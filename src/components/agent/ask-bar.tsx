@@ -173,8 +173,8 @@ export function AskBar({ targets, provider: initialProvider, examples = [], sugg
               className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] py-1 pl-2.5 pr-2 text-xs text-ink-2 transition hover:border-white/20 hover:text-ink disabled:cursor-default disabled:hover:border-white/10"
             >
               <span className="size-2 rounded-full" style={{ background: target.glow, boxShadow: `0 0 8px ${target.glow}` }} />
-              <span className="max-w-[12rem] truncate">{target.name}</span>
-              {!fixedTarget && (auto ? <span className="text-ink-3">· auto</span> : null)}
+              <span className="max-w-[12rem] truncate whitespace-nowrap">{target.name}</span>
+              {!fixedTarget && (auto ? <span className="hidden whitespace-nowrap text-ink-3 sm:inline">· auto</span> : null)}
               {!fixedTarget && <ChevronDown className="size-3 text-ink-3" />}
             </button>
             <AnimatePresence>

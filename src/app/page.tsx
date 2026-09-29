@@ -601,8 +601,8 @@ async function Today() {
   const [w, l] = await Promise.all([source(weather), source(life)]);
   const snap = l.ok ? l.data : null;
   const next = snap?.agenda.find((e) => new Date(e.end ?? e.start).getTime() > Date.now());
-  const waiting = (snap?.inbox.needsReply.length ?? 0) + urgent().length;
-  if (!w.ok && !next && !waiting) return null;
+  const pending = agentUi().enabled ? (await waiting().catch(() => [])).length : (snap?.inbox.needsReply.length ?? 0) + urgent().length;
+  if (!w.ok && !next && !pending) return null;
   const { locale, timeZone } = l10n();
   const hm = (t: string) => new Intl.DateTimeFormat(locale, { timeZone, weekday: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(t));
   return (
@@ -623,9 +623,9 @@ async function Today() {
           📅 {next.title} <span className="text-ink-3">· {next.allDay ? tr("journée", "all day") : hm(next.start)}</span>
         </span>
       )}
-      {waiting > 0 && (
+      {pending > 0 && (
         <span className="text-ink-2">
-          ⚡ {tr(`${waiting} chose${waiting > 1 ? "s" : ""} t'attendent`, `${waiting} ${plural(waiting, ["thing", "things"], ["thing", "things"])} waiting for you`)}
+          ⚡ {tr(`${pending} chose${pending > 1 ? "s" : ""} t'attend${pending > 1 ? "ent" : ""}`, `${pending} ${plural(pending, ["thing", "things"], ["thing", "things"])} waiting for you`)}
         </span>
       )}
       <ArrowUpRight className="ml-auto size-4 text-ink-3 transition group-hover:text-ink" />

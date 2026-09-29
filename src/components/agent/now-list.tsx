@@ -196,11 +196,11 @@ function ItemRow({
   const Icon = KIND[item.kind].icon;
   const s = thread?.status ? STATUS_STYLE[thread.status] : null;
   return (
-    <div className="group flex items-center gap-3 rounded-2xl px-2 py-2.5 transition hover:bg-white/[0.03]">
+    <div className="group flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl px-2 py-2.5 transition hover:bg-white/[0.03] sm:flex-nowrap">
       <span className="grid size-9 shrink-0 place-items-center rounded-xl" style={{ background: `${color}1f`, color }}>
         <Icon className="size-4" />
       </span>
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 basis-[calc(100%-3rem)] sm:basis-auto">
         <div className="truncate text-sm text-ink">{item.title}</div>
         <div className="truncate text-xs text-ink-3">
           {item.detail}
@@ -209,7 +209,7 @@ function ItemRow({
         </div>
         {error && <div className="mt-1 text-xs text-bad">{error}</div>}
       </div>
-      <div className="flex shrink-0 items-center gap-1">
+      <div className="flex w-full shrink-0 items-center justify-end gap-1 sm:w-auto">
         <div className="flex items-center gap-0.5 opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100">
           {item.href && (
             <IconLink href={item.href} label={tr("Ouvrir", "Open")}>
