@@ -42,6 +42,8 @@ To build zenith code (the coding workspace) once:
 npm run code:build
 ```
 
+With zenith code built and Claude Code or Codex installed, you can skip the config editing: the first page has a **Let zenith set itself up** button. An agent reads your project folders, writes your config, and asks only what it can't guess.
+
 ### Mac app
 
 ```bash

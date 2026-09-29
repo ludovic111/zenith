@@ -17,6 +17,13 @@ export const refreshLifePrompt = () => {
   );
 };
 
+/** First run: an agent writes zenith.config.json from your project folders. */
+export const setupPrompt = (projectsRoot: string) =>
+  tr(
+    `Configure zenith pour moi. Lis docs/configuration.md et zenith.config.example.json, puis parcours mes dossiers de projets dans ${projectsRoot} (remote git, package.json, README, sites) et écris perso/zenith.config.json : langue et devise d'après ce Mac, ma ville, et chaque vrai projet avec id, nom, accroche, emoji, dossier, dépôt GitHub, site et sondes. Demande-moi seulement ce que tu ne peux pas deviner (ma ville, quels projets garder). Vérifie que le fichier respecte zenith.schema.json. Ne committe rien : ce fichier est privé. Termine en me disant de relancer zenith.`,
+    `Set zenith up for me. Read docs/configuration.md and zenith.config.example.json, then go through my project folders in ${projectsRoot} (git remote, package.json, README, sites) and write perso/zenith.config.json: language and currency from this Mac, my city, and every real project with id, name, tagline, emoji, folder, GitHub repository, site and probes. Only ask me what you can't guess (my city, which projects to keep). Check the file against zenith.schema.json. Don't commit anything: this file is private. End by telling me to restart zenith.`,
+  );
+
 export const TASKS = {
   "refresh-life": { name: () => tr("Actualiser ma vie", "Refresh my life"), prompt: refreshLifePrompt },
 } as const;

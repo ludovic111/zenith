@@ -53,6 +53,8 @@ import { now } from "@/lib/agent/now";
 import { SUGGESTIONS, agentUi, examplesFrom } from "@/lib/agent/ui";
 import { AskBar } from "@/components/agent/ask-bar";
 import { NowList } from "@/components/agent/now-list";
+import { AskButton } from "@/components/agent/ask-button";
+import { setupPrompt } from "@/lib/agent/tasks";
 
 export const dynamic = "force-dynamic";
 
@@ -699,7 +701,8 @@ function Welcome() {
                 </li>
               ))}
             </ol>
-            <div className="mt-7 flex flex-wrap gap-3">
+            <div className="mt-7 flex flex-wrap items-start gap-3">
+              {agentUi().enabled && <AskButton prompt={setupPrompt(config().projectsRoot)} target="zenith" label={tr("Laisser zenith se configurer", "Let zenith set itself up")} />}
               <Link href="/reglages" className="inline-flex items-center gap-2 rounded-full border border-sun/40 bg-sun/10 px-4 py-2 text-sm text-ink transition hover:border-sun/70">
                 <Settings2 className="size-4 text-sun" /> {tr("Ouvrir les réglages", "Open settings")}
               </Link>

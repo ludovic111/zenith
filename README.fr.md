@@ -42,6 +42,8 @@ Pour construire zenith code (l'espace de code), une fois :
 npm run code:build
 ```
 
+Avec zenith code construit et Claude Code ou Codex installé, tu peux sauter l'édition du fichier : la première page a un bouton **Laisser zenith se configurer**. Un agent lit tes dossiers de projets, écrit ta config, et ne te demande que ce qu'il ne peut pas deviner.
+
 ### App Mac
 
 ```bash

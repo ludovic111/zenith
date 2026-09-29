@@ -1,4 +1,5 @@
 import "server-only";
+import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
@@ -166,5 +167,9 @@ export async function ensureWorkspace(): Promise<string> {
     path.join(home, ".codex", "config.toml"),
     `# Written by zenith.\n[mcp_servers.zenith]\ncommand = ${JSON.stringify(server.command)}\nargs = [${JSON.stringify(MCP_SCRIPT)}]\n`,
   );
+  // A repository, so zenith code can checkpoint and diff what the agent changes here.
+  if (!existsSync(path.join(home, ".git"))) {
+    await new Promise<void>((resolve) => execFile("git", ["init", "-q"], { cwd: home }, () => resolve()));
+  }
   return home;
 }

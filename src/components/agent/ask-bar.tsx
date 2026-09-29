@@ -70,6 +70,12 @@ export function AskBar({ targets, provider: initialProvider, examples = [], sugg
     el.style.height = `${Math.min(el.scrollHeight, 240)}px`;
   }, [text]);
 
+  // Words typed before the page came alive are kept.
+  useEffect(() => {
+    const typed = area.current?.value;
+    if (typed) setText((t) => t || typed);
+  }, []);
+
   useEffect(() => {
     if (!autoFocus) return;
     const el = area.current;

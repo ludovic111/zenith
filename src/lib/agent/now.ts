@@ -193,8 +193,8 @@ async function collectItems(): Promise<Omit<NowItem, "delegated">[]> {
       project: null,
       target: LIFE,
       prompt: tr(
-        `${m.from} attend ma réponse : « ${m.subject} » (${m.why}). Lis tout le fil${m.link ? ` (${m.link})` : ""}, puis rédige une réponse courte dans mon ton et crée-la en brouillon Gmail dans ce fil. Montre-la-moi ; ne l'envoie pas.`,
-        `${m.from} is waiting for my reply: "${m.subject}" (${m.why}). Read the whole thread${m.link ? ` (${m.link})` : ""}, then write a short reply in my voice and save it as a Gmail draft in that thread. Show it to me; don't send it.`,
+        `${m.from} attend quelque chose de moi : « ${m.subject} » (${m.why}). Lis tout le fil${m.link ? ` (${m.link})` : ""}. S'il faut répondre, rédige une réponse courte dans mon ton et crée-la en brouillon Gmail dans ce fil ; s'il faut agir (payer, remplir, se connecter quelque part), dis-moi exactement quoi faire, où et avant quand. Montre-moi tout ; n'envoie et ne paie rien.`,
+        `${m.from} is waiting on me: "${m.subject}" (${m.why}). Read the whole thread${m.link ? ` (${m.link})` : ""}. If it needs a reply, write a short one in my voice and save it as a Gmail draft in that thread; if it needs an action (paying, filling something in, logging in somewhere), tell me exactly what to do, where and by when. Show me everything; don't send or pay anything.`,
       ),
       href: m.link || null,
       priority: 60 + Math.min(10, Math.floor(age / DAY) * 2),
