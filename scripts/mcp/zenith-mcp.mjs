@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 // "zenith" MCP server: gives any AI agent (Claude Code, Claude Desktop, Codex, Cursor…) the full
-// context zenith keeps about you (projects, life, money, directory, Obsidian notes), read-only.
+// context zenith keeps about you (projects, life, money, directory, Obsidian notes), and lets it
+// act through zenith: see what is waiting (Now), hand work to other agents, file things away.
 //
 //   claude mcp add zenith --scope user -- node /path/to/zenith/scripts/mcp/zenith-mcp.mjs
 //
 // It asks the local zenith server (ZENITH_URL, default http://127.0.0.1:4747) and, when it does not
-// answer, reads the files already written to zenith/context/. It never needs the server to start.
+// answer, reads the files already written to zenith/context/. Reading never needs the server;
+// acting does.
 
 import { readFile, readdir } from "node:fs/promises";
 import os from "node:os";
@@ -87,7 +89,7 @@ async function markdownFiles(dir, root = dir, out = []) {
 }
 
 const text = (t) => ({ content: [{ type: "text", text: t }] });
-const server = new McpServer({ name: "zenith", version: "1.1.0" });
+const server = new McpServer({ name: "zenith", version: "1.2.0" });
 const projectList = PROJECTS.length ? PROJECTS.map((id) => (NAMES[id] && NAMES[id] !== id ? `${id} (${NAMES[id]})` : id)).join(", ") : "none configured";
 
 server.registerTool(
@@ -165,6 +167,112 @@ server.registerTool(
     if (!full.startsWith(root + path.sep)) return text(tr("Chemin refusé : hors du vault.", "Path refused: outside the vault."));
     return text(await readFile(full, "utf8").catch(() => tr(`Note introuvable : ${rel}`, `Note not found: ${rel}`)));
   },
+);
+
+// ——— Acting: Now, delegation to other agents ———————————————————————————————
+// These go through the running zenith server, authenticated by the token it keeps in
+// .data/agent-token (readable by local programs only, never by a web page).
+
+const NOT_RUNNING = tr(
+  "zenith ne répond pas : lance-le (npm run dev, ou l'app zenith) pour agir.",
+  "zenith is not answering: start it (npm run dev, or the zenith app) to act.",
+);
+
+async function act(pathname, body) {
+  const token = await readFile(path.join(ROOT, ".data", "agent-token"), "utf8").catch(() => "");
+  const res = await fetch(`${BASE}${pathname}`, {
+    method: body === undefined ? "GET" : "POST",
+    headers: { "x-zenith-token": token.trim(), ...(body === undefined ? {} : { "content-type": "application/json" }) },
+    body: body === undefined ? undefined : JSON.stringify(body),
+    signal: AbortSignal.timeout(60_000),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+  return data;
+}
+
+const attempt = async (fn) => {
+  try {
+    return text(await fn());
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return text(/fetch failed|ECONNREFUSED|abort/i.test(msg) ? NOT_RUNNING : `${tr("Échec", "Failed")}: ${msg}`);
+  }
+};
+
+const TARGETS = ["life", ...PROJECTS, "zenith"];
+
+server.registerTool(
+  "zenith_now",
+  {
+    title: "What is waiting now",
+    description:
+      "What is waiting for the user right now, most pressing first: sites down, failing payments, birthdays, emails to answer, paperwork, broken CI, stale email/calendar capture. Each item has an id (for zenith_done), where an agent would work on it, and whether an agent is already on it.",
+    annotations: { readOnlyHint: true },
+  },
+  () =>
+    attempt(async () => {
+      const items = await act("/api/now");
+      if (!items.length) return tr("Rien n'attend. Ciel dégagé.", "Nothing is waiting. Clear skies.");
+      return items
+        .map((i) => `- [${i.id}] ${i.title} — ${i.detail}${i.target !== "life" ? ` (→ ${i.target})` : ""}${i.delegated ? tr(` · un agent s'en occupe (thread ${i.delegated.threadId})`, ` · an agent is on it (thread ${i.delegated.threadId})`) : ""}${i.href ? ` · ${i.href}` : ""}`)
+        .join("\n");
+    }),
+);
+
+server.registerTool(
+  "zenith_delegate",
+  {
+    title: "Hand work to an agent",
+    description:
+      `Starts another AI agent (Claude Code or Codex, in zenith code) that works in parallel: in a project's folder for code (${projectList}), in "zenith" for the dashboard itself, or in "life" for anything else. It does not see your conversation: give it a complete, self-contained brief. Returns its thread id (follow up with zenith_agent) and a link the user can open.`,
+    inputSchema: {
+      prompt: z.string().min(8).describe("the complete brief for the agent"),
+      project: z.enum(TARGETS).optional().describe(`where it works: ${TARGETS.join(", ")}; default: guessed from the brief`),
+      provider: z.enum(["claude", "codex"]).optional().describe("Claude Code or Codex; default: the user's choice"),
+      now_id: z.string().optional().describe("the zenith_now item this handles, if any"),
+    },
+  },
+  ({ prompt, project, provider, now_id }) =>
+    attempt(async () => {
+      const r = await act("/api/agent", { prompt, target: project, provider, nowId: now_id });
+      return tr(
+        `Agent lancé dans « ${r.target} » (thread ${r.threadId}). Suivi : zenith_agent. Lien : ${BASE}${r.href}`,
+        `Agent started in "${r.target}" (thread ${r.threadId}). Follow up: zenith_agent. Link: ${BASE}${r.href}`,
+      );
+    }),
+);
+
+server.registerTool(
+  "zenith_agent",
+  {
+    title: "Check on an agent",
+    description: "State of an agent started with zenith_delegate (working, completed, waiting for approval) and its latest messages.",
+    inputSchema: { thread_id: z.string().describe("thread id returned by zenith_delegate") },
+    annotations: { readOnlyHint: true },
+  },
+  ({ thread_id }) =>
+    attempt(async () => {
+      const t = await act(`/api/agent/thread/${encodeURIComponent(thread_id)}`);
+      return [`# ${t.title}`, `turn: ${t.turn ?? "—"} · session: ${t.session ?? "—"}`, "", ...t.messages.map((m) => `## ${m.role}\n\n${m.text}`)].join("\n");
+    }),
+);
+
+server.registerTool(
+  "zenith_done",
+  {
+    title: "File a Now item away",
+    description: "Marks a zenith_now item as handled (it leaves the list), or snoozes it for some hours.",
+    inputSchema: {
+      id: z.string().describe("item id from zenith_now"),
+      snooze_hours: z.number().min(1).max(720).optional().describe("snooze instead of done"),
+    },
+  },
+  ({ id, snooze_hours }) =>
+    attempt(async () => {
+      await act("/api/now", snooze_hours ? { id, action: "snooze", hours: snooze_hours } : { id, action: "done" });
+      return snooze_hours ? tr(`Reporté de ${snooze_hours} h.`, `Snoozed for ${snooze_hours} h.`) : tr("Classé.", "Filed away.");
+    }),
 );
 
 for (const name of DOCS) {

@@ -20,6 +20,7 @@ import {
   Search,
   Settings2,
   SlidersHorizontal,
+  Sparkles,
   SquareTerminal,
   Sun,
   Wallet,
@@ -47,6 +48,7 @@ import { ZenithMark } from "./logo";
 import { AssistantIcon } from "@/components/assistants/assistant-icon";
 import { ASSISTANTS, assistantHref, type AssistantId } from "@/lib/assistants";
 import { readPref, subscribePrefs, writePref } from "@/lib/prefs";
+import { openAsk } from "@/components/agent/client";
 
 type NavProject = { id: string; name: string; href: string; color: string; glow: string; emoji: string; tagline: string; dir: string | null };
 
@@ -82,7 +84,20 @@ function useStoredSet(key: string) {
  * threads live underneath, and zenith code's own projects and settings. It folds to a
  * rail (⌘B); the choice is kept per browser and applied before paint (layout.tsx).
  */
-export function Sidebar({ projects, code = true, home, assistants = [] }: { projects: NavProject[]; code?: boolean; home: string; assistants?: AssistantId[] }) {
+export function Sidebar({
+  projects,
+  code = true,
+  home,
+  assistants = [],
+  agent = null,
+}: {
+  projects: NavProject[];
+  code?: boolean;
+  home: string;
+  assistants?: AssistantId[];
+  /** The zenith agent's folder, whose threads are your conversations. */
+  agent?: { home: string } | null;
+}) {
   const path = usePathname();
   const router = useRouter();
   const { status, snapshot, ready } = useCode();
@@ -111,7 +126,7 @@ export function Sidebar({ projects, code = true, home, assistants = [] }: { proj
   }, [toggleCollapsed]);
 
   // zenith code's projects and threads, matched to zenith's projects by folder.
-  const { byZenithProject, others, all } = useMemo(() => {
+  const { byZenithProject, others, life, all } = useMemo(() => {
     const threadsOf = new Map<string, CodeThread[]>();
     for (const t of snapshot?.threads ?? []) {
       const k = `${t.environmentId}:${t.projectId}`;
@@ -120,13 +135,18 @@ export function Sidebar({ projects, code = true, home, assistants = [] }: { proj
     const entry = (p: CodeProject) => ({ project: p, threads: threadsOf.get(`${p.environmentId}:${p.id}`) ?? [] });
     const byZenithProject = new Map<string, ReturnType<typeof entry>>();
     const others: ReturnType<typeof entry>[] = [];
+    let life: ReturnType<typeof entry> | null = null;
     for (const p of snapshot?.projects ?? []) {
+      if (agent && !life && sameDir(p.workspaceRoot, agent.home)) {
+        life = entry(p);
+        continue;
+      }
       const owner = projects.find((z) => z.dir && sameDir(z.dir, p.workspaceRoot));
       if (owner && !byZenithProject.has(owner.id)) byZenithProject.set(owner.id, entry(p));
       else others.push(entry(p));
     }
-    return { byZenithProject, others, all: snapshot?.threads ?? [] };
-  }, [snapshot, projects]);
+    return { byZenithProject, others, life, all: snapshot?.threads ?? [] };
+  }, [snapshot, projects, agent]);
 
   const navigate = useCallback(
     (request: CodeNavigate) => {
@@ -173,12 +193,45 @@ export function Sidebar({ projects, code = true, home, assistants = [] }: { proj
           </button>
         </div>
 
+        {agent && (
+          <div className="px-3 pb-3 collapsed:px-2">
+            <button
+              type="button"
+              onClick={() => openAsk()}
+              title={`${tr("Demander à zenith", "Ask zenith")} (⌘J)`}
+              className="group/ask relative flex w-full items-center gap-3 overflow-hidden rounded-xl border border-sun/25 bg-sun/[0.06] px-3 py-2 text-sm text-ink transition hover:border-sun/50 hover:bg-sun/[0.1] collapsed:justify-center collapsed:px-0"
+            >
+              <Sparkles className="size-4 shrink-0 text-sun transition group-hover/ask:rotate-12" />
+              <span className="truncate collapsed:hidden">{tr("Demander à zenith", "Ask zenith")}</span>
+              <kbd className="ml-auto rounded-md border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-3 collapsed:hidden">⌘J</kbd>
+            </button>
+          </div>
+        )}
+
         <nav className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto overflow-x-hidden px-3 pb-4 [scrollbar-width:thin] collapsed:px-2">
           <div className="flex flex-col gap-0.5">
             {pages.map((it) => (
               <NavRow key={it.href} href={it.href} name={it.name} glow={it.glow} icon={it.icon} active={isActive(it.href)} />
             ))}
           </div>
+
+          {agent && codeReady && life && life.threads.length > 0 && (
+            <Group label="zenith">
+              <ProjectBlock
+                id="zenith:life"
+                name={tr("Conversations", "Conversations")}
+                title={agent.home}
+                glow="#FFD166"
+                threads={life.threads}
+                activeThread={activeThread}
+                folded={folded.has("zenith:life")}
+                full={full.has("zenith:life")}
+                onFold={() => toggleFolded("zenith:life")}
+                onFull={() => toggleFull("zenith:life")}
+                onNewThread={() => openAsk()}
+              />
+            </Group>
+          )}
 
           {assistants.length > 0 && (
             <Group label={tr("Assistants", "Assistants")}>

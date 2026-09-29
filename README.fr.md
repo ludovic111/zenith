@@ -2,12 +2,16 @@
 
 **Un ciel privé au-dessus de tes projets et de ta journée.** zenith est un tableau de bord local pour qui mène plusieurs projets à la fois : l'état de chaque projet, ses déploiements, son code et ses agents IA, ton agenda, tes mails, ton argent et l'actualité — et **zenith code**, un vrai espace de code pour Claude Code et Codex, intégré.
 
+Et il agit. **Demande à zenith** n'importe quoi en une phrase (⌘J) : un agent IA s'y met aussitôt, dans le bon projet ou sur toute ta vie, avec tout ce que zenith sait. La liste **Maintenant** montre ce qui t'attend — un paiement en échec, des acheteurs à qui répondre, une CI cassée, un anniversaire — et confie chaque chose à un agent d'un geste. Il prépare, tu valides.
+
 Il tourne sur ta machine, ne répond que sur `127.0.0.1` et n'envoie tes données nulle part. [English version](README.md).
 
 ## Ce qu'il montre
 
 | Page | Contenu |
 | --- | --- |
+| **Demande à zenith** | Une seule boîte, partout (vue d'ensemble, pages projet, ⌘J, ⌘K) : dis ce que tu veux, un agent le fait et s'ouvre en thread. Va au projet que tu nommes, sinon à ton agent de vie |
+| **Maintenant** | Ce qui t'attend, le plus pressant d'abord, avec pour chaque chose *Confier* à un agent, *fait* et *plus tard*. Et les routines : des agents qui travaillent seuls chaque matin |
 | Vue d'ensemble | Système orbital des projets (état en direct), chiffres clés, cartes projet, six mois de commits, fil de tout ce qui se passe |
 | Ma vie | Météo, qualité de l'air, UV et pollens, agenda (14 jours, fériés, anniversaires), ce qui t'attend, morceau en cours, temps d'écran, dépenses, rythme de travail |
 | Projets | Une page par projet : disponibilité, latence, trafic et déploiements (Railway), CI, issues et PR (GitHub), releases et téléchargements, note et avis App Store, MRR RevenueCat, sessions d'agents, notes Obsidian, carte d'identité |
@@ -18,7 +22,7 @@ Il tourne sur ta machine, ne répond que sur `127.0.0.1` et n'envoie tes donnée
 | Abonnements | Tout ce que tu paies, total mensuel dans ta devise, prochains prélèvements, paiements en échec, jauges Claude / ChatGPT |
 | Annuaire | Noms, identifiants, domaines (registraire, renouvellement, certificat, e-mail), stores et services de chaque projet |
 
-**⌘K** pour aller partout.
+**⌘J** pour demander à zenith, **⌘K** pour aller partout (ou tape une phrase pour demander).
 
 ## Démarrage
 
@@ -56,8 +60,12 @@ Les clés d'API se collent dans **Sources de données** (`/reglages`) : elles so
 
 Toutes les 10 minutes, zenith réécrit un brief Markdown de tout ce qu'il sait (`context/brief.md`, un fichier par projet, `vie.md`, `argent.md`…), aussi dans ton vault Obsidian. Pour le donner à tes agents :
 
-- **MCP** : `claude mcp add zenith --scope user -- node /chemin/vers/zenith/scripts/mcp/zenith-mcp.mjs` (Codex : `codex mcp add zenith -- node …`).
+- **MCP** : `claude mcp add zenith --scope user -- node /chemin/vers/zenith/scripts/mcp/zenith-mcp.mjs` (Codex : `codex mcp add zenith -- node …`). Pour lire : `zenith_brief`, `zenith_project`, `zenith_document`, `zenith_search_notes`, `zenith_read_note`. Pour agir (zenith lancé) : `zenith_now`, `zenith_delegate` (lancer un autre agent dans un projet), `zenith_agent`, `zenith_done`.
 - **HTTP** : `http://127.0.0.1:4747/api/context[/<doc>]` et `/llms.txt`.
+
+## L'agent zenith
+
+Demande à zenith, Maintenant et les routines passent par zenith code, avec ton abonnement Claude Code ou Codex et tes permissions habituelles. Les demandes de vie tournent dans le dossier de l'agent (`~/.zenith/life`), où zenith écrit ses consignes (qui tu es, où tout se trouve, ce qu'il doit demander avant d'agir) et branche son serveur MCP ; il atteint tes mails et ton agenda par tes connecteurs Claude. Il rédige, crée des branches et propose ; il demande avant d'envoyer, payer, supprimer ou déployer. Voir [docs/agent.fr.md](docs/agent.fr.md).
 
 ## zenith code
 

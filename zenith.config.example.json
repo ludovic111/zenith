@@ -43,5 +43,9 @@
   "news": [{ "name": "The Verge", "url": "https://www.theverge.com/rss/index.xml", "limit": 8 }],
   "watch": [{ "term": "zenith dashboard", "label": "zenith" }],
   "obsidian": { "exportDir": "zenith" },
-  "code": { "enabled": true, "port": 4749 }
+  "code": { "enabled": true, "port": 4749 },
+  "agent": {
+    "provider": "claude",
+    "routines": [{ "id": "morning", "name": "Morning capture", "at": "07:30", "task": "refresh-life" }]
+  }
 }

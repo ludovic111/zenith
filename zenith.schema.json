@@ -841,6 +841,93 @@
           "type": "string"
         }
       }
+    },
+    "agent": {
+      "default": {
+        "enabled": true,
+        "home": "~/.zenith/life",
+        "provider": "claude",
+        "routines": []
+      },
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "default": true,
+          "type": "boolean"
+        },
+        "home": {
+          "default": "~/.zenith/life",
+          "type": "string"
+        },
+        "provider": {
+          "default": "claude",
+          "type": "string",
+          "enum": [
+            "claude",
+            "codex"
+          ]
+        },
+        "model": {
+          "type": "string"
+        },
+        "routines": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]*$"
+              },
+              "name": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string",
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+              },
+              "days": {
+                "default": [
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7
+                ],
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 7
+                }
+              },
+              "task": {
+                "type": "string",
+                "enum": [
+                  "refresh-life"
+                ]
+              },
+              "prompt": {
+                "type": "string"
+              },
+              "project": {
+                "type": "string"
+              },
+              "enabled": {
+                "default": true,
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "at"
+            ]
+          }
+        }
+      }
     }
   }
 }

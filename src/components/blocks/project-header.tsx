@@ -5,6 +5,8 @@ import { projectVersion } from "@/lib/sources/git";
 import { uptime } from "@/lib/sources/uptime";
 import { LiveDot, Status } from "@/components/z/status";
 import { Meteors } from "@/components/ui/meteors";
+import { AskBar } from "@/components/agent/ask-bar";
+import { agentUi } from "@/lib/agent/ui";
 
 /** A project page's hero: status, version, name, tagline, links. `actions` go before the links. */
 export async function ProjectHeader({ project: p, actions, children }: { project: Project; actions?: React.ReactNode; children?: React.ReactNode }) {
@@ -12,6 +14,8 @@ export async function ProjectHeader({ project: p, actions, children }: { project
   const mine = probes.filter((u) => u.project === p.id);
   const allUp = mine.length > 0 && mine.every((u) => u.up);
   const anyDown = mine.some((u) => u.up === false);
+  const ui = agentUi();
+  const canAsk = ui.enabled && ui.targets.some((t) => t.id === p.id);
   return (
     <header className="relative mb-8 overflow-hidden rounded-[2rem] border border-line px-6 py-8 sm:px-10 sm:py-10">
       <div aria-hidden className="absolute inset-0" style={{ background: `radial-gradient(120% 140% at 0% 0%, ${p.glow}33 0%, transparent 55%), radial-gradient(80% 120% at 100% 100%, ${p.color}26 0%, transparent 60%)` }} />
@@ -56,6 +60,21 @@ export async function ProjectHeader({ project: p, actions, children }: { project
           </div>
         )}
       </div>
+      {canAsk && (
+        <div className="relative mt-8 max-w-3xl">
+          <AskBar
+            targets={ui.targets}
+            provider={ui.provider}
+            fixedTarget={p.id}
+            examples={[
+              tr(`Qu'est-ce qui a changé dans ${p.name} cette semaine ?`, `What changed in ${p.name} this week?`),
+              tr("Trouve et corrige le bug le plus gênant", "Find and fix the most annoying bug"),
+              tr("Écris les notes de la prochaine version", "Write the next release notes"),
+              tr("Ajoute des tests là où ça casse", "Add tests where it breaks"),
+            ]}
+          />
+        </div>
+      )}
       {children && <div className="relative mt-8">{children}</div>}
     </header>
   );

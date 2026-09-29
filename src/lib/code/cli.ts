@@ -31,6 +31,25 @@ export async function mintPairingToken(): Promise<string> {
   return credential;
 }
 
+/** A bearer session for zenith's own server-side calls (the environment HTTP API), owner scopes. */
+export async function issueSession(ttl = "12h"): Promise<{ token: string; expiresAt: number }> {
+  const { code, stdout, stderr } = await cli(["auth", "session", "issue", "--ttl", ttl, "--label", BRAND, "--json"]);
+  if (code !== 0) throw new Error(stderr.trim().split("\n").at(-1) || `exit ${code}`);
+  // Logs may precede the JSON document.
+  const body = JSON.parse(stdout.slice(stdout.indexOf("{"))) as { token?: unknown; expiresAt?: unknown };
+  if (typeof body.token !== "string" || !body.token) throw new Error("no token in CLI output");
+  const expiresAt = typeof body.expiresAt === "string" ? Date.parse(body.expiresAt) : Date.now() + 3600_000;
+  return { token: body.token, expiresAt };
+}
+
+/** Adds a folder as a zenith code project (no-op when it already is one). */
+export async function addProject(dir: string, title: string): Promise<void> {
+  const { code, stdout, stderr } = await cli(["project", "add", dir, "--title", title]);
+  if (code !== 0 && !/already exists/i.test(stderr + stdout)) {
+    throw new Error((stderr + stdout).split("\n").find((l) => /error/i.test(l))?.trim() ?? `exit ${code}`);
+  }
+}
+
 const REGISTERED = () => path.join(codeHome(), "zenith-projects.json");
 
 /**

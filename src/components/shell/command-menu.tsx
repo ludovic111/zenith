@@ -1,19 +1,29 @@
 "use client";
 
-import { Command } from "cmdk";
+import { Command, defaultFilter } from "cmdk";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, Bot, Contact, ExternalLink, FolderPlus, LayoutGrid, MessageSquarePlus, Radar, RefreshCw, RotateCw, Settings2, SlidersHorizontal, SquareTerminal, Sun, Wallet } from "lucide-react";
+import { ArrowUpRight, Bot, LoaderCircle, Sparkles, Contact, ExternalLink, FolderPlus, LayoutGrid, MessageSquarePlus, Radar, RefreshCw, RotateCw, Settings2, SlidersHorizontal, SquareTerminal, Sun, Wallet } from "lucide-react";
 import { tr } from "@/lib/i18n";
 import { AssistantIcon } from "@/components/assistants/assistant-icon";
 import { ASSISTANTS, assistantHref, type AssistantId } from "@/lib/assistants";
 import { codeHref, codeNavigate, STATUS_STYLE, threadHref, threadKey, useCode } from "@/components/code/store";
+import { guessTarget, type AgentTarget, type Provider } from "@/lib/agent/target";
+import { askZenith, openAsk } from "@/components/agent/client";
 
 type NavProject = { id: string; name: string; href: string; glow: string; tagline: string };
 type ExtLink = { label: string; url: string; project: string; color: string };
 
-export function CommandMenu({ projects, links, code = true, assistants = [] }: { projects: NavProject[]; links: ExtLink[]; code?: boolean; assistants?: AssistantId[] }) {
+type Agent = { targets: AgentTarget[]; provider: Provider } | null;
+
+// The "Ask zenith" row always matches, but last: a sentence nothing else matches lands on it.
+const filter = (value: string, search: string, keywords?: string[]) => (value.startsWith("ask:") ? 0.0001 : defaultFilter(value, search, keywords));
+
+export function CommandMenu({ projects, links, code = true, assistants = [], agent = null }: { projects: NavProject[]; links: ExtLink[]; code?: boolean; assistants?: AssistantId[]; agent?: Agent }) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [asking, setAsking] = useState(false);
+  const [askError, setAskError] = useState<string | null>(null);
   const router = useRouter();
   const { status, snapshot, ready } = useCode();
   const codeProjects = new Map((snapshot?.projects ?? []).map((p) => [`${p.environmentId}:${p.id}`, p.title]));
@@ -44,6 +54,23 @@ export function CommandMenu({ projects, links, code = true, assistants = [] }: {
     fn();
   };
 
+  const askTarget = agent && search.trim() ? agent.targets.find((t) => t.id === guessTarget(search, agent.targets)) : null;
+  async function ask() {
+    if (!agent || asking || !search.trim()) return;
+    setAsking(true);
+    setAskError(null);
+    try {
+      const r = await askZenith({ prompt: search.trim(), provider: agent.provider, source: "command" });
+      setOpen(false);
+      setSearch("");
+      router.push(r.href);
+    } catch (e) {
+      setAskError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setAsking(false);
+    }
+  }
+
   const heading =
     "[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-[11px] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-ink-3";
   const item =
@@ -52,18 +79,47 @@ export function CommandMenu({ projects, links, code = true, assistants = [] }: {
   return (
     <Command.Dialog
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) {
+          setSearch("");
+          setAskError(null);
+        }
+      }}
+      filter={filter}
       label={tr("Aller à", "Go to")}
       overlayClassName="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
       contentClassName="fixed left-1/2 top-[18vh] z-50 w-[min(640px,calc(100vw-2rem))] -translate-x-1/2 overflow-hidden rounded-3xl border border-white/10 bg-[#100e1c]/95 shadow-2xl shadow-black/60 backdrop-blur-xl"
     >
       <Command.Input
         autoFocus
-        placeholder={tr("Projet, thread, lien, action…", "Project, thread, link, action…")}
+        value={search}
+        onValueChange={(v) => {
+          setSearch(v);
+          setAskError(null);
+        }}
+        placeholder={agent ? tr("Aller quelque part, ou demander quelque chose à zenith…", "Go somewhere, or ask zenith anything…") : tr("Projet, thread, lien, action…", "Project, thread, link, action…")}
         className="w-full border-b border-line bg-transparent px-5 py-4 text-base outline-none placeholder:text-ink-3"
       />
       <Command.List className="max-h-[50vh] overflow-y-auto p-2">
         <Command.Empty className="px-4 py-6 text-center text-sm text-ink-3">{tr("Rien sous ce ciel.", "Nothing under this sky.")}</Command.Empty>
+        {agent && search.trim() && (
+          <Command.Group heading="zenith" className={heading}>
+            <Command.Item value={`ask:${search}`} className={item} onSelect={() => void ask()} disabled={asking}>
+              {asking ? <LoaderCircle className="size-4 shrink-0 animate-spin text-sun" /> : <Sparkles className="size-4 shrink-0 text-sun" />}
+              <span className="min-w-0 truncate">
+                {tr("Demander à zenith : ", "Ask zenith: ")}
+                <span className="text-ink">{search.trim()}</span>
+              </span>
+              {askTarget && (
+                <span className="ml-auto inline-flex shrink-0 items-center gap-1.5 text-xs text-ink-3">
+                  <span className="size-1.5 rounded-full" style={{ background: askTarget.glow }} /> {askTarget.name}
+                </span>
+              )}
+            </Command.Item>
+            {askError && <div className="px-3 pb-2 text-xs text-bad">{askError}</div>}
+          </Command.Group>
+        )}
         <Command.Group heading={tr("Projets", "Projects")} className={heading}>
           <Command.Item className={item} onSelect={() => go(() => router.push("/"))}>
             <LayoutGrid className="size-4" /> {tr("Vue d'ensemble", "Overview")}
@@ -136,6 +192,12 @@ export function CommandMenu({ projects, links, code = true, assistants = [] }: {
           </Command.Group>
         )}
         <Command.Group heading={tr("Actions", "Actions")} className={heading}>
+          {agent && (
+            <Command.Item value={tr("demander à zenith agent assistant question tâche", "ask zenith agent assistant question task")} className={item} onSelect={() => go(() => openAsk())}>
+              <Sparkles className="size-4 text-sun" /> {tr("Demander à zenith…", "Ask zenith…")}
+              <kbd className="ml-auto rounded-md border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-3">⌘J</kbd>
+            </Command.Item>
+          )}
           <Command.Item className={item} onSelect={() => go(() => router.refresh())}>
             <RefreshCw className="size-4" /> {tr("Rafraîchir les données", "Refresh data")}
           </Command.Item>

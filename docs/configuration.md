@@ -34,6 +34,7 @@ cp zenith.config.example.json zenith.config.json
 | `mac` | object | `{ "bundleId": "dev.zenith.app" }` | The native Mac app. See [mac](#mac). |
 | `assistants` | array | `["claude", "chatgpt"]` | Claude and ChatGPT in the sidebar. See [assistants](#assistants). |
 | `code` | object | `{ "enabled": true, "port": 4749 }` | zenith code, the coding workspace. See [code](#code). |
+| `agent` | object | `{ "enabled": true, "provider": "claude" }` | The zenith agent: Ask zenith, Now, routines. See [agent](#agent). |
 
 ```json
 {
@@ -258,6 +259,40 @@ Until then, or if the desktop app isn't installed, or if you pick **Web** in the
 | `enabled` | boolean | `true` | Turns zenith code (the coding workspace at `/code`) on or off. |
 | `port` | number | `4749` | Local port of its server. |
 | `home` | string | — | Where zenith code keeps its state. |
+
+## agent
+
+The zenith agent (see [agent.md](agent.md)). It runs through zenith code, so `code.enabled` must stay on.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `enabled` | boolean | `true` | Shows Ask zenith (⌘J), the Now list and the routines. |
+| `home` | string | `"~/.zenith/life"` | The agent's own folder, where conversations about your life run. zenith writes its instructions there. |
+| `provider` | `"claude"` \| `"codex"` | `"claude"` | Who answers by default (switchable in the ask bar). |
+| `model` | string | — | Model id for that provider, e.g. `"claude-opus-5-5"`. Default: zenith code's default model, else the one of your latest thread. |
+| `routines` | array | `[]` | Agents that run on their own, once a day. |
+
+Each routine:
+
+| Field | Type | What it does |
+| --- | --- | --- |
+| `id` | string | Lowercase letters, digits and dashes. |
+| `at` | `"HH:MM"` | Local time. A Mac asleep then catches up within three hours. |
+| `days` | number[] | ISO weekdays, 1 = Monday … 7 = Sunday. Default: every day. |
+| `task` | `"refresh-life"` | A built-in request: capture Gmail and Google Calendar into My life. |
+| `prompt` | string | Or your own request, in your words. |
+| `project` | string | A project id to run it in. Default: the agent's folder. |
+| `name` | string | Shown in AI agents → Routines. |
+| `enabled` | boolean | `false` pauses it. |
+
+```json
+"agent": {
+  "routines": [
+    { "id": "morning", "at": "07:30", "task": "refresh-life" },
+    { "id": "weekly-review", "at": "18:00", "days": [5], "prompt": "Review my week: what shipped, what slipped, what to do Monday. Keep it to 10 lines." }
+  ]
+}
+```
 
 ## A complete example
 

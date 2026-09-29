@@ -9,6 +9,8 @@ import { config } from "@/lib/config";
 import { l10n, tr } from "@/lib/i18n";
 import { PROJECTS, projectDir } from "@/lib/projects";
 import { CodeHost } from "@/components/code/code-host";
+import { AskDialog } from "@/components/agent/ask-dialog";
+import { SUGGESTIONS, agentUi } from "@/lib/agent/ui";
 import "./globals.css";
 
 const body = Geist({ variable: "--font-body", subsets: ["latin"] });
@@ -28,6 +30,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const loc = l10n();
   const nav = PROJECTS.map(({ id, name, href, color, glow, emoji, tagline, dir }) => ({ id, name, href, color, glow, emoji, tagline, dir: projectDir({ dir }) }));
   const links = PROJECTS.flatMap((p) => p.links.map((l) => ({ ...l, project: p.name, color: p.color })));
+  const ui = agentUi();
+  const agent = ui.enabled ? { targets: ui.targets, provider: ui.provider } : null;
   return (
     <html lang={loc.locale} className={`${body.variable} ${mono.variable} ${display.variable} ${serif.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
@@ -38,11 +42,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <L10nProvider value={loc}>
           <Sky />
           <div className="relative z-10 flex min-h-screen">
-            <Sidebar projects={nav} code={c.code.enabled} home={process.cwd()} assistants={c.assistants} />
+            <Sidebar projects={nav} code={c.code.enabled} home={process.cwd()} assistants={c.assistants} agent={agent ? { home: ui.home } : null} />
             <main className="min-w-0 flex-1 px-4 pb-16 pt-4 sm:px-6 lg:px-10 lg:pt-8">{children}</main>
           </div>
           <CodeHost />
-          <CommandMenu projects={nav} links={links} code={c.code.enabled} assistants={c.assistants} />
+          <CommandMenu projects={nav} links={links} code={c.code.enabled} assistants={c.assistants} agent={agent} />
+          {agent && <AskDialog targets={agent.targets} provider={agent.provider} suggestions={SUGGESTIONS()} />}
           <AutoRefresh seconds={60} />
         </L10nProvider>
       </body>

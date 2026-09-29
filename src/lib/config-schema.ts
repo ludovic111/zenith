@@ -91,6 +91,24 @@ const Subscription = z.object({
   manage_url: z.string().optional(),
 });
 
+const Routine = z
+  .object({
+    id: z.string().regex(/^[a-z0-9][a-z0-9-]*$/, "lowercase letters, digits and dashes"),
+    name: z.string().optional(),
+    /** Local time, "HH:MM" (24 h). */
+    at: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "HH:MM, 24-hour"),
+    /** ISO weekdays it runs on (1 = Monday … 7 = Sunday). Default: every day. */
+    days: z.array(z.number().int().min(1).max(7)).default([1, 2, 3, 4, 5, 6, 7]),
+    /** A built-in task: "refresh-life" captures Gmail and Google Calendar into My life. */
+    task: z.enum(["refresh-life"]).optional(),
+    /** What to ask, in your words (when no built-in task). */
+    prompt: z.string().optional(),
+    /** A project id to run it in; default: the agent's own folder. */
+    project: z.string().optional(),
+    enabled: z.boolean().default(true),
+  })
+  .refine((r) => r.task || r.prompt, { message: "a routine needs a task or a prompt" });
+
 export const ConfigSchema = z.object({
   $schema: z.string().optional(),
   /** BCP 47 locale: "fr-CH", "fr-FR", "en-US", "en-GB"… French or English interface. */
@@ -148,6 +166,20 @@ export const ConfigSchema = z.object({
   code: z
     .object({ enabled: z.boolean().default(true), port: z.number().default(4749), home: z.string().optional() })
     .default({ enabled: true, port: 4749 }),
+  /** The zenith agent: "Ask zenith", the Now list, delegation to agents and routines. Runs through zenith code. */
+  agent: z
+    .object({
+      enabled: z.boolean().default(true),
+      /** The agent's own folder, where your life conversations live. */
+      home: z.string().default("~/.zenith/life"),
+      /** Who answers by default: Claude Code or Codex. */
+      provider: z.enum(["claude", "codex"]).default("claude"),
+      /** Model id, e.g. "claude-opus-5-5". Default: zenith code's default, else your latest thread's. */
+      model: z.string().optional(),
+      /** Agents that run on their own at a given time, once a day. */
+      routines: z.array(Routine).default([]),
+    })
+    .default({ enabled: true, home: "~/.zenith/life", provider: "claude", routines: [] }),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
@@ -157,3 +189,4 @@ export type SubscriptionConfig = z.infer<typeof Subscription>;
 export type BrandName = z.infer<typeof Brand>;
 export type NetworkName = z.infer<typeof Network>;
 
+export type RoutineConfig = z.infer<typeof Routine>;

@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, cache } from "react";
 import Link from "next/link";
 import {
   ArrowUpRight,
@@ -49,6 +49,10 @@ import { Bars } from "@/components/charts/bars";
 import { Marquee } from "@/components/ui/marquee";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { AnimatedShinyText } from "@/components/ui/animated-shiny-text";
+import { now } from "@/lib/agent/now";
+import { SUGGESTIONS, agentUi, examplesFrom } from "@/lib/agent/ui";
+import { AskBar } from "@/components/agent/ask-bar";
+import { NowList } from "@/components/agent/now-list";
 
 export const dynamic = "force-dynamic";
 
@@ -57,19 +61,28 @@ const DAY = 864e5;
 /** Name and colors of an event's project, with a neutral fallback. */
 const who = (id: string) => findProject(id) ?? { name: id, color: "#9C97AD", glow: "#C9C4D9" };
 
+/** What is waiting, once per request (the ask bar and the Now list both use it). */
+const waiting = cache(now);
+
 export default function Home() {
   if (!PROJECTS.length) return <Welcome />;
+  const agent = agentUi().enabled;
   return (
     <>
       <Suspense fallback={<div className="h-12" />}>
         <Ticker />
       </Suspense>
 
-      <Urgent />
+      {!agent && <Urgent />}
 
       <section className="mt-4 grid items-center gap-8 lg:grid-cols-[1.1fr_1fr]">
         <div>
           <Greeting name={OWNER.firstName} place={OWNER.place} />
+          {agent && (
+            <Suspense fallback={<div className="mt-8 h-[124px] max-w-2xl rounded-[26px] border border-line bg-white/[0.03]" />}>
+              <Ask />
+            </Suspense>
+          )}
           <Suspense fallback={<p className="mt-6 h-16" />}>
             <Summary />
           </Suspense>
@@ -81,6 +94,14 @@ export default function Home() {
           <SolarSystem />
         </Suspense>
       </section>
+
+      {agent && (
+        <Suspense fallback={<Skeleton className="mt-8 h-72" />}>
+          <div className="mt-8">
+            <Now />
+          </div>
+        </Suspense>
+      )}
 
       <Suspense fallback={<Skeleton className="mt-8 h-28" />}>
         <Kpis />
@@ -167,6 +188,29 @@ async function Ticker() {
       </Marquee>
     </div>
   );
+}
+
+/* ——— Ask zenith, and what is waiting ——— */
+
+const projectNames = () => Object.fromEntries(agentUi().targets.map((t) => [t.id, t.name]));
+
+async function Ask() {
+  const ui = agentUi();
+  const items = await waiting().catch(() => []);
+  return (
+    <AskBar
+      className="mt-8 max-w-2xl"
+      targets={ui.targets}
+      provider={ui.provider}
+      examples={examplesFrom(items, projectNames())}
+      suggestions={SUGGESTIONS()}
+    />
+  );
+}
+
+async function Now() {
+  const items = await waiting().catch(() => []);
+  return <NowList items={items} colors={Object.fromEntries(PROJECTS.map((p) => [p.id, p.glow]))} projectNames={projectNames()} />;
 }
 
 /* ——— Header ——— */

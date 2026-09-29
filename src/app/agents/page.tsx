@@ -17,6 +17,10 @@ import { Meteors } from "@/components/ui/meteors";
 import { PlanCard } from "@/components/plans/plan-card";
 import { claudePlan, codexPlan } from "@/lib/sources/plans";
 import { SUBSCRIPTIONS } from "@/lib/subscriptions";
+import { config } from "@/lib/config";
+import { routines } from "@/lib/agent/routines";
+import { agentUi } from "@/lib/agent/ui";
+import { RoutinesList } from "@/components/agent/routines-panel";
 
 export const dynamic = "force-dynamic";
 export function generateMetadata(): Metadata {
@@ -57,6 +61,8 @@ export default async function AgentsPage() {
           </Gate>
         </div>
       </header>
+
+      {agentUi().enabled && <Routines />}
 
       <div className="mb-5 grid gap-5 xl:grid-cols-2">
         <PlanCard title="Claude" color={AGENTS.claude.color} price={planOf("Anthropic")} src={claude} hint={CLAUDE_HINT()} />
@@ -120,3 +126,27 @@ const CLAUDE_HINT = () =>
   );
 
 const CODEX_HINT = () => tr("Lues dans ~/.codex dès ta première session Codex.", "Read from ~/.codex after your first Codex session.");
+
+/** zenith's routines (`agent.routines`), or how to add one. */
+async function Routines() {
+  const list = await routines();
+  const names = Object.fromEntries(agentUi().targets.map((t) => [t.id, t.name]));
+  return (
+    <Panel className="mb-5" kicker="zenith" title={tr("Routines", "Routines")} accent="#FFD166">
+      {list.length ? (
+        <RoutinesList
+          routines={list.map((r) => ({ id: r.id, title: r.title, at: r.at, days: r.days, enabled: r.enabled, target: names[r.project ?? "life"] ?? r.project ?? "", last: r.last }))}
+        />
+      ) : (
+        <Empty>
+          <span>
+            {tr("Des agents qui travaillent seuls, chaque jour à heure fixe. Ajoute-en dans ", "Agents that work on their own, every day at a set time. Add some in ")}
+            <code className="font-mono text-xs text-ink-2">{config().meta.file.split("/").slice(-2).join("/")}</code>
+            {tr(" : ", ": ")}
+            <code className="font-mono text-xs text-ink-2">{`"agent": { "routines": [{ "id": "matin", "at": "07:30", "task": "refresh-life" }] }`}</code>
+          </span>
+        </Empty>
+      )}
+    </Panel>
+  );
+}
