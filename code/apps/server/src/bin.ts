@@ -55,8 +55,8 @@ export const makeCli = ({ cloudEnabled = hasCloudPublicConfig } = {}) =>
     Command.withSubcommands([
       startCommand,
       serveCommand,
-      // Zénith: `app`, `service`, `update`, `uninstall` and `triage` are gone: they
-      // drive the upstream desktop app, npm releases and issue tracker. Zénith
+      // zenith: `app`, `service`, `update`, `uninstall` and `triage` are gone: they
+      // drive the upstream desktop app, npm releases and issue tracker. zenith
       // starts, updates and supervises this server itself.
       pairCommand,
       authCommand,

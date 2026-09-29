@@ -2,7 +2,13 @@
 # Removes zenith.app and the background server. The code, perso/ and .env.local are left alone.
 set -uo pipefail
 cd "$(dirname "$0")/../.."
-case "$(defaults read -g AppleLocale 2>/dev/null || echo "${LANG:-en}")" in fr*) FR=1 ;; *) FR= ;; esac
+# French when zenith speaks French (`locale` in the config), else when the Mac does.
+LOCALE="$(node -e '
+  const fs = require("fs");
+  const f = [process.env.ZENITH_CONFIG, "perso/zenith.config.json", "zenith.config.json"].find((x) => x && fs.existsSync(x));
+  try { process.stdout.write(JSON.parse(fs.readFileSync(f, "utf8")).locale || ""); } catch {}
+' 2>/dev/null)"
+case "${LOCALE:-$(defaults read -g AppleLocale 2>/dev/null || echo "${LANG:-en}")}" in fr*) FR=1 ;; *) FR= ;; esac
 t() { if [ -n "$FR" ]; then printf "%s" "$1"; else printf "%s" "$2"; fi; }
 LABEL="$(node -e '
   const fs = require("fs");

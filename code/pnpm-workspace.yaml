@@ -178,7 +178,7 @@ packageExtensions:
     dependencies:
       vite: "catalog:"
 
-# Zénith: patches for pruned apps (mobile/desktop) stay unused; keep them for easy upstream merges.
+# zenith: patches for pruned apps (mobile/desktop) stay unused; keep them for easy upstream merges.
 allowUnusedPatches: true
 
 patchedDependencies:

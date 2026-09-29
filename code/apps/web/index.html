@@ -51,7 +51,7 @@
         // Keep this small boot-time copy in sync with the built-in palettes so
         // the selected theme is visible before the app has mounted.
         const BUILT_IN_THEME_PALETTES = {
-          // Zénith: dark-only default theme (packages/shared/src/zenithTheme.ts).
+          // zenith: dark-only default theme (packages/shared/src/zenithTheme.ts).
           zenith: {
             dark: {
               background: "#0b0a14",
@@ -227,7 +227,7 @@
         };
 
         try {
-          // Zénith: no stored preference means the Zénith theme (mirrors useTheme.ts).
+          // zenith: no stored preference means the zenith theme (mirrors useTheme.ts).
           const storedTheme = window.localStorage.getItem("t3code:theme") ?? "zenith";
           const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
           // Older builds stored the dark T3 Chat palette as its own theme id

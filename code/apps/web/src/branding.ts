@@ -20,7 +20,7 @@ export const APP_BASE_NAME = injectedDesktopAppBranding?.baseName ?? "T3 Code";
 export const APP_STAGE_LABEL =
   injectedDesktopAppBranding?.stageLabel ??
   HOSTED_APP_CHANNEL_LABEL ??
-  // Zénith: no "(Alpha)" suffix on release builds.
+  // zenith: no "(Alpha)" suffix on release builds.
   (import.meta.env.DEV ? "Dev" : "Latest");
 export const APP_DISPLAY_NAME =
   injectedDesktopAppBranding?.displayName ??

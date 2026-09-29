@@ -471,7 +471,7 @@ it.layer(NodeServices.layer)("bin cli parsing", (it) => {
     }).pipe(Effect.provide(Layer.mergeAll(CliRuntimeLayer, TestConsole.layer))),
   );
 
-  // Zénith: the host app supervises the server, so upstream lifecycle commands are gone.
+  // zenith: the host app supervises the server, so upstream lifecycle commands are gone.
   it.effect("does not expose upstream service, update, uninstall, app or triage commands", () =>
     Effect.gen(function* () {
       const { output } = yield* captureStdout(runCli(["--help"], noConnectCli));

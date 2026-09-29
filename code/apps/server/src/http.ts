@@ -613,7 +613,7 @@ const handleStaticAndDevRequest = Effect.fn("handleStaticAndDevRequest")(
     const headers: Record<string, string> = {
       "Cache-Control": immutable ? "public, max-age=31536000, immutable" : "no-cache",
     };
-    // Zénith: only this origin and the configured Zénith pages may frame the app.
+    // zenith: only this origin and the configured zenith pages may frame the app.
     if (isHtml) headers["Content-Security-Policy"] = zenithFrameAncestorsPolicy();
     // Deployments can preserve HTML size and mtime while changing its bundle URLs.
     const modifiedAt = isHtml ? undefined : Option.getOrUndefined(fileInfo.mtime);

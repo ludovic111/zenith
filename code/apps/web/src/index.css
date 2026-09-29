@@ -1,5 +1,5 @@
 @import "tailwindcss";
-/* Zénith: self-hosted Zénith fonts (no CDN request). */
+/* zenith: self-hosted zenith fonts (no CDN request). */
 @import "@fontsource-variable/geist";
 @import "@fontsource-variable/jetbrains-mono";
 @import "@fontsource-variable/unbounded";
@@ -1583,7 +1583,7 @@ html[data-theme-id="t3-chat"] [data-app-sidebar] {
   );
 }
 
-/* Zénith theme typography: Geist for text, JetBrains Mono for code, Unbounded
+/* zenith theme typography: Geist for text, JetBrains Mono for code, Unbounded
    for display. A font picked in Settings -> Appearance still wins (inline). */
 html[data-theme-id="zenith"] {
   --font-sans: "Geist Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;

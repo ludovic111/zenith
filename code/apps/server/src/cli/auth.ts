@@ -81,7 +81,7 @@ const tokenOnlyFlag = Flag.Boolean("token-only").pipe(
   Flag.withDefault(false),
 );
 
-// Zénith: the dashboard pairs its owner's embedded client with full access.
+// zenith: the dashboard pairs its owner's embedded client with full access.
 const adminFlag = Flag.Boolean("admin").pipe(
   Flag.withDescription("Grant administrative scopes (owner client) instead of standard ones."),
   Flag.withDefault(false),

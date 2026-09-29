@@ -86,7 +86,7 @@ export function PairingRouteSurface({
     void submitCredential(token);
   }, [submitCredential]);
 
-  // Zénith: inside the dashboard, the parent page hands us a one-time token.
+  // zenith: inside the dashboard, the parent page hands us a one-time token.
   useZenithEmbeddedPairing({
     skip: autoPairTokenRef.current !== null,
     submit: submitCredential,

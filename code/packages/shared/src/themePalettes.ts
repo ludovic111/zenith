@@ -1,6 +1,6 @@
 import { ZENITH_THEME } from "./zenithTheme.ts";
 
-// Zénith: "zenith" is the first built-in and the default theme.
+// zenith: "zenith" is the first built-in and the default theme.
 export const BUILT_IN_THEME_IDS = ["zenith", "t3-chat", "grove", "ocean", "ember", "iris"] as const;
 
 /** The standard T3 Code palette, kept separate from the optional built-in theme library. */

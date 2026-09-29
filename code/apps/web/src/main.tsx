@@ -17,7 +17,7 @@ import { captureProjectFocusRequest } from "./zenith/embed";
 import { clearChunkReloadGuard, reloadOnceForChunkLoadError } from "./lib/chunkReloadGuard";
 
 prepareProviderAuthDelivery();
-// Zénith: remember `?zenithProject=` across the pairing redirect.
+// zenith: remember `?zenithProject=` across the pairing redirect.
 captureProjectFocusRequest();
 
 // Electron loads the app from a file-backed shell, so hash history avoids path resolution issues.

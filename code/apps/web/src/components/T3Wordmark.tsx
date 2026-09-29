@@ -2,7 +2,7 @@
 import { useId, type SVGProps } from "react";
 
 /**
- * Zénith: the upstream "T3" wordmark is replaced by Zénith's mark, the sun at
+ * zenith: the upstream "T3" wordmark is replaced by zenith's mark, the sun at
  * its zenith over a horizon arc. The export name stays for easy upstream merges.
  */
 export function T3Wordmark(props: SVGProps<SVGSVGElement>) {

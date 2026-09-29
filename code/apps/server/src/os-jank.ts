@@ -105,7 +105,7 @@ export const expandHomePath = Effect.fn(function* (input: string) {
 export const resolveBaseDir = Effect.fn(function* (raw: string | undefined) {
   const { join, resolve } = yield* Path.Path;
   if (!raw || raw.trim().length === 0) {
-    // Zénith: never share state with an upstream T3 Code install (~/.t3).
+    // zenith: never share state with an upstream T3 Code install (~/.t3).
     return join(NodeOS.homedir(), ".zenith", "code");
   }
   return resolve(yield* expandHomePath(raw.trim()));
