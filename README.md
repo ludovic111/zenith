@@ -1,0 +1,103 @@
+# zenith
+
+**A private sky over your projects and your day.** zenith is a local dashboard for people who build many things at once: every project's health, deploys, code and AI agents, your calendar, mail, money and news — plus **zenith code**, a full coding workspace for Claude Code and Codex, built in.
+
+It runs on your machine, answers only on `127.0.0.1`, and never sends your data anywhere. [Version française](README.fr.md).
+
+## What you get
+
+| Page | What it shows |
+| --- | --- |
+| Overview | An orbit of your projects with live status, key numbers, project cards, six months of commits, a live feed of everything that happens |
+| My day | Weather, air quality, UV and pollen, calendar (14 days, holidays, birthdays), what's waiting for you, now playing, screen time, spending, work rhythm |
+| Projects | One page per project: uptime, latency, HTTP traffic and deploys (Railway), CI, issues and PRs (GitHub), releases and downloads, App Store rating and reviews, RevenueCat MRR, agent sessions, Obsidian notes, identity card |
+| **Code** | **zenith code**: chat with Claude Code, Codex and other agents inside any of your projects — diffs, terminals, worktrees, approvals |
+| Watch | Who talks about your projects (Hacker News, GitHub), notifications, new stars, contributions, news, markets, the state of your Mac |
+| AI agents | Every Claude Code and Codex session: live, cost, lines written, PRs, the command to resume it |
+| Subscriptions | Everything you pay for, monthly total in your currency, next charges, failing payments, Claude / ChatGPT plan gauges |
+| Directory | Every project's names, handles, domains (registrar, renewal, certificate, email), stores and services |
+
+Press **⌘K** anywhere to jump.
+
+## Quick start
+
+Requirements: macOS or Linux, Node.js 22.16+ (24+ recommended), git. Optional: the [GitHub CLI](https://cli.github.com) logged in, Claude Code and/or Codex.
+
+```bash
+git clone https://github.com/ludovic111/zenith.git
+cd zenith
+npm install
+cp zenith.config.example.json zenith.config.json   # then edit it: your projects, city, language
+npm run dev                                         # http://127.0.0.1:4748
+```
+
+To build zenith code (the coding workspace) once:
+
+```bash
+npm run code:build
+```
+
+### Mac app
+
+```bash
+npm run mac:install
+```
+
+Builds everything, installs **zenith.app** (a native window) and keeps the server running in the background (a LaunchAgent on `127.0.0.1:4747`). Run it again after pulling changes; `npm run mac:uninstall` removes it. The app also reads Calendar, Reminders, Contacts (birthdays only), Mail, Music/Spotify and screen time — read-only, after macOS asks you.
+
+## Configuration
+
+Everything about you lives in **`zenith.config.json`** — at the root or in `perso/`, both git-ignored. It's validated on start; `zenith.schema.json` gives your editor autocompletion. See [docs/configuration.md](docs/configuration.md) for every field.
+
+```jsonc
+{
+  "locale": "en-US",            // or "fr-FR", "fr-CH"… — French or English interface
+  "currency": "USD",            // totals are converted to it
+  "location": { "name": "New York", "latitude": 40.71, "longitude": -74.0, "country": "US" },
+  "projects": [
+    {
+      "id": "my-app",
+      "name": "My App",
+      "dir": "my-app",                      // folder next to zenith/, or an absolute path
+      "repo": "me/my-app",                  // GitHub
+      "site": "https://my-app.com",
+      "probes": [{ "label": "API", "url": "https://api.my-app.com/health" }],
+      "releases": true,                     // count GitHub release downloads
+      "appStore": { "id": "1234567890" },   // ratings and reviews
+      "revenuecat": { "projectId": "1a2b3c4d" }
+    }
+  ]
+}
+```
+
+API keys are pasted from **Data sources** (`/reglages`): they're written to `.env.local` (git-ignored) and applied without a restart. See `.env.example`. Without any key, zenith still shows your local repos, agent sessions, weather, news and more.
+
+## For AI agents
+
+Every 10 minutes zenith writes a Markdown brief of everything it knows (`context/brief.md`, one file per project, `vie.md`, `argent.md`…), also into your Obsidian vault. Give it to your agents with:
+
+- **MCP**: `claude mcp add zenith --scope user -- node /path/to/zenith/scripts/mcp/zenith-mcp.mjs` (Codex: `codex mcp add zenith -- node …`). Read-only tools: `zenith_brief`, `zenith_project`, `zenith_document`, `zenith_search_notes`, `zenith_read_note`.
+- **HTTP**: `http://127.0.0.1:4747/api/context[/<doc>]` and `/llms.txt`.
+
+## zenith code
+
+`code/` holds zenith code, a fork of [T3 Code](https://github.com/pingdotgg/t3code) (MIT) rebranded, themed and wired into zenith: it starts with zenith, knows your projects, and pairs itself inside the dashboard. It keeps its own state in `~/.zenith/code`. See [code/ZENITH.md](code/ZENITH.md) for what changed and how to sync with upstream.
+
+## Extending
+
+Built-in integrations (GitHub, Railway, RevenueCat, App Store, Obsidian, Claude Code, Codex…) switch on from the config. For anything specific to your projects — your own database, your own API, whole pages — write an extension in `perso/` (git-ignored, plugged in automatically when it exists): see [docs/extensions.md](docs/extensions.md). Keep `perso/` in its own private repository if you want it backed up.
+
+## Privacy
+
+- The server listens on `127.0.0.1` only and rejects any other `Host` header (DNS rebinding).
+- Keys stay server-side in `.env.local`; nothing is sent to a third party except the API calls you configured.
+- `perso/`, `zenith.config.json`, `.env.local`, `.data/` and `context/` are git-ignored.
+- `npm run privacy` scans every tracked file for your config's identifying values (names, emails, domains, ids…) and for secrets; `npm run privacy -- --install` runs it before each `git push`. Useful when you contribute back.
+
+## Stack
+
+Next.js 16, React 19, Tailwind 4, Motion, cmdk, NumberFlow, Magic UI components. Fonts: Unbounded, Instrument Serif, Geist, JetBrains Mono. zenith code: Effect, Vite, TanStack Router.
+
+## License
+
+MIT. zenith code is based on T3 Code by T3 Tools Inc. (MIT).

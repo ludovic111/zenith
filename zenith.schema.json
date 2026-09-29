@@ -1,0 +1,832 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "locale": {
+      "default": "en-US",
+      "type": "string"
+    },
+    "timezone": {
+      "type": "string"
+    },
+    "currency": {
+      "default": "USD",
+      "type": "string"
+    },
+    "owner": {
+      "default": {
+        "name": "",
+        "emails": [],
+        "socials": [],
+        "accounts": []
+      },
+      "type": "object",
+      "properties": {
+        "name": {
+          "default": "",
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "emails": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "address": {
+                "type": "string"
+              },
+              "role": {
+                "default": "",
+                "type": "string"
+              }
+            },
+            "required": [
+              "address"
+            ]
+          }
+        },
+        "socials": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "network": {
+                "type": "string",
+                "enum": [
+                  "x",
+                  "instagram",
+                  "youtube",
+                  "tiktok",
+                  "github",
+                  "telegram",
+                  "linkedin",
+                  "bluesky",
+                  "mastodon",
+                  "threads"
+                ]
+              },
+              "handle": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "network",
+              "handle",
+              "url"
+            ]
+          }
+        },
+        "accounts": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "brand": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "x",
+                      "instagram",
+                      "youtube",
+                      "tiktok",
+                      "github",
+                      "telegram",
+                      "linkedin",
+                      "bluesky",
+                      "mastodon",
+                      "threads"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "appstore",
+                      "googleplay",
+                      "railway",
+                      "supabase",
+                      "revenuecat",
+                      "openrouter",
+                      "solana",
+                      "gmail",
+                      "apple",
+                      "vercel",
+                      "cloudflare",
+                      "stripe",
+                      "web"
+                    ]
+                  }
+                ]
+              },
+              "label": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "brand",
+              "label"
+            ]
+          }
+        },
+        "sponsors": {
+          "type": "string"
+        }
+      }
+    },
+    "location": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "latitude": {
+          "type": "number"
+        },
+        "longitude": {
+          "type": "number"
+        },
+        "country": {
+          "type": "string"
+        },
+        "region": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "latitude",
+        "longitude"
+      ]
+    },
+    "projectsRoot": {
+      "type": "string"
+    },
+    "projects": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "tagline": {
+            "default": "",
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "glow": {
+            "type": "string"
+          },
+          "emoji": {
+            "default": "✦",
+            "type": "string"
+          },
+          "href": {
+            "type": "string"
+          },
+          "repo": {
+            "type": "string"
+          },
+          "dir": {
+            "type": "string"
+          },
+          "extraDirs": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "site": {
+            "type": "string"
+          },
+          "probes": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label",
+                "url"
+              ]
+            }
+          },
+          "shot": {
+            "type": "string"
+          },
+          "railway": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "string"
+              },
+              "serviceId": {
+                "type": "string"
+              },
+              "environmentId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "projectId",
+              "serviceId",
+              "environmentId"
+            ]
+          },
+          "links": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label",
+                "url"
+              ]
+            }
+          },
+          "notes": {
+            "type": "string"
+          },
+          "version": {
+            "type": "object",
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "pattern": {
+                "type": "string"
+              },
+              "json": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "file"
+            ]
+          },
+          "appStore": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "countries": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "id"
+            ]
+          },
+          "revenuecat": {
+            "type": "object",
+            "properties": {
+              "projectId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "projectId"
+            ]
+          },
+          "releases": {
+            "default": false,
+            "type": "boolean"
+          },
+          "highlights": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "about": {
+            "type": "string"
+          },
+          "trafficTitle": {
+            "type": "string"
+          },
+          "showcase": {
+            "default": false,
+            "type": "boolean"
+          },
+          "identity": {
+            "type": "object",
+            "properties": {
+              "names": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "label": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    },
+                    "mono": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "label",
+                    "value"
+                  ]
+                }
+              },
+              "domains": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "emails": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "address": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "default": "",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "address"
+                  ]
+                }
+              },
+              "socials": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "network": {
+                      "type": "string",
+                      "enum": [
+                        "x",
+                        "instagram",
+                        "youtube",
+                        "tiktok",
+                        "github",
+                        "telegram",
+                        "linkedin",
+                        "bluesky",
+                        "mastodon",
+                        "threads"
+                      ]
+                    },
+                    "handle": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "note": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "network",
+                    "handle",
+                    "url"
+                  ]
+                }
+              },
+              "stores": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "brand": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "x",
+                            "instagram",
+                            "youtube",
+                            "tiktok",
+                            "github",
+                            "telegram",
+                            "linkedin",
+                            "bluesky",
+                            "mastodon",
+                            "threads"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "appstore",
+                            "googleplay",
+                            "railway",
+                            "supabase",
+                            "revenuecat",
+                            "openrouter",
+                            "solana",
+                            "gmail",
+                            "apple",
+                            "vercel",
+                            "cloudflare",
+                            "stripe",
+                            "web"
+                          ]
+                        }
+                      ]
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "brand",
+                    "label"
+                  ]
+                }
+              },
+              "ids": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "label": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    },
+                    "mono": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "label",
+                    "value"
+                  ]
+                }
+              },
+              "services": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "brand": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "x",
+                            "instagram",
+                            "youtube",
+                            "tiktok",
+                            "github",
+                            "telegram",
+                            "linkedin",
+                            "bluesky",
+                            "mastodon",
+                            "threads"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "appstore",
+                            "googleplay",
+                            "railway",
+                            "supabase",
+                            "revenuecat",
+                            "openrouter",
+                            "solana",
+                            "gmail",
+                            "apple",
+                            "vercel",
+                            "cloudflare",
+                            "stripe",
+                            "web"
+                          ]
+                        }
+                      ]
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "brand",
+                    "label"
+                  ]
+                }
+              },
+              "todo": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      }
+    },
+    "subscriptions": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "vendor": {
+            "default": "",
+            "type": "string"
+          },
+          "category": {
+            "default": "tools",
+            "type": "string",
+            "enum": [
+              "ia",
+              "infra",
+              "domains",
+              "tools",
+              "music",
+              "personal"
+            ]
+          },
+          "amount": {
+            "default": null,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "currency": {
+            "default": "USD",
+            "type": "string"
+          },
+          "period": {
+            "default": "month",
+            "type": "string",
+            "enum": [
+              "month",
+              "year",
+              "week",
+              "usage"
+            ]
+          },
+          "last_charge": {
+            "default": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "next_renewal": {
+            "default": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "default": "active",
+            "type": "string",
+            "enum": [
+              "active",
+              "failing",
+              "cancelled",
+              "unknown"
+            ]
+          },
+          "project": {
+            "default": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "evidence": {
+            "default": "",
+            "type": "string"
+          },
+          "manage_url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      }
+    },
+    "news": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "limit": {
+            "default": 8,
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "url"
+        ]
+      }
+    },
+    "watch": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "term": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "term",
+          "label"
+        ]
+      }
+    },
+    "transit": {
+      "type": "object",
+      "properties": {
+        "stop": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "stop"
+      ]
+    },
+    "water": {
+      "type": "object",
+      "properties": {
+        "stations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "water": {
+                "type": "string"
+              },
+              "level": {
+                "default": false,
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "water"
+            ]
+          }
+        }
+      },
+      "required": [
+        "stations"
+      ]
+    },
+    "obsidian": {
+      "default": {
+        "exportDir": "zenith"
+      },
+      "type": "object",
+      "properties": {
+        "vault": {
+          "type": "string"
+        },
+        "fallback": {
+          "type": "string"
+        },
+        "exportDir": {
+          "default": "zenith",
+          "type": "string"
+        }
+      }
+    },
+    "mac": {
+      "default": {
+        "bundleId": "dev.zenith.app"
+      },
+      "type": "object",
+      "properties": {
+        "bundleId": {
+          "default": "dev.zenith.app",
+          "type": "string"
+        }
+      }
+    },
+    "code": {
+      "default": {
+        "enabled": true,
+        "port": 4749
+      },
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "default": true,
+          "type": "boolean"
+        },
+        "port": {
+          "default": 4749,
+          "type": "number"
+        },
+        "home": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

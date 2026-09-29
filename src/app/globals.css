@@ -1,0 +1,242 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* perso/ is git-ignored, so Tailwind would skip it: scan it explicitly. */
+@source "../../perso";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-mono-face);
+  --font-display: var(--font-display-face);
+  --font-serif: var(--font-serif-face);
+  --font-heading: var(--font-display-face);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--secondary);
+  --color-accent-foreground: var(--foreground);
+  --color-destructive: var(--bad);
+  --color-border: var(--border);
+  --color-input: var(--border);
+  --color-ring: var(--ring);
+
+  --color-ink: var(--foreground);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--border);
+  --color-good: var(--good);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+  --color-sun: var(--sun);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  --animate-marquee: marquee var(--duration) infinite linear;
+  --animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;
+  --animate-meteor: meteor 5s linear infinite;
+  --animate-shiny-text: shiny-text 8s infinite;
+  --animate-shine: shine var(--duration) infinite linear;
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(calc(-100% - var(--gap))); }
+  }
+  @keyframes marquee-vertical {
+    from { transform: translateY(0); }
+    to { transform: translateY(calc(-100% - var(--gap))); }
+  }
+  @keyframes meteor {
+    0% { transform: rotate(var(--angle)) translateX(0); opacity: 1; }
+    70% { opacity: 1; }
+    100% { transform: rotate(var(--angle)) translateX(-500px); opacity: 0; }
+  }
+  @keyframes shiny-text {
+    0%, 90%, 100% { background-position: calc(-100% - var(--shiny-width)) 0; }
+    30%, 60% { background-position: calc(100% + var(--shiny-width)) 0; }
+  }
+  @keyframes shine {
+    0% { background-position: 0% 0%; }
+    50% { background-position: 100% 100%; }
+    to { background-position: 0% 0%; }
+  }
+}
+
+/* zenith est un tableau de bord de nuit : un seul thème, sombre, pensé comme tel. */
+:root {
+  color-scheme: dark;
+  --radius: 0.75rem;
+  --background: #07060d;
+  --surface: #0b0a14;
+  --card: rgb(255 255 255 / 0.035);
+  --popover: #121020;
+  --foreground: #f4f1ea;
+  --ink-2: #b9b4c9;
+  --ink-3: #7c7791;
+  --muted: rgb(255 255 255 / 0.05);
+  --muted-foreground: #9c97ad;
+  --secondary: rgb(255 255 255 / 0.07);
+  --primary: #ffd166;
+  --primary-foreground: #1a1204;
+  --border: rgb(255 255 255 / 0.09);
+  --ring: #ffd166;
+  --sun: #ffd166;
+  --good: #34d399;
+  --warn: #fbbf24;
+  --bad: #fb5a6b;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    background: var(--background);
+  }
+  body {
+    @apply text-foreground;
+    background: var(--background);
+    font-feature-settings: "ss01", "cv11";
+  }
+  ::selection {
+    background: rgb(255 209 102 / 0.35);
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ——— Ciel ——— */
+.sky {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.sky .blob {
+  position: absolute;
+  width: 46vmax;
+  height: 46vmax;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.22;
+  mix-blend-mode: screen;
+  animation: drift var(--d, 38s) ease-in-out infinite alternate;
+}
+@keyframes drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(var(--x, 8vw), var(--y, -6vh), 0) scale(1.15); }
+  100% { transform: translate3d(calc(var(--x, 8vw) * -0.6), calc(var(--y, -6vh) * -1), 0) scale(0.92); }
+}
+.sky .stars {
+  position: absolute;
+  inset: -50%;
+  background-image:
+    radial-gradient(1px 1px at 20px 30px, rgb(255 255 255 / 0.55), transparent),
+    radial-gradient(1px 1px at 140px 80px, rgb(255 255 255 / 0.35), transparent),
+    radial-gradient(1.5px 1.5px at 60px 160px, rgb(255 240 200 / 0.5), transparent),
+    radial-gradient(1px 1px at 210px 210px, rgb(255 255 255 / 0.3), transparent),
+    radial-gradient(1px 1px at 280px 120px, rgb(200 220 255 / 0.4), transparent);
+  background-size: 300px 260px;
+  animation: stars 240s linear infinite;
+  opacity: 0.7;
+}
+@keyframes stars {
+  to { transform: translate3d(-300px, -260px, 0); }
+}
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ——— Orbites ——— */
+@keyframes orbit {
+  to { transform: rotate(360deg); }
+}
+.orbit {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  border-radius: 9999px;
+  border: 1px dashed rgb(255 255 255 / 0.1);
+  animation: orbit var(--period) linear infinite;
+  animation-delay: var(--phase);
+  pointer-events: none;
+}
+.orbit > a {
+  pointer-events: auto;
+}
+.orbit:has(> a:hover),
+.orbit:has(:focus-visible) {
+  animation-play-state: paused;
+}
+.orbit .counter {
+  animation: orbit var(--period) linear infinite reverse;
+  animation-delay: var(--phase);
+}
+.orbit:has(> a:hover) .counter,
+.orbit:has(:focus-visible) .counter {
+  animation-play-state: paused;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 0.9; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+.live-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: pulse-ring 1.8s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+}
+
+@keyframes sun-breathe {
+  0%, 100% { transform: scale(1); filter: blur(24px); opacity: 0.8; }
+  50% { transform: scale(1.12); filter: blur(30px); opacity: 1; }
+}
+
+.text-gradient {
+  background: linear-gradient(100deg, #ffd166 0%, #ff8a4c 28%, #ff6fb5 52%, #b18cff 74%, #00d2ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sky .blob, .sky .stars, .orbit, .orbit .counter, .live-dot::after {
+    animation: none !important;
+  }
+}
+
+/* Barres de défilement discrètes */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 255 255 / 0.15) transparent;
+}

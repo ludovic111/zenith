@@ -1,0 +1,47 @@
+{
+  "$schema": "./zenith.schema.json",
+  "locale": "en-US",
+  "timezone": "America/New_York",
+  "currency": "USD",
+  "owner": {
+    "name": "Ada Lovelace",
+    "emails": [{ "address": "ada@example.com", "role": "Personal" }],
+    "socials": [{ "network": "github", "handle": "ada", "url": "https://github.com/ada" }],
+    "accounts": []
+  },
+  "location": { "name": "New York", "latitude": 40.7128, "longitude": -74.006, "country": "US", "region": "US-NY" },
+  "projects": [
+    {
+      "id": "zenith",
+      "name": "zenith",
+      "tagline": "This dashboard",
+      "emoji": "✦",
+      "dir": "zenith",
+      "repo": "ludovic111/zenith",
+      "links": [{ "label": "GitHub", "url": "https://github.com/ludovic111/zenith" }],
+      "highlights": ["Local only", "Next.js", "MIT"]
+    },
+    {
+      "id": "my-app",
+      "name": "My App",
+      "tagline": "Replace me with a real project",
+      "emoji": "🚀",
+      "dir": "my-app",
+      "site": "https://example.com",
+      "probes": [{ "label": "example.com", "url": "https://example.com" }],
+      "links": [{ "label": "Site", "url": "https://example.com" }],
+      "identity": {
+        "domains": ["example.com"],
+        "todo": ["Point this project at a real repository"]
+      }
+    }
+  ],
+  "subscriptions": [
+    { "name": "Claude Pro", "vendor": "Anthropic", "category": "ia", "amount": 20, "currency": "USD", "period": "month", "manage_url": "https://claude.ai/settings/billing" },
+    { "name": "Domain example.com", "vendor": "Registrar", "category": "domains", "amount": 12, "currency": "USD", "period": "year", "project": "my-app" }
+  ],
+  "news": [{ "name": "The Verge", "url": "https://www.theverge.com/rss/index.xml", "limit": 8 }],
+  "watch": [{ "term": "zenith dashboard", "label": "zenith" }],
+  "obsidian": { "exportDir": "zenith" },
+  "code": { "enabled": true, "port": 4749 }
+}

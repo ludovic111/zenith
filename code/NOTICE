@@ -1,0 +1,7 @@
+zenith code
+===========
+
+zenith code is a modified version of T3 Code (https://github.com/pingdotgg/t3code),
+Copyright (c) 2026 T3 Tools Inc., used under the MIT License (see LICENSE).
+The upstream commit it is based on is recorded in UPSTREAM; ZENITH.md lists what
+was changed and why. zenith code is not affiliated with or endorsed by T3 Tools Inc.
