@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Download, SquareTerminal, Star, Tag } from "lucide-react";
 import { config } from "@/lib/config";
-import { PROJECTS, findProject, type Project } from "@/lib/projects";
+import { PROJECTS, findProject, projectDir, type Project } from "@/lib/projects";
 import { source } from "@/lib/source";
 import { plural, tr } from "@/lib/i18n";
 import { ago, base, date, nf } from "@/lib/format";
@@ -17,6 +17,7 @@ import { ProjectHeader } from "@/components/blocks/project-header";
 import { UptimePanel, DeployPanel, TrafficPanel } from "@/components/blocks/health";
 import { CodePanel } from "@/components/blocks/code";
 import { AgentsPanel } from "@/components/blocks/agents";
+import { CodeThreadsPanel } from "@/components/code/threads-panel";
 import { NotesPanel } from "@/components/blocks/notes";
 import { SiteKpis } from "@/components/blocks/site-kpis";
 import { IdentityCard } from "@/components/identity/identity-card";
@@ -129,6 +130,8 @@ export default async function ProjectPage({ params }: Props) {
           )}
         </div>
       )}
+
+      {config().code.enabled && projectDir(p) && <CodeThreadsPanel dir={projectDir(p)!} glow={p.glow} />}
 
       <div className="mt-5">
         <Suspense fallback={<Skeleton className="h-72" />}>

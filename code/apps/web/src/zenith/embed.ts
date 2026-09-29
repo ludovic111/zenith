@@ -1,8 +1,10 @@
 /**
  * zenith embedding: when this app runs inside the zenith dashboard (an iframe),
- * it asks the parent page for one-time pairing tokens and takes project focus
- * requests from it. Only parents listed by the server (/zenith/embed.json,
- * from ZENITH_CODE_PARENT_ORIGINS) are ever talked to or listened to.
+ * it asks the parent page for one-time pairing tokens, takes project focus and
+ * navigation requests from it, and publishes its projects and threads so
+ * zenith's own sidebar can list them (the app's sidebar is then hidden). Only
+ * parents listed by the server (/zenith/embed.json, from
+ * ZENITH_CODE_PARENT_ORIGINS) are ever talked to or listened to.
  */
 
 export const ZENITH_MESSAGE = {
@@ -11,11 +13,77 @@ export const ZENITH_MESSAGE = {
   pairError: "zenith-code:pair-error",
   openProject: "zenith-code:open-project",
   ready: "zenith-code:ready",
+  /** parent → app: `{ ownSidebar: boolean }`, whether the app shows its own sidebar. */
+  chrome: "zenith-code:chrome",
+  /** parent → app: a `ZenithNavigateRequest`. */
+  navigate: "zenith-code:navigate",
+  /** app → parent: a `ZenithSidebarSnapshot`, whenever it changes. */
+  sidebar: "zenith-code:sidebar",
 } as const;
+
+export type ZenithThreadSection = "pinned" | "active" | "snoozed" | "settled";
+
+export type ZenithThreadStatus =
+  | "approval"
+  | "input"
+  | "working"
+  | "connecting"
+  | "plan"
+  | "monitoring"
+  | "completed"
+  | "failed";
+
+export interface ZenithSidebarProject {
+  readonly environmentId: string;
+  readonly id: string;
+  readonly title: string;
+  readonly workspaceRoot: string;
+}
+
+export interface ZenithSidebarThread {
+  readonly environmentId: string;
+  readonly id: string;
+  readonly projectId: string;
+  readonly title: string;
+  readonly branch: string | null;
+  readonly section: ZenithThreadSection;
+  readonly status: ZenithThreadStatus | null;
+  readonly activityAt: string;
+}
+
+export interface ZenithSidebarSnapshot {
+  readonly projects: ReadonlyArray<ZenithSidebarProject>;
+  /** Sidebar order: pinned, active, snoozed, settled. */
+  readonly threads: ReadonlyArray<ZenithSidebarThread>;
+  /** `environmentId:threadId` of the open thread, if any. */
+  readonly activeThread: string | null;
+  readonly pathname: string;
+}
+
+/**
+ * An in-app path the parent may open (zenith mirrors the app's path in its own URL, so
+ * back/forward and reloads land on the same thread). Plain same-origin paths only, never
+ * the pairing page.
+ */
+export function isZenithAppPath(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    /^\/(?!\/)[A-Za-z0-9\-._~%/:@]*$/.test(value) &&
+    !/^\/pair(\/|$)/.test(value)
+  );
+}
+
+export type ZenithNavigateRequest =
+  | { readonly to: "thread"; readonly environmentId: string; readonly threadId: string }
+  | { readonly to: "new-thread"; readonly environmentId: string; readonly projectId: string }
+  | { readonly to: "path"; readonly path: string }
+  | { readonly to: "palette"; readonly open?: "add-project" | "new-thread-in" };
 
 const EMBED_CONFIG_PATH = "/zenith/embed.json";
 const PENDING_PROJECT_KEY = "zenith:open-project";
 const PROJECT_SEARCH_PARAM = "zenithProject";
+const CHROME_KEY = "zenith:chrome";
+const CHROME_SEARCH_PARAM = "zenithChrome";
 
 export function isEmbedded(): boolean {
   try {
@@ -101,12 +169,80 @@ export function captureProjectFocusRequest(): void {
   try {
     const url = new URL(window.location.href);
     const path = url.searchParams.get(PROJECT_SEARCH_PARAM);
-    if (!path) return;
-    window.sessionStorage.setItem(PENDING_PROJECT_KEY, path);
+    const chrome = url.searchParams.get(CHROME_SEARCH_PARAM);
+    if (!path && !chrome) return;
+    if (path) window.sessionStorage.setItem(PENDING_PROJECT_KEY, path);
+    if (chrome) window.sessionStorage.setItem(CHROME_KEY, chrome);
     url.searchParams.delete(PROJECT_SEARCH_PARAM);
+    url.searchParams.delete(CHROME_SEARCH_PARAM);
     window.history.replaceState(window.history.state, "", url.toString());
   } catch {
     // Storage can be unavailable; the focus request is best-effort.
+  }
+}
+
+/**
+ * Whether the app draws its own thread sidebar. Inside zenith, the dashboard's
+ * sidebar lists the threads instead (`?zenithChrome=bare` on first load, then
+ * `zenith-code:chrome` messages as zenith's layout changes).
+ */
+// Read lazily: main.tsx captures `?zenithChrome=` after this module loads.
+let ownSidebar: boolean | null = null;
+const ownSidebarListeners = new Set<() => void>();
+
+function readInitialOwnSidebar(): boolean {
+  if (typeof window === "undefined" || !isEmbedded()) return true;
+  try {
+    return window.sessionStorage.getItem(CHROME_KEY) !== "bare";
+  } catch {
+    return true;
+  }
+}
+
+export function readOwnSidebar(): boolean {
+  ownSidebar ??= readInitialOwnSidebar();
+  return ownSidebar;
+}
+
+export function setOwnSidebar(value: boolean): void {
+  if (value === readOwnSidebar()) return;
+  ownSidebar = value;
+  try {
+    window.sessionStorage.setItem(CHROME_KEY, value ? "full" : "bare");
+  } catch {
+    // Best-effort.
+  }
+  for (const listener of ownSidebarListeners) listener();
+}
+
+export function subscribeOwnSidebar(listener: () => void): () => void {
+  ownSidebarListeners.add(listener);
+  return () => ownSidebarListeners.delete(listener);
+}
+
+export function parseNavigateRequest(value: unknown): ZenithNavigateRequest | null {
+  if (!isRecord(value)) return null;
+  const str = (key: string) => (typeof value[key] === "string" ? (value[key] as string) : null);
+  switch (value.to) {
+    case "thread": {
+      const environmentId = str("environmentId");
+      const threadId = str("threadId");
+      return environmentId && threadId ? { to: "thread", environmentId, threadId } : null;
+    }
+    case "new-thread": {
+      const environmentId = str("environmentId");
+      const projectId = str("projectId");
+      return environmentId && projectId ? { to: "new-thread", environmentId, projectId } : null;
+    }
+    case "path":
+      return isZenithAppPath(value.path) ? { to: "path", path: value.path } : null;
+    case "palette": {
+      const open =
+        value.open === "add-project" || value.open === "new-thread-in" ? value.open : undefined;
+      return open ? { to: "palette", open } : { to: "palette" };
+    }
+    default:
+      return null;
   }
 }
 

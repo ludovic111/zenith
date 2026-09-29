@@ -11,13 +11,14 @@ It runs on your machine, answers only on `127.0.0.1`, and never sends your data 
 | Overview | An orbit of your projects with live status, key numbers, project cards, six months of commits, a live feed of everything that happens |
 | My day | Weather, air quality, UV and pollen, calendar (14 days, holidays, birthdays), what's waiting for you, now playing, screen time, spending, work rhythm |
 | Projects | One page per project: uptime, latency, HTTP traffic and deploys (Railway), CI, issues and PRs (GitHub), releases and downloads, App Store rating and reviews, RevenueCat MRR, agent sessions, Obsidian notes, identity card |
-| **Code** | **zenith code**: chat with Claude Code, Codex and other agents inside any of your projects — diffs, terminals, worktrees, approvals |
+| **Code** | **zenith code**: chat with Claude Code, Codex and other agents inside any of your projects — diffs, terminals, worktrees, approvals. Its threads live in zenith's sidebar, under their project |
+| **Claude, ChatGPT** | Their desktop apps docked right in zenith's window (zenith.app), plugins and connectors included |
 | Watch | Who talks about your projects (Hacker News, GitHub), notifications, new stars, contributions, news, markets, the state of your Mac |
 | AI agents | Every Claude Code and Codex session: live, cost, lines written, PRs, the command to resume it |
 | Subscriptions | Everything you pay for, monthly total in your currency, next charges, failing payments, Claude / ChatGPT plan gauges |
 | Directory | Every project's names, handles, domains (registrar, renewal, certificate, email), stores and services |
 
-Press **⌘K** anywhere to jump.
+Press **⌘K** anywhere to jump (pages, projects, threads), **⌘B** to fold the sidebar.
 
 ## Quick start
 
@@ -81,7 +82,7 @@ Every 10 minutes zenith writes a Markdown brief of everything it knows (`context
 
 ## zenith code
 
-`code/` holds zenith code, a fork of [T3 Code](https://github.com/pingdotgg/t3code) (MIT) rebranded, themed and wired into zenith: it starts with zenith, knows your projects, and pairs itself inside the dashboard. It keeps its own state in `~/.zenith/code`. See [code/ZENITH.md](code/ZENITH.md) for what changed and how to sync with upstream.
+`code/` holds zenith code, a fork of [T3 Code](https://github.com/pingdotgg/t3code) (MIT) rebranded, themed and wired into zenith: it starts with zenith, knows your projects, pairs itself inside the dashboard, and shares zenith's sidebar, ⌘K and URLs (`/code/<environment>/<thread>`): one app, not an app in an app. It keeps its own state in `~/.zenith/code`. See [code/ZENITH.md](code/ZENITH.md) for what changed and how to sync with upstream.
 
 ## Extending
 

@@ -6,6 +6,8 @@
 @source "../../perso";
 
 @custom-variant dark (&:is(.dark *));
+/* The sidebar folded to a rail (sidebar.tsx, set before paint in layout.tsx). */
+@custom-variant collapsed (&:where(html[data-sidebar="collapsed"] *));
 
 @theme inline {
   --font-sans: var(--font-body);
@@ -102,6 +104,22 @@
   --good: #34d399;
   --warn: #fbbf24;
   --bad: #fb5a6b;
+  --zenith-sidebar-w: 16.5rem;
+}
+html[data-sidebar="collapsed"] {
+  --zenith-sidebar-w: 4.5rem;
+}
+/* A desktop app docked by zenith.app sits under the page (assistant-surface.tsx): the page
+   lets it show through, and the sidebar turns opaque so the desktop never does. */
+html[data-docked],
+html[data-docked] body {
+  background: transparent;
+}
+html[data-docked] .sky {
+  display: none;
+}
+html[data-docked] aside {
+  background: var(--background);
 }
 
 @layer base {

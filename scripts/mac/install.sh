@@ -101,6 +101,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
   <key>NSCalendarsUsageDescription</key><string>$(t "zenith affiche tes rendez-vous dans « Ma vie ». Lecture seule." "zenith shows your events in My day. Read-only.")</string>
   <key>NSRemindersFullAccessUsageDescription</key><string>$(t "zenith ajoute tes rappels à la liste « À faire ». Lecture seule." "zenith adds your reminders to the to-do list. Read-only.")</string>
   <key>NSRemindersUsageDescription</key><string>$(t "zenith ajoute tes rappels à la liste « À faire ». Lecture seule." "zenith adds your reminders to the to-do list. Read-only.")</string>
+  <key>NSMicrophoneUsageDescription</key><string>$(t "Pour les modes vocaux de Claude et ChatGPT, seulement quand tu les lances." "For Claude's and ChatGPT's voice modes, only when you start one.")</string>
   <key>NSAppleEventsUsageDescription</key><string>$(t "zenith lit les mails non lus dans Mail et le morceau en cours dans Musique ou Spotify, seulement quand ces apps sont ouvertes. Lecture seule." "zenith reads unread mail in Mail and the song playing in Music or Spotify, only while those apps are open. Read-only.")</string>
   <key>NSContactsUsageDescription</key><string>$(t "zenith affiche les anniversaires à venir de tes contacts (nom et date seulement). Lecture seule." "zenith shows your contacts' upcoming birthdays (name and date only). Read-only.")</string>
 </dict>

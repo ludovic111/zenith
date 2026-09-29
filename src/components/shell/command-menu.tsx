@@ -3,15 +3,25 @@
 import { Command } from "cmdk";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, Bot, Contact, LayoutGrid, Radar, RefreshCw, Settings2, SquareTerminal, Sun, Wallet } from "lucide-react";
+import { ArrowUpRight, Bot, Contact, ExternalLink, FolderPlus, LayoutGrid, MessageSquarePlus, Radar, RefreshCw, RotateCw, Settings2, SlidersHorizontal, SquareTerminal, Sun, Wallet } from "lucide-react";
 import { tr } from "@/lib/i18n";
+import { AssistantIcon } from "@/components/assistants/assistant-icon";
+import { ASSISTANTS, assistantHref, type AssistantId } from "@/lib/assistants";
+import { codeHref, codeNavigate, STATUS_STYLE, threadHref, threadKey, useCode } from "@/components/code/store";
 
 type NavProject = { id: string; name: string; href: string; glow: string; tagline: string };
 type ExtLink = { label: string; url: string; project: string; color: string };
 
-export function CommandMenu({ projects, links, code = true }: { projects: NavProject[]; links: ExtLink[]; code?: boolean }) {
+export function CommandMenu({ projects, links, code = true, assistants = [] }: { projects: NavProject[]; links: ExtLink[]; code?: boolean; assistants?: AssistantId[] }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const { status, snapshot, ready } = useCode();
+  const codeProjects = new Map((snapshot?.projects ?? []).map((p) => [`${p.environmentId}:${p.id}`, p.title]));
+  const threads = snapshot?.threads.filter((t) => t.section !== "settled").slice(0, 40) ?? [];
+  const inCode = (fn: () => void) => {
+    router.push(codeHref(snapshot?.pathname ?? "/"));
+    fn();
+  };
 
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
@@ -34,6 +44,8 @@ export function CommandMenu({ projects, links, code = true }: { projects: NavPro
     fn();
   };
 
+  const heading =
+    "[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-[11px] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-ink-3";
   const item =
     "flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-ink-2 data-[selected=true]:bg-white/[0.07] data-[selected=true]:text-ink";
 
@@ -47,12 +59,12 @@ export function CommandMenu({ projects, links, code = true }: { projects: NavPro
     >
       <Command.Input
         autoFocus
-        placeholder={tr("Projet, lien, action…", "Project, link, action…")}
+        placeholder={tr("Projet, thread, lien, action…", "Project, thread, link, action…")}
         className="w-full border-b border-line bg-transparent px-5 py-4 text-base outline-none placeholder:text-ink-3"
       />
       <Command.List className="max-h-[50vh] overflow-y-auto p-2">
         <Command.Empty className="px-4 py-6 text-center text-sm text-ink-3">{tr("Rien sous ce ciel.", "Nothing under this sky.")}</Command.Empty>
-        <Command.Group heading={tr("Projets", "Projects")} className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-[11px] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-ink-3">
+        <Command.Group heading={tr("Projets", "Projects")} className={heading}>
           <Command.Item className={item} onSelect={() => go(() => router.push("/"))}>
             <LayoutGrid className="size-4" /> {tr("Vue d'ensemble", "Overview")}
           </Command.Item>
@@ -68,11 +80,17 @@ export function CommandMenu({ projects, links, code = true }: { projects: NavPro
             </Command.Item>
           ))}
           {code && (
-            <Command.Item value={tr("zenith code coder agents terminal éditeur", "zenith code coding agents terminal editor")} className={item} onSelect={() => go(() => router.push("/code"))}>
+            <Command.Item value={tr("zenith code coder agents terminal éditeur", "zenith code coding agents terminal editor")} className={item} onSelect={() => go(() => router.push(codeHref(snapshot?.pathname ?? "/")))}>
               <SquareTerminal className="size-4" /> zenith code
               <span className="ml-auto text-xs text-ink-3">{tr("coder avec les agents", "code with agents")}</span>
             </Command.Item>
           )}
+          {assistants.map((id) => (
+            <Command.Item key={id} value={`${ASSISTANTS[id].name} ${tr("assistant chat IA", "assistant AI chat")}`} className={item} onSelect={() => go(() => router.push(assistantHref(id)))}>
+              <AssistantIcon id={id} size={16} /> {ASSISTANTS[id].name}
+              <span className="ml-auto text-xs text-ink-3">{tr("app de bureau", "desktop app")}</span>
+            </Command.Item>
+          ))}
           <Command.Item value={tr("Veille mentions GitHub notifications actualité Hacker News marchés crypto Mac Homebrew", "Radar mentions GitHub notifications news Hacker News markets crypto Mac Homebrew")} className={item} onSelect={() => go(() => router.push("/veille"))}>
             <Radar className="size-4" /> {tr("Veille", "Radar")}
             <span className="ml-auto text-xs text-ink-3">{tr("mentions · actu · ce Mac", "mentions · news · this Mac")}</span>
@@ -90,8 +108,24 @@ export function CommandMenu({ projects, links, code = true }: { projects: NavPro
             <span className="ml-auto text-xs text-ink-3">{tr("frais · limites IA", "fees · AI limits")}</span>
           </Command.Item>
         </Command.Group>
+        {code && threads.length > 0 && (
+          <Command.Group heading="Threads" className={heading}>
+            {threads.map((t) => {
+              const project = codeProjects.get(`${t.environmentId}:${t.projectId}`) ?? "";
+              const s = t.status ? STATUS_STYLE[t.status] : null;
+              return (
+                <Command.Item key={threadKey(t)} value={`thread ${t.title} ${project} ${t.branch ?? ""} ${threadKey(t)}`} className={item} onSelect={() => go(() => router.push(threadHref(t)))}>
+                  <SquareTerminal className="size-4 shrink-0" />
+                  <span className="min-w-0 truncate">{t.title}</span>
+                  {s && <span className="size-1.5 shrink-0 rounded-full" style={{ background: s.dot }} title={tr(...s.label())} />}
+                  <span className="ml-auto shrink-0 text-xs text-ink-3">{project}</span>
+                </Command.Item>
+              );
+            })}
+          </Command.Group>
+        )}
         {links.length > 0 && (
-            <Command.Group heading={tr("Ouvrir", "Open")} className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-[11px] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-ink-3">
+            <Command.Group heading={tr("Ouvrir", "Open")} className={heading}>
             {links.map((l) => (
               <Command.Item key={l.url + l.project} value={`${l.project} ${l.label}`} className={item} onSelect={() => go(() => window.open(l.url, "_blank", "noopener"))}>
                 <ArrowUpRight className="size-4" style={{ color: l.color }} />
@@ -101,13 +135,38 @@ export function CommandMenu({ projects, links, code = true }: { projects: NavPro
             ))}
           </Command.Group>
         )}
-        <Command.Group heading={tr("Actions", "Actions")} className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-[11px] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-ink-3">
+        <Command.Group heading={tr("Actions", "Actions")} className={heading}>
           <Command.Item className={item} onSelect={() => go(() => router.refresh())}>
             <RefreshCw className="size-4" /> {tr("Rafraîchir les données", "Refresh data")}
           </Command.Item>
           <Command.Item className={item} onSelect={() => go(() => router.push("/reglages"))}>
             <Settings2 className="size-4" /> {tr("Sources de données", "Data sources")}
           </Command.Item>
+          {code && ready && (
+            <>
+              <Command.Item value={tr("nouveau thread code agent", "new thread code agent")} className={item} onSelect={() => go(() => inCode(() => codeNavigate({ to: "palette", open: "new-thread-in" })))}>
+                <MessageSquarePlus className="size-4" /> {tr("Nouveau thread…", "New thread…")}
+              </Command.Item>
+              <Command.Item value={tr("ajouter un projet code dossier", "add a project code folder")} className={item} onSelect={() => go(() => inCode(() => codeNavigate({ to: "palette", open: "add-project" })))}>
+                <FolderPlus className="size-4" /> {tr("Ajouter un projet à zenith code", "Add a project to zenith code")}
+              </Command.Item>
+            </>
+          )}
+          {code && (
+            <Command.Item value={tr("réglages de code providers modèles thème", "code settings providers models theme")} className={item} onSelect={() => go(() => router.push("/code/settings"))}>
+              <SlidersHorizontal className="size-4" /> {tr("Réglages de zenith code", "zenith code settings")}
+            </Command.Item>
+          )}
+          {code && status?.enabled && status.built && (
+            <Command.Item value={tr("redémarrer zenith code", "restart zenith code")} className={item} onSelect={() => go(() => window.dispatchEvent(new Event("zenith:code-restart")))}>
+              <RotateCw className="size-4" /> {tr("Redémarrer zenith code", "Restart zenith code")}
+            </Command.Item>
+          )}
+          {code && status?.running && (
+            <Command.Item value={tr("ouvrir zenith code dans sa propre fenêtre", "open zenith code in its own window")} className={item} onSelect={() => go(() => window.open("/api/code/open", "_blank", "noopener"))}>
+              <ExternalLink className="size-4" /> {tr("Ouvrir zenith code dans sa propre fenêtre", "Open zenith code in its own window")}
+            </Command.Item>
+          )}
         </Command.Group>
       </Command.List>
     </Command.Dialog>

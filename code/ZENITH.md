@@ -27,6 +27,14 @@ restarts it with backoff if it crashes, reuses one left over by a previous zenit
 process, and stops it when zenith exits. The dashboard shows it at `/code`
 (`/code?project=<id>` opens a project, `zenith` is the dashboard itself).
 
+It is part of zenith, not an app beside it: one iframe, mounted once in zenith's root
+layout (`src/components/code/code-host.tsx`), lives across page changes and shows
+full-bleed on `/code/*`. zenith's URL mirrors the app's (`/code/<environment>/<thread>`,
+`/code/settings/…`), so reloads, links, back and forward land on the same thread.
+zenith's sidebar lists every thread under its project (matched by folder), ⌘K searches
+them, project pages show theirs, and on desktop widths the app hides its own sidebar
+(it keeps it on settings pages and on narrow screens, where zenith's is a bottom bar).
+
 | `zenith.config.json` | default | |
 | --- | --- | --- |
 | `code.enabled` | `true` | start zenith code with zenith |
@@ -34,7 +42,7 @@ process, and stops it when zenith exits. The dashboard shows it at `/code`
 | `code.home` | `~/.zenith/code` | state: database, settings, worktrees. Never `~/.t3`, so an upstream T3 Code install is left alone |
 
 Logs: `.data/code.log` in zenith's folder (pairing tokens are redacted).
-Status: `GET /api/code`. Restart: the button on `/code`.
+Status: `GET /api/code`. Restart: the ↻ in the sidebar's Code heading, or ⌘K.
 
 On start, zenith registers the dashboard and every configured project folder as
 zenith code projects, once each (`<code.home>/zenith-projects.json` remembers them, so
@@ -66,6 +74,16 @@ Project focus: `?zenithProject=<absolute path>` on first load (kept in sessionSt
 across the pairing redirect), or `{ type: "zenith-code:open-project", path }` from the
 parent later, opens that project's latest thread, or a new draft. The app posts
 `{ type: "zenith-code:ready" }` once signed in.
+
+Shared sidebar (`apps/web/src/zenith/embed.ts` has the types):
+
+- app → parent `zenith-code:sidebar` `{ snapshot }`: projects, threads (the app's own
+  sidebar order and status: approval, input, working, plan, completed, failed…), the open
+  thread and the app's path. Debounced, sent only when it changes.
+- parent → app `zenith-code:navigate` `{ request }`: a thread, a new thread in a project,
+  an in-app path (validated: same-origin paths only, never `/pair`), or the command palette.
+- parent → app `zenith-code:chrome` `{ ownSidebar }`, and `?zenithChrome=bare|full` on
+  first load: whether the app draws its own thread sidebar.
 
 "Open in its own window" goes through `GET /api/code/open`, which mints a token and
 redirects to `/pair#token=…`, only for navigations started by the user or zenith
@@ -127,8 +145,10 @@ frame-ancestors policy, registered in `server.ts` and `http.ts`); `auth pairing 
 `~/.zenith/code-dev` in `scripts/dev-runner.ts`).
 
 **Web additions:** `apps/web/src/zenith/` (embed messaging, embedded pairing hook used
-by `components/auth/PairingRouteSurface.tsx`, project focus coordinator mounted in
-`routes/__root.tsx`, `?zenithProject=` captured in `main.tsx`).
+by `components/auth/PairingRouteSurface.tsx`, the coordinator mounted in
+`routes/__root.tsx` that focuses projects, follows navigation requests and publishes the
+sidebar snapshot, `?zenithProject=` / `?zenithChrome=` captured in `main.tsx`), and
+`components/AppSidebarLayout.tsx` skipping its sidebar when zenith draws it.
 
 Edits inside upstream files are marked with a `zenith:` comment where the format
 allows (`grep -rn "zenith:" code`); `git log -p -- code` after the import commit shows

@@ -808,6 +808,20 @@
         }
       }
     },
+    "assistants": {
+      "default": [
+        "claude",
+        "chatgpt"
+      ],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "claude",
+          "chatgpt"
+        ]
+      }
+    },
     "code": {
       "default": {
         "enabled": true,

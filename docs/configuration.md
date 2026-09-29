@@ -32,6 +32,7 @@ cp zenith.config.example.json zenith.config.json
 | `water` | object | — | Swiss rivers and lakes. See [water](#water). |
 | `obsidian` | object | `{ "exportDir": "zenith" }` | Your Obsidian vault. See [obsidian](#obsidian). |
 | `mac` | object | `{ "bundleId": "dev.zenith.app" }` | The native Mac app. See [mac](#mac). |
+| `assistants` | array | `["claude", "chatgpt"]` | Claude and ChatGPT in the sidebar. See [assistants](#assistants). |
 | `code` | object | `{ "enabled": true, "port": 4749 }` | zenith code, the coding workspace. See [code](#code). |
 
 ```json
@@ -241,6 +242,14 @@ Without `vault`, zenith uses the vault currently open in Obsidian.
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `bundleId` | string | `"dev.zenith.app"` | Bundle identifier of zenith.app. Changing it resets the macOS permissions (Calendars, Reminders, Contacts, Automation). |
+
+## assistants
+
+`"claude"` and `"chatgpt"`, in sidebar order; `[]` hides them. Each gets a page at `/assistants/<id>`.
+
+In zenith.app, the page docks the app's **desktop** app in zenith's window: zenith moves the real Claude.app / ChatGPT.app window over the page, keeps it there when you move or resize zenith, and hides it when you leave. Its plugins, connectors and desktop extensions are all there. This uses the Accessibility API: the first time, allow zenith in System Settings → Privacy & Security → Accessibility (the page has a button). Rebuilding zenith.app (`npm run mac:install`) can ask for it again, since the app is signed locally.
+
+Until then, or if the desktop app isn't installed, or if you pick **Web** in the page's toolbar, zenith shows claude.ai / chatgpt.com in a native web view instead (sign in once; Safari's cookie store keeps you signed in). **Detach** gives the app its own window back. In a browser, neither can be embedded: the page opens the app.
 
 ## code
 

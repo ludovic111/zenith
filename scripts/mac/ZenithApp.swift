@@ -25,9 +25,15 @@ p{text-align:center;margin:6px 0}small{color:#7c7791}
 </style></head><body><div><div class="sun"></div><p>TITLE</p><p><small>MESSAGE</small></p></div></body></html>
 """
 
-final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate {
+/// Top-left origin, like the web page laying it out.
+final class FlippedView: NSView {
+    override var isFlipped: Bool { true }
+}
+
+final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
     var window: NSWindow!
     var webView: WKWebView!
+    let assistants = Assistants()
     var attempts = 0
     var loaded = false
     var knownDown: Set<String> = []
@@ -40,6 +46,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         let config = WKWebViewConfiguration()
         config.applicationNameForUserAgent = "ZenithMac/1.0"
         config.websiteDataStore = .default()
+        // The dashboard places Claude and ChatGPT in its layout (src/components/assistants).
+        config.userContentController.add(self, name: "zenithShell")
         webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = self
         webView.uiDelegate = self
@@ -56,7 +64,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         window.backgroundColor = night
         window.appearance = NSAppearance(named: .darkAqua)
         window.minSize = NSSize(width: 420, height: 520)
-        window.contentView = webView
+        let root = FlippedView()
+        webView.frame = root.bounds
+        webView.autoresizingMask = [.width, .height]
+        root.addSubview(webView)
+        assistants.host = root
+        assistants.dashboard = webView
+        window.contentView = root
         window.center()
         window.setFrameAutosaveName("ZenithMain")
         window.makeKeyAndOrderFront(nil)
@@ -176,6 +190,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         return nil
     }
 
+    // A new dashboard page starts without an assistant on top; its page shows one again.
+    func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) { assistants.hideAll() }
+
+    func applicationDidBecomeActive(_ note: Notification) { assistants.zenithActivated() }
+    func applicationDidHide(_ note: Notification) { assistants.zenithHidden() }
+
+    /// Only the dashboard's own page may place assistants.
+    func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
+        let origin = message.frameInfo.securityOrigin
+        guard message.frameInfo.isMainFrame, origin.host == dashboardURL.host, origin.port == dashboardURL.port ?? 80,
+              let body = message.body as? [String: Any], body["type"] as? String == "assistant" else { return }
+        let id = body["app"] as? String
+        if let action = body["action"] as? String, let id {
+            assistants.perform(action, on: id, url: (body["url"] as? String).flatMap(URL.init(string:)))
+            return
+        }
+        var rect: NSRect?
+        if let r = body["rect"] as? [String: Double], let x = r["x"], let y = r["y"], let w = r["width"], let h = r["height"] {
+            let zoom = webView.pageZoom
+            rect = NSRect(x: x * zoom, y: y * zoom, width: w * zoom, height: h * zoom)
+        }
+        assistants.show(id, rect: rect, mode: body["mode"] as? String ?? "desktop", url: (body["url"] as? String).flatMap(URL.init(string:)))
+    }
+
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { retry() }
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { retry() }
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) { webView.reload() }
@@ -188,7 +226,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
 
     // MARK: - Menus (copy/paste, reload, zoom, full screen)
 
-    @objc func reload() { webView.reload() }
+    @objc func reload() {
+        if let visible = assistants.visible { visible.reload() } else { webView.reload() }
+    }
     @objc func goHome() { webView.load(URLRequest(url: dashboardURL)) }
     @objc func zoomIn() { webView.pageZoom = min(webView.pageZoom + 0.1, 2) }
     @objc func zoomOut() { webView.pageZoom = max(webView.pageZoom - 0.1, 0.5) }
@@ -240,6 +280,398 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
         item.submenu = menu
         return item
+    }
+}
+
+// MARK: - Claude and ChatGPT
+
+/// Claude's and ChatGPT's desktop apps, docked in zenith's window. macOS can't put another
+/// app's window inside ours, so zenith does the next best thing: it moves the app's real
+/// window (Accessibility API) exactly over the area the dashboard's /apps page leaves
+/// transparent, keeps it there while zenith moves or resizes, lets clicks through that area,
+/// and hides the app when you leave the page. Plugins, connectors and desktop extensions are
+/// the app's own. A desktop app that isn't installed, or Accessibility not granted yet: a web
+/// view of claude.ai / chatgpt.com takes the same place (web pages can't frame them, a native
+/// web view can), signed in through Safari's cookie store.
+final class Assistants: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownloadDelegate {
+    weak var host: NSView?
+    weak var dashboard: WKWebView?
+    var views: [String: WKWebView] = [:]
+    var popups: [WKWebView: NSWindow] = [:]
+    var shown: String?
+    var docked: DockedApp?
+    /// The reserved area, in the content view's coordinates (top-left origin).
+    var slot: NSRect = .zero
+    var follow: Timer?
+    var lastPlaced: CGRect?
+    var launchStarted: Date?
+
+    static let homes: [String: URL] = [
+        "claude": URL(string: "https://claude.ai/new")!,
+        "chatgpt": URL(string: "https://chatgpt.com/")!,
+    ]
+    /// Where the desktop apps usually live: by name first, then by bundle id.
+    static let desktop: [String: (names: [String], bundleIds: [String])] = [
+        "claude": (["Claude.app"], ["com.anthropic.claudefordesktop"]),
+        "chatgpt": (["ChatGPT.app"], ["com.openai.chat", "com.openai.codex"]),
+    ]
+    /// Sign-in with Google refuses web views that don't look like Safari.
+    static let userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15"
+
+    var visible: WKWebView? { docked == nil ? shown.flatMap { views[$0] } : nil }
+
+    func view(_ id: String) -> WKWebView? {
+        if let v = views[id] { return v }
+        guard let home = Assistants.homes[id], let host else { return nil }
+        let config = WKWebViewConfiguration()
+        config.websiteDataStore = .default()
+        config.mediaTypesRequiringUserActionForPlayback = []
+        let v = WKWebView(frame: .zero, configuration: config)
+        v.customUserAgent = Assistants.userAgent
+        v.navigationDelegate = self
+        v.uiDelegate = self
+        v.allowsBackForwardNavigationGestures = true
+        v.isHidden = true
+        host.addSubview(v)
+        v.load(URLRequest(url: home))
+        views[id] = v
+        return v
+    }
+
+    static func findDesktopApp(_ id: String) -> URL? {
+        guard let spec = desktop[id] else { return nil }
+        let dirs = ["/Applications", NSHomeDirectory() + "/Applications"]
+        for name in spec.names {
+            for dir in dirs where FileManager.default.fileExists(atPath: dir + "/" + name) {
+                return URL(fileURLWithPath: dir + "/" + name)
+            }
+        }
+        for bundleId in spec.bundleIds {
+            if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) { return url }
+        }
+        return nil
+    }
+
+    /// `mode`: "desktop" (dock the app, the default) or "web".
+    func show(_ id: String?, rect: NSRect?, mode: String = "desktop", url: URL? = nil) {
+        guard let id, let rect else {
+            hideAll()
+            return
+        }
+        slot = rect
+        let wantsDesktop = mode != "web"
+        let appURL = wantsDesktop ? Assistants.findDesktopApp(id) : nil
+        let trusted = AXIsProcessTrusted()
+
+        if let appURL, trusted {
+            for (_, v) in views { v.isHidden = true }
+            if docked?.id != id {
+                undock(hide: true)
+                docked = DockedApp(id: id, url: appURL)
+                lastPlaced = nil
+                launchStarted = Date()
+                docked?.bringUp()
+            }
+            shown = id
+            startFollowing()
+            report(id, mode: "desktop", state: lastPlaced == nil ? "launching" : "docked")
+            return
+        }
+
+        undock(hide: true)
+        for (key, v) in views where key != id { v.isHidden = true }
+        guard let v = view(id) else { return }
+        v.frame = rect
+        if let url, Assistants.allowed(url, for: id) { v.load(URLRequest(url: url)) }
+        if v.isHidden || shown != id {
+            v.isHidden = false
+            v.window?.makeFirstResponder(v)
+        }
+        shown = id
+        let state = !wantsDesktop ? "web" : appURL == nil ? "not-installed" : "needs-permission"
+        report(id, mode: "web", state: state)
+    }
+
+    func hideAll() {
+        for (_, v) in views { v.isHidden = true }
+        undock(hide: true)
+        if shown != nil, let dashboard { dashboard.window?.makeFirstResponder(dashboard) }
+        shown = nil
+    }
+
+    func perform(_ action: String, on id: String, url: URL?) {
+        switch action {
+        case "grant":
+            AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary)
+            if let pane = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") { NSWorkspace.shared.open(pane) }
+            return
+        case "detach":
+            // Back to a normal window of its own, where it was docked.
+            let app = docked
+            docked = nil
+            stopFollowing()
+            app?.running?.activate()
+            report(id, mode: "desktop", state: "detached")
+            return
+        case "focus":
+            docked?.running?.activate()
+            return
+        default: break
+        }
+        guard let v = views[id] else { return }
+        switch action {
+        case "back": v.goBack()
+        case "forward": v.goForward()
+        case "reload": v.reload()
+        case "home": if let home = Assistants.homes[id] { v.load(URLRequest(url: home)) }
+        case "open": if let url, Assistants.allowed(url, for: id) { v.load(URLRequest(url: url)) }
+        case "browser": if let current = v.url { NSWorkspace.shared.open(current) }
+        default: break
+        }
+    }
+
+    /// Tells the page what it is showing, so it can go transparent over a docked app.
+    func report(_ id: String, mode: String, state: String) {
+        let json = "{\"app\":\"\(id)\",\"mode\":\"\(mode)\",\"state\":\"\(state)\"}"
+        dashboard?.window?.isOpaque = state != "docked"
+        dashboard?.window?.backgroundColor = state == "docked" ? .clear : night
+        dashboard?.evaluateJavaScript("window.dispatchEvent(new CustomEvent('zenith-shell',{detail:\(json)}))")
+    }
+
+    // MARK: Docking
+
+    func startFollowing() {
+        guard follow == nil else { return }
+        follow = Timer.scheduledTimer(withTimeInterval: 1.0 / 30, repeats: true) { [weak self] _ in self?.tick() }
+    }
+
+    func stopFollowing() {
+        follow?.invalidate()
+        follow = nil
+        lastPlaced = nil
+        dashboard?.window?.ignoresMouseEvents = false
+        dashboard?.window?.isOpaque = true
+        dashboard?.window?.backgroundColor = night
+    }
+
+    func undock(hide: Bool) {
+        guard let app = docked else { return }
+        docked = nil
+        stopFollowing()
+        if hide { app.running?.hide() }
+    }
+
+    /// The slot in AX coordinates (global, top-left origin of the primary screen).
+    func slotOnScreen() -> CGRect? {
+        guard let host, let window = host.window, slot.width > 0, slot.height > 0 else { return nil }
+        let inWindow = host.convert(slot, to: nil)
+        let cocoa = window.convertToScreen(inWindow)
+        let top = NSScreen.screens.first?.frame.maxY ?? cocoa.maxY
+        return CGRect(x: cocoa.minX, y: top - cocoa.maxY, width: cocoa.width, height: cocoa.height)
+    }
+
+    func tick() {
+        guard let app = docked, let window = dashboard?.window, let target = slotOnScreen() else { return }
+        if window.isMiniaturized || !window.isVisible {
+            app.running?.hide()
+            return
+        }
+        guard let w = app.window() else {
+            // Launching, or running without a window: ask again every few seconds.
+            if let started = launchStarted, Date().timeIntervalSince(started) > 4 {
+                launchStarted = Date()
+                app.bringUp()
+            }
+            return
+        }
+        if lastPlaced != target || app.frame(of: w) != target {
+            if app.running?.isHidden == true { app.running?.unhide() }
+            app.place(w, target)
+            if lastPlaced == nil {
+                report(app.id, mode: "desktop", state: "docked")
+                app.running?.activate()
+            }
+            lastPlaced = target
+        }
+        // Clicks over the slot go to the app underneath; the rest stays zenith's.
+        let mouse = NSEvent.mouseLocation
+        let cocoaSlot = window.convertToScreen(host!.convert(slot, to: nil))
+        window.ignoresMouseEvents = cocoaSlot.contains(mouse)
+    }
+
+    /// zenith came back to the front: the docked app must be right under it, not another app.
+    func zenithActivated() {
+        guard let app = docked, let window = dashboard?.window, let pid = app.running?.processIdentifier else { return }
+        let below = CGWindowListCopyWindowInfo([.optionOnScreenBelowWindow, .excludeDesktopElements], CGWindowID(window.windowNumber)) as? [[String: Any]] ?? []
+        let target = slotOnScreen() ?? .zero
+        let first = below.first { info in
+            guard (info[kCGWindowLayer as String] as? Int) == 0,
+                  let b = info[kCGWindowBounds as String] as? [String: CGFloat],
+                  let r = CGRect(dictionaryRepresentation: b as CFDictionary) else { return false }
+            return r.intersects(target)
+        }
+        if (first?[kCGWindowOwnerPID as String] as? pid_t) != pid { app.running?.activate() }
+    }
+
+    func zenithHidden() { docked?.running?.hide() }
+
+    /// Links the dashboard may open in an assistant: its own site only.
+    static func allowed(_ url: URL, for id: String) -> Bool {
+        guard url.scheme == "https", let home = homes[id]?.host, let host = url.host else { return false }
+        return host == home || host.hasSuffix("." + home)
+    }
+
+    // Everything web stays in the view (sign-in providers included); other schemes go to macOS.
+    func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        guard let url = action.request.url, let scheme = url.scheme else { return decisionHandler(.allow) }
+        if ["https", "http", "about", "blob", "data"].contains(scheme) { return decisionHandler(action.shouldPerformDownload ? .download : .allow) }
+        NSWorkspace.shared.open(url)
+        decisionHandler(.cancel)
+    }
+
+    func webView(_ webView: WKWebView, decidePolicyFor response: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
+        decisionHandler(response.canShowMIMEType ? .allow : .download)
+    }
+
+    func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) { download.delegate = self }
+    func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) { download.delegate = self }
+
+    func download(_ download: WKDownload, decideDestinationUsing response: URLResponse, suggestedFilename: String, completionHandler: @escaping (URL?) -> Void) {
+        let folder = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)[0]
+        var dest = folder.appendingPathComponent(suggestedFilename)
+        let base = dest.deletingPathExtension().lastPathComponent, ext = dest.pathExtension
+        var n = 1
+        while FileManager.default.fileExists(atPath: dest.path) {
+            n += 1
+            dest = folder.appendingPathComponent(ext.isEmpty ? "\(base) \(n)" : "\(base) \(n).\(ext)")
+        }
+        completionHandler(dest)
+    }
+
+    func downloadDidFinish(_ download: WKDownload) {}
+
+    /// Sign-in and connector windows (OAuth) are real popups that talk back to their opener;
+    /// plain links opening a new tab go to the browser instead.
+    func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for action: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
+        let sized = windowFeatures.width != nil || windowFeatures.height != nil
+        let blank = action.request.url == nil || action.request.url?.absoluteString == "about:blank" || action.request.url?.absoluteString == ""
+        if !sized && !blank, let url = action.request.url {
+            NSWorkspace.shared.open(url)
+            return nil
+        }
+        let popup = WKWebView(frame: .zero, configuration: configuration)
+        popup.customUserAgent = Assistants.userAgent
+        popup.navigationDelegate = self
+        popup.uiDelegate = self
+        let size = NSSize(width: windowFeatures.width?.doubleValue ?? 520, height: windowFeatures.height?.doubleValue ?? 680)
+        let w = NSWindow(contentRect: NSRect(origin: .zero, size: size), styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
+        w.contentView = popup
+        w.isReleasedWhenClosed = false
+        w.appearance = NSAppearance(named: .darkAqua)
+        if let parent = webView.window { w.setFrameTopLeftPoint(NSPoint(x: parent.frame.midX - size.width / 2, y: parent.frame.maxY - 80)) }
+        w.makeKeyAndOrderFront(nil)
+        popups[popup] = w
+        return popup
+    }
+
+    func webViewDidClose(_ webView: WKWebView) {
+        popups.removeValue(forKey: webView)?.close()
+    }
+
+    // Attachments: files, images, PDFs.
+    func webView(_ webView: WKWebView, runOpenPanelWith parameters: WKOpenPanelParameters, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping ([URL]?) -> Void) {
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = parameters.allowsMultipleSelection
+        panel.canChooseDirectories = parameters.allowsDirectories
+        panel.canChooseFiles = true
+        if let window = webView.window {
+            panel.beginSheetModal(for: window) { completionHandler($0 == .OK ? panel.urls : nil) }
+        } else {
+            completionHandler(panel.runModal() == .OK ? panel.urls : nil)
+        }
+    }
+
+    // Voice modes: the microphone, after macOS's own prompt.
+    func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin, initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType, decisionHandler: @escaping (WKPermissionDecision) -> Void) {
+        decisionHandler(type == .microphone ? .grant : .prompt)
+    }
+
+    func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
+        let alert = NSAlert()
+        alert.messageText = message
+        alert.runModal()
+        completionHandler()
+    }
+
+    func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (Bool) -> Void) {
+        let alert = NSAlert()
+        alert.messageText = message
+        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: L("Annuler", "Cancel"))
+        completionHandler(alert.runModal() == .alertFirstButtonReturn)
+    }
+
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) { webView.reload() }
+}
+
+/// One desktop app's main window, driven through the Accessibility API.
+final class DockedApp {
+    let id: String
+    let url: URL
+    let bundleId: String?
+
+    init(id: String, url: URL) {
+        self.id = id
+        self.url = url
+        bundleId = Bundle(url: url)?.bundleIdentifier
+    }
+
+    var running: NSRunningApplication? {
+        bundleId.flatMap { NSRunningApplication.runningApplications(withBundleIdentifier: $0).first }
+    }
+
+    /// Launches it, or asks it to reopen its window, without stealing the focus yet.
+    func bringUp() {
+        running?.unhide()
+        let config = NSWorkspace.OpenConfiguration()
+        config.activates = false
+        NSWorkspace.shared.openApplication(at: url, configuration: config) { _, _ in }
+    }
+
+    func window() -> AXUIElement? {
+        guard let pid = running?.processIdentifier else { return nil }
+        let app = AXUIElementCreateApplication(pid)
+        var value: CFTypeRef?
+        if AXUIElementCopyAttributeValue(app, kAXMainWindowAttribute as CFString, &value) == .success, let value {
+            return (value as! AXUIElement)
+        }
+        guard AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &value) == .success,
+              let list = value as? [AXUIElement] else { return nil }
+        return list.first { w in
+            var role: CFTypeRef?
+            AXUIElementCopyAttributeValue(w, kAXSubroleAttribute as CFString, &role)
+            return (role as? String) == kAXStandardWindowSubrole as String
+        }
+    }
+
+    func frame(of w: AXUIElement) -> CGRect? {
+        var pos: CFTypeRef?, size: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(w, kAXPositionAttribute as CFString, &pos) == .success,
+              AXUIElementCopyAttributeValue(w, kAXSizeAttribute as CFString, &size) == .success else { return nil }
+        var p = CGPoint.zero, s = CGSize.zero
+        AXValueGetValue(pos as! AXValue, .cgPoint, &p)
+        AXValueGetValue(size as! AXValue, .cgSize, &s)
+        return CGRect(origin: p, size: s)
+    }
+
+    func place(_ w: AXUIElement, _ r: CGRect) {
+        AXUIElementSetAttributeValue(w, kAXMinimizedAttribute as CFString, kCFBooleanFalse)
+        var p = r.origin, s = r.size
+        guard let pos = AXValueCreate(.cgPoint, &p), let size = AXValueCreate(.cgSize, &s) else { return }
+        // Position, size, position again: a resize can nudge the origin on the way.
+        AXUIElementSetAttributeValue(w, kAXPositionAttribute as CFString, pos)
+        AXUIElementSetAttributeValue(w, kAXSizeAttribute as CFString, size)
+        AXUIElementSetAttributeValue(w, kAXPositionAttribute as CFString, pos)
     }
 }
 

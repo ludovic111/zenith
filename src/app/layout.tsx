@@ -7,7 +7,8 @@ import { AutoRefresh } from "@/components/shell/auto-refresh";
 import { L10nProvider } from "@/components/shell/l10n-provider";
 import { config } from "@/lib/config";
 import { l10n, tr } from "@/lib/i18n";
-import { PROJECTS } from "@/lib/projects";
+import { PROJECTS, projectDir } from "@/lib/projects";
+import { CodeHost } from "@/components/code/code-host";
 import "./globals.css";
 
 const body = Geist({ variable: "--font-body", subsets: ["latin"] });
@@ -25,18 +26,23 @@ export function generateMetadata(): Metadata {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const c = config();
   const loc = l10n();
-  const nav = PROJECTS.map(({ id, name, href, color, glow, emoji, tagline }) => ({ id, name, href, color, glow, emoji, tagline }));
+  const nav = PROJECTS.map(({ id, name, href, color, glow, emoji, tagline, dir }) => ({ id, name, href, color, glow, emoji, tagline, dir: projectDir({ dir }) }));
   const links = PROJECTS.flatMap((p) => p.links.map((l) => ({ ...l, project: p.name, color: p.color })));
   return (
-    <html lang={loc.locale} className={`${body.variable} ${mono.variable} ${display.variable} ${serif.variable} h-full antialiased`}>
+    <html lang={loc.locale} className={`${body.variable} ${mono.variable} ${display.variable} ${serif.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        {/* The sidebar's folded state, before paint (sidebar.tsx). */}
+        <script dangerouslySetInnerHTML={{ __html: `try{if(localStorage.getItem("zenith:sidebar")==="collapsed")document.documentElement.dataset.sidebar="collapsed"}catch(e){}` }} />
+      </head>
       <body className="min-h-full">
         <L10nProvider value={loc}>
           <Sky />
           <div className="relative z-10 flex min-h-screen">
-            <Sidebar projects={nav} code={c.code.enabled} />
+            <Sidebar projects={nav} code={c.code.enabled} home={process.cwd()} assistants={c.assistants} />
             <main className="min-w-0 flex-1 px-4 pb-16 pt-4 sm:px-6 lg:px-10 lg:pt-8">{children}</main>
           </div>
-          <CommandMenu projects={nav} links={links} code={c.code.enabled} />
+          <CodeHost />
+          <CommandMenu projects={nav} links={links} code={c.code.enabled} assistants={c.assistants} />
           <AutoRefresh seconds={60} />
         </L10nProvider>
       </body>
