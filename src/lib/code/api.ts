@@ -38,17 +38,30 @@ export type ThreadMessage = { id: string; role: "user" | "assistant" | "system";
 type Session = { token: string; expiresAt: number };
 const g = globalThis as { __zenithCodeSession?: Promise<Session> | null };
 
-function session(force = false): Promise<Session> {
+/** Issues a new session, unless another caller already replaced `stale` with a fresh one. */
+function renew(stale: Promise<Session> | null | undefined): Promise<Session> {
   const current = g.__zenithCodeSession;
-  if (!force && current) {
-    return current.then((s) => (s.expiresAt - Date.now() > 10 * 60_000 ? s : session(true)));
-  }
+  if (current && current !== stale) return current;
   const next = issueSession();
   g.__zenithCodeSession = next;
   next.catch(() => {
     if (g.__zenithCodeSession === next) g.__zenithCodeSession = null;
   });
   return next;
+}
+
+/** After a refused token: a fresh session, issued once however many calls were refused. */
+async function renewAfter(refused: string): Promise<Session> {
+  const current = g.__zenithCodeSession;
+  const s = current ? await current.catch(() => null) : null;
+  if (s && s.token !== refused) return s;
+  return renew(current);
+}
+
+function session(): Promise<Session> {
+  const current = g.__zenithCodeSession;
+  if (!current) return renew(null);
+  return current.then((s) => (s.expiresAt - Date.now() > 10 * 60_000 ? s : renew(current)));
 }
 
 async function call<T>(pathname: string, init: RequestInit = {}, retried = false): Promise<T> {
@@ -60,7 +73,7 @@ async function call<T>(pathname: string, init: RequestInit = {}, retried = false
     headers: { ...(init.body ? { "content-type": "application/json" } : {}), authorization: `Bearer ${token}`, ...init.headers },
   });
   if (res.status === 401 && !retried) {
-    await session(true);
+    await renewAfter(token);
     return call(pathname, init, true);
   }
   const body = await res.text();

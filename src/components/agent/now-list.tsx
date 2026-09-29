@@ -204,7 +204,7 @@ function ItemRow({
         <div className="truncate text-sm text-ink">{item.title}</div>
         <div className="truncate text-xs text-ink-3">
           {item.detail}
-          {item.at && item.kind !== "birthday" && <> · {ago(item.at)}</>}
+          {item.at && item.kind !== "birthday" && <span suppressHydrationWarning> · {ago(item.at)}</span>}
           {targetName && <> · → {targetName}</>}
         </div>
         {error && <div className="mt-1 text-xs text-bad">{error}</div>}
@@ -259,7 +259,7 @@ function ThreadRow({ thread }: { thread: CodeThread }) {
         </span>
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm text-ink">{thread.title}</div>
-          <div className="truncate text-xs text-ink-3">
+          <div className="truncate text-xs text-ink-3" suppressHydrationWarning>
             {s ? tr(...s.label()) : ""} · {ago(thread.activityAt)}
           </div>
         </div>

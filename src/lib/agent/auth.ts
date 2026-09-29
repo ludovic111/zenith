@@ -31,7 +31,9 @@ export function agentToken(): string {
 export function viaToken(request: Request): boolean {
   const given = request.headers.get("x-zenith-token") ?? "";
   const want = agentToken();
-  return given.length === want.length && timingSafeEqual(Buffer.from(given), Buffer.from(want));
+  const a = Buffer.from(given);
+  const b = Buffer.from(want);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 /** Same-origin JSON from zenith's pages, or the local token. */
@@ -40,12 +42,14 @@ export function mayAct(request: Request): boolean {
   return isSameOrigin(request) && (request.headers.get("content-type") ?? "").startsWith("application/json");
 }
 
-// Agents asking agents: a ceiling so a loop can't run away.
-const recent: number[] = [];
-export function underLimit(max = 12, windowMs = 3600e3): boolean {
+// Ceilings so agents asking agents can't run away: one for local programs, one for all.
+const windows = new Map<string, number[]>();
+export function underLimit(key: string, max: number, windowMs = 3600e3): boolean {
   const t = Date.now();
+  const recent = windows.get(key) ?? [];
   while (recent.length && recent[0] < t - windowMs) recent.shift();
   if (recent.length >= max) return false;
   recent.push(t);
+  windows.set(key, recent);
   return true;
 }

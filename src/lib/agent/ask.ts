@@ -1,6 +1,6 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { config } from "../config";
 import { PROJECTS, projectDir } from "../projects";
@@ -10,6 +10,7 @@ import { codeStatus } from "../code/manager";
 import { codeSettings, dispatch, environmentId, shell, type ModelSelection, type Shell } from "../code/api";
 import { LIFE, aliasesOf, guessTarget, type AgentTarget, type Provider } from "./target";
 import { ensureWorkspace } from "./workspace";
+import { serial, writeJson } from "./files";
 
 /**
  * "Ask zenith": one sentence becomes an agent at work. The request goes to the project it
@@ -98,6 +99,21 @@ async function modelFor(provider: Provider, s: Shell): Promise<{ provider: Provi
   return { provider: chosen, selection: { instanceId, model: FALLBACK_MODEL[chosen] } };
 }
 
+// From the most careful to the most free (zenith code's runtime modes).
+const MODES = ["approval-required", "auto-accept-edits", "auto", "full-access"];
+
+/**
+ * Requests that carry outside words (emails, web pages, CI logs, another agent's brief)
+ * run at most in "auto": the agent works freely, but Claude's and Codex's reviewers stop
+ * risky actions (exfiltration, destructive commands) a crafted message could ask for.
+ * Your own words to a project keep your usual mode.
+ */
+function runtimeFor(usual: string, untrusted: boolean): string {
+  if (!untrusted) return usual;
+  const i = MODES.indexOf(usual);
+  return i >= 0 && i < MODES.indexOf("auto") ? usual : "auto";
+}
+
 export type AskLogEntry = { at: string; target: string; threadId: string; environmentId: string; source: AskSource; nowId?: string; title: string };
 
 export async function askLog(): Promise<AskLogEntry[]> {
@@ -108,11 +124,11 @@ export async function askLog(): Promise<AskLogEntry[]> {
   }
 }
 
-async function remember(entry: AskLogEntry) {
-  const list = [entry, ...(await askLog())].slice(0, 200);
-  await mkdir(path.dirname(LOG), { recursive: true });
-  await writeFile(LOG, JSON.stringify(list, null, 2));
-}
+const remember = (entry: AskLogEntry) =>
+  serial(LOG, async () => {
+    const list = [entry, ...(await askLog())].slice(0, 200);
+    await writeJson(LOG, list);
+  });
 
 const titleOf = (prompt: string) => {
   const line = prompt.split("\n").find((l) => l.trim())?.trim() ?? prompt.trim();
@@ -128,15 +144,14 @@ export async function ask(input: AskInput): Promise<AskResult> {
   let text = input.prompt.trim();
   if (!text) throw new Error(tr("Demande vide.", "Empty request."));
   const all = targets();
-  let target = input.target && all.some((t) => t.id === input.target) ? input.target : guessTarget(text, all);
+  if (input.target && !all.some((t) => t.id === input.target)) throw new Error(tr(`Destination inconnue : ${input.target}.`, `Unknown destination: ${input.target}.`));
+  let target = input.target ?? guessTarget(text, all);
   // "@my-app fix the login": the mention chose the target, the rest is the request.
   const forced = /^\s*@([\w-]+)\s+/.exec(text);
-  if (forced && !input.target) {
-    const hit = all.find((t) => t.id === forced[1].toLowerCase() || t.aliases.includes(forced[1].toLowerCase()));
-    if (hit) {
-      target = hit.id;
-      text = text.slice(forced[0].length).trim();
-    }
+  const hit = forced && all.find((t) => t.id === forced[1].toLowerCase() || t.aliases.includes(forced[1].toLowerCase()));
+  if (forced && hit) {
+    if (!input.target) target = hit.id;
+    text = text.slice(forced[0].length).trim();
   }
 
   const folder = target === LIFE ? { dir: await ensureWorkspace(), title: tr("Ma vie", "My life") } : folderOf(target);
@@ -144,7 +159,10 @@ export async function ask(input: AskInput): Promise<AskResult> {
   const { id: projectId, shell: s } = await codeProject(folder.dir, folder.title);
   const { selection } = await modelFor(input.provider ?? c.agent.provider, s);
   const settings = await codeSettings();
-  const runtimeMode = settings.projectSettingsOverrides?.[projectId]?.defaultRuntimeMode ?? settings.defaultRuntimeMode ?? "full-access";
+  const runtimeMode = runtimeFor(
+    settings.projectSettingsOverrides?.[projectId]?.defaultRuntimeMode ?? settings.defaultRuntimeMode ?? "full-access",
+    target === LIFE || (input.source !== undefined && input.source !== "bar" && input.source !== "command"),
+  );
   const title = input.title?.trim() || titleOf(text);
   const threadId = randomUUID();
   const createdAt = new Date().toISOString();

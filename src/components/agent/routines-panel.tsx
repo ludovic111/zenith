@@ -62,7 +62,7 @@ export function RoutinesList({ routines }: { routines: RoutineView[] }) {
               {r.title}
               {!r.enabled && <span className="ml-2 text-xs text-ink-3">{tr("en pause", "paused")}</span>}
             </div>
-            <div className="truncate text-xs text-ink-3">
+            <div className="truncate text-xs text-ink-3" suppressHydrationWarning>
               {when(r)} · {r.target}
               {r.last && (
                 <>

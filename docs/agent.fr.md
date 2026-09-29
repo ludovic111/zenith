@@ -84,7 +84,8 @@ Des agents qui travaillent seuls, une fois par jour à heure fixe, listés dans 
 ## Sécurité
 
 - Seules les pages de zenith (même origine, JSON) et les programmes locaux qui lisent `.data/agent-token` (créé en mode 600) peuvent lancer un agent. Une page web ne le peut pas, même ouverte sur ce Mac.
-- Les agents ont les permissions de zenith code. Pour plus de prudence, mets son mode par défaut sur *approbation requise* dans les réglages de zenith code : l'agent demande alors avant chaque commande et modification.
+- **Les mots venus d'ailleurs n'ont jamais tous les droits.** Tout ce qui porte un texte que zenith n'a pas écrit — éléments de Maintenant (e-mails, notes, CI), routines, demandes d'autres agents, et toute demande à ton agent de vie — tourne au plus en mode **auto** de zenith code : l'agent travaille seul, mais les relecteurs de Claude et de Codex bloquent les actions risquées (faire sortir des données, commandes destructrices) qu'un e-mail piégé pourrait demander. Ce que tu tapes pour un projet garde ton mode habituel. Un mode par défaut plus strict (*approbation requise*, *modifications acceptées*) l'emporte toujours.
+- Les consignes de l'agent lui disent que les e-mails, pages et messages sont des données, jamais des ordres, et les demandes que zenith écrit le rappellent.
 - Chaque demande, sa destination et son thread sont notés dans `.data/agent.json`.
 
 ## Sous le capot

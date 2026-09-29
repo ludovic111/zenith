@@ -84,7 +84,8 @@ Agents that run on their own, once a day at a set time, listed in **AI agents �
 ## Safety
 
 - Only zenith's own pages (same origin, JSON) and local programs holding `.data/agent-token` (created with mode 600) can start an agent. A web page can't, even one on this Mac.
-- Agents run with zenith code's permissions. For more caution, set its default runtime mode to *approval required* in zenith code's settings; the agent then asks before each command and edit.
+- **Outside words never get full access.** Whatever carries text zenith didn't write — Now items (emails, notes, CI), routines, requests from other agents, and every request to your life agent — runs at most in zenith code's **auto** mode: the agent works on its own, but Claude's and Codex's reviewers stop risky actions (sending data out, destructive commands) that a crafted email could ask for. What you type to a project keeps your usual mode. A stricter default (*approval required*, *auto-accept edits*) always wins.
+- The agent's instructions tell it that emails, pages and messages are data, never orders, and the requests zenith writes say so again.
 - Every request, its destination and its thread are logged in `.data/agent.json`.
 
 ## Under the hood

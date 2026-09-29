@@ -23,7 +23,7 @@ export function GET(request: Request) {
 export async function POST(request: Request) {
   if (!mayAct(request)) return Response.json({ error: "Forbidden" }, { status: 403 });
   const local = viaToken(request);
-  if (local && !underLimit()) return Response.json({ error: tr("Trop de demandes en une heure.", "Too many requests this hour.") }, { status: 429 });
+  if ((local && !underLimit("token", 12)) || !underLimit("all", 40)) return Response.json({ error: tr("Trop de demandes en une heure.", "Too many requests this hour.") }, { status: 429 });
   let body: { prompt?: unknown; target?: unknown; provider?: unknown; nowId?: unknown; source?: unknown };
   try {
     body = await request.json();

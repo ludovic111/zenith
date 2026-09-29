@@ -196,11 +196,14 @@ const attempt = async (fn) => {
     return text(await fn());
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    return text(/fetch failed|ECONNREFUSED|abort/i.test(msg) ? NOT_RUNNING : `${tr("Échec", "Failed")}: ${msg}`);
+    if (/timeout|abort/i.test(msg))
+      return text(tr("zenith n'a pas répondu à temps : la demande a peut-être abouti. Vérifie avec zenith_now avant de réessayer.", "zenith didn't answer in time: the request may have gone through. Check with zenith_now before retrying."));
+    return text(/fetch failed|ECONNREFUSED/i.test(msg) ? NOT_RUNNING : `${tr("Échec", "Failed")}: ${msg}`);
   }
 };
 
-const TARGETS = ["life", ...PROJECTS, "zenith"];
+// Only projects with a folder can host an agent.
+const TARGETS = ["life", ...PROJECTS.filter((id) => (CONFIG.projects ?? []).some((p) => p?.id === id && p.dir)), "zenith"];
 
 server.registerTool(
   "zenith_now",

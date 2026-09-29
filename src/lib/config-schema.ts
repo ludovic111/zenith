@@ -177,7 +177,10 @@ export const ConfigSchema = z.object({
       /** Model id, e.g. "claude-opus-5-5". Default: zenith code's default, else your latest thread's. */
       model: z.string().optional(),
       /** Agents that run on their own at a given time, once a day. */
-      routines: z.array(Routine).default([]),
+      routines: z
+        .array(Routine)
+        .refine((list) => new Set(list.map((r) => r.id)).size === list.length, { message: "routine ids must be unique" })
+        .default([]),
     })
     .default({ enabled: true, home: "~/.zenith/life", provider: "claude", routines: [] }),
 });
