@@ -4,12 +4,12 @@ import path from "node:path";
 import { config } from "../config";
 import { tr } from "../i18n";
 import { codeStatus } from "../code/manager";
-import { shell, threadDetail } from "../code/api";
 import { ask, followUp } from "./ask";
 import { underLimit } from "./auth";
 import { serial, writeJson } from "./files";
 import { selfOrigin } from "./workspace";
 import { LIFE, mention } from "./target";
+import { waitForTurn } from "./talk";
 
 /**
  * The gateway: talk to your agent from your phone, through a Telegram bot of your own
@@ -71,41 +71,22 @@ async function say(chat: number, text: string) {
 
 const link = (environmentId: string, threadId: string) => `${selfOrigin()}/code/${encodeURIComponent(environmentId)}/${encodeURIComponent(threadId)}`;
 
-/** The agent's words since `since` (all of this turn's messages). */
-const answerSince = (messages: { role: string; text: string; createdAt?: string }[], since: number) =>
-  messages
-    .filter((m) => m.role === "assistant" && m.text.trim() && Date.parse(m.createdAt ?? "") >= since)
-    .map((m) => m.text.trim())
-    .join("\n\n");
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
 /** Waits for the turn started at `since` to end (or to need you), then sends its answer. */
 async function relay(chat: number, threadId: string, environmentId: string, since: number) {
-  const until = Date.now() + WATCH_MS;
   let typing = 0;
-  while (Date.now() < until) {
-    await sleep(3000);
-    if (Date.now() - typing > 4500) {
-      typing = Date.now();
-      telegram("sendChatAction", { chat_id: chat, action: "typing" }).catch(() => {});
-    }
-    const t = (await shell().catch(() => null))?.threads.find((x) => x.id === threadId);
-    if (!t) continue;
-    if (t.hasPendingApprovals || t.hasPendingUserInput) {
-      const d = await threadDetail(threadId).catch(() => null);
-      const said = d ? answerSince(d.messages, since) : "";
-      return say(chat, `${said ? `${said}\n\n` : ""}${tr("⏸ J'ai besoin de ton accord pour continuer, dans zenith sur ton Mac :", "⏸ I need your go-ahead to continue, in zenith on your Mac:")} ${link(environmentId, threadId)}`);
-    }
-    const turn = t.latestTurn;
-    // Until the new turn shows up, the latest one may still be the previous, finished one.
-    if (!turn || turn.state === "running" || (turn.completedAt && Date.parse(turn.completedAt) < since)) continue;
-    const d = await threadDetail(threadId).catch(() => null);
-    const answer = d ? answerSince(d.messages, since) || (d.messages.filter((m) => m.role === "assistant").at(-1)?.text ?? "") : "";
-    if (turn.state === "completed") return say(chat, answer || tr("C'est fait.", "Done."));
-    return say(chat, `${answer ? `${answer}\n\n` : ""}${tr("⚠︎ Je me suis arrêté en route", "⚠︎ I stopped on the way")}${t.session?.lastError ? ` : ${t.session.lastError}` : ""}. ${link(environmentId, threadId)}`);
-  }
-  await say(chat, tr(`Toujours au travail. Suis-moi ici : ${link(environmentId, threadId)}`, `Still working. Follow along here: ${link(environmentId, threadId)}`));
+  const end = await waitForTurn(threadId, since, WATCH_MS, () => {
+    if (Date.now() - typing < 4500) return;
+    typing = Date.now();
+    telegram("sendChatAction", { chat_id: chat, action: "typing" }).catch(() => {});
+  });
+  const said = end.text ? `${end.text}\n\n` : "";
+  if (end.state === "completed") return say(chat, end.text || tr("C'est fait.", "Done."));
+  if (end.state === "needs-you") return say(chat, `${said}${tr("⏸ J'ai besoin de ton accord pour continuer, dans zenith sur ton Mac :", "⏸ I need your go-ahead to continue, in zenith on your Mac:")} ${link(environmentId, threadId)}`);
+  if (end.state === "timeout") return say(chat, tr(`Toujours au travail. Suis-moi ici : ${link(environmentId, threadId)}`, `Still working. Follow along here: ${link(environmentId, threadId)}`));
+  return say(chat, `${said}${tr("⚠︎ Je me suis arrêté en route", "⚠︎ I stopped on the way")}${end.error ? ` : ${end.error}` : ""}. ${link(environmentId, threadId)}`);
 }
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const told = new Map<number, number>();
 

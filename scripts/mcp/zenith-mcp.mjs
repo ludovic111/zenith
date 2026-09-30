@@ -178,13 +178,13 @@ const NOT_RUNNING = tr(
   "zenith is not answering: start it (npm run dev, or the zenith app) to act.",
 );
 
-async function act(pathname, body) {
+async function act(pathname, body, timeoutMs = 60_000) {
   const token = await readFile(path.join(ROOT, ".data", "agent-token"), "utf8").catch(() => "");
   const res = await fetch(`${BASE}${pathname}`, {
     method: body === undefined ? "GET" : "POST",
     headers: { "x-zenith-token": token.trim(), ...(body === undefined ? {} : { "content-type": "application/json" }) },
     body: body === undefined ? undefined : JSON.stringify(body),
-    signal: AbortSignal.timeout(60_000),
+    signal: AbortSignal.timeout(timeoutMs),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
@@ -281,6 +281,51 @@ server.registerTool(
     attempt(async () => {
       await act("/api/now", snooze_hours ? { id, action: "snooze", hours: snooze_hours } : { id, action: "done" });
       return snooze_hours ? tr(`Reporté de ${snooze_hours} h.`, `Snoozed for ${snooze_hours} h.`) : tr("Classé.", "Filed away.");
+    }),
+);
+
+// ——— The team talks ————————————————————————————————————————————————————————————
+// zenith writes ZENITH_AGENT (who this agent is) into each team folder's MCP config.
+
+const ME = process.env.ZENITH_AGENT || null;
+
+server.registerTool(
+  "zenith_team",
+  {
+    title: "Who is on the team",
+    description: "The user's team of agents: id, first name, job, what each is for, which subscription it runs on (Claude or Codex), and who is working right now. Use it before zenith_message.",
+    annotations: { readOnlyHint: true },
+  },
+  () =>
+    attempt(async () => {
+      const list = await act("/api/agent/team");
+      return list
+        .map((m) => `- ${m.id}${m.id === ME ? tr(" (toi)", " (you)") : ""}: ${m.name}${m.title ? `, ${m.title}` : ""} · ${m.provider === "codex" ? "Codex" : "Claude"}${m.busy ? tr(" · occupé", " · busy") : ""} — ${m.role}`)
+        .join("\n");
+    }),
+);
+
+server.registerTool(
+  "zenith_message",
+  {
+    title: "Talk to a teammate",
+    description:
+      "Send a message to another agent of the team (see zenith_team) and get their answer: ask a question, share a finding, or hand over something that fits their role. They answer from their own folder, memory and tools (e.g. a Claude agent can read Gmail when a Codex one can't). The same pair keeps one conversation, so follow-ups have context. Waits for the answer (up to 10 minutes) unless wait is false.",
+    inputSchema: {
+      to: z.string().describe("teammate id, e.g. \"life\" for the main agent or a bot id"),
+      message: z.string().min(2).describe("what you want to tell or ask them; self-contained"),
+      wait: z.boolean().optional().describe("wait for their answer (default true)"),
+    },
+  },
+  ({ to, message, wait }) =>
+    attempt(async () => {
+      const r = await act("/api/agent/message", { from: ME, to, text: message, wait: wait !== false }, 11 * 60_000);
+      if (!r.reply) return tr(`Message envoyé à « ${to} » (thread ${r.threadId}).`, `Message sent to "${to}" (thread ${r.threadId}).`);
+      const { state, text: said } = r.reply;
+      if (state === "completed") return said || tr("(réponse vide)", "(empty answer)");
+      if (state === "needs-you") return `${said}\n\n${tr("⏸ Il attend l'accord de la personne pour continuer.", "⏸ They are waiting for the person's go-ahead.")} ${BASE}${r.href}`;
+      if (state === "timeout") return tr(`Pas encore de réponse après 10 minutes ; suis-le avec zenith_agent (thread ${r.threadId}).`, `No answer after 10 minutes yet; follow up with zenith_agent (thread ${r.threadId}).`);
+      return `${said}\n\n${tr("⚠︎ Il s'est arrêté en route.", "⚠︎ They stopped on the way.")}`;
     }),
 );
 

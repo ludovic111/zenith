@@ -228,6 +228,20 @@ export const ConfigSchema = z.object({
         .array(Bot)
         .refine((list) => new Set(list.map((b) => b.id)).size === list.length, { message: "bot ids must be unique" })
         .default([]),
+      /**
+       * MCP servers the whole team can use (Claude Code and Codex alike), by name: a local
+       * program `{ "command", "args", "env" }` or a remote one `{ "url", "headers" }`.
+       * Anything with an MCP server becomes something your agents can act on.
+       */
+      mcp: z
+        .record(
+          z.string().regex(/^[\w-]+$/, "letters, digits, dashes"),
+          z.union([
+            z.object({ command: z.string(), args: z.array(z.string()).default([]), env: z.record(z.string(), z.string()).default({}) }),
+            z.object({ url: z.string().url(), headers: z.record(z.string(), z.string()).default({}) }),
+          ]),
+        )
+        .default({}),
       /** Talk to your agent from elsewhere. Telegram: the bot token is TELEGRAM_BOT_TOKEN (.env.local). */
       gateway: z
         .object({
@@ -242,7 +256,7 @@ export const ConfigSchema = z.object({
         })
         .default({}),
     })
-    .default({ enabled: true, home: "~/.zenith/life", name: "zenith", provider: "claude", routines: [], bots: [], gateway: {} }),
+    .default({ enabled: true, home: "~/.zenith/life", name: "zenith", provider: "claude", routines: [], bots: [], mcp: {}, gateway: {} }),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;

@@ -133,6 +133,7 @@ async function instructions(bot: Bot | null, team: Bot[], skillList: Skill[]): P
     ...(bot ? [`| life | ${main} | ${c.agent.provider === "codex" ? "Codex" : "Claude"} | ${tr("l'agent principal : tout ce qui n'a pas d'autre place", "the main agent: everything without another place")} |`] : []),
     ...team.filter((b) => b.id !== bot?.id).map((b) => `| ${b.id} | ${b.name}${b.title ? ` · ${b.title}` : ""} | ${b.provider === "codex" ? "Codex" : "Claude"} | ${b.role.replace(/\s+/g, " ").trim()} |`),
   ];
+  const mcpNames = Object.keys(c.agent.mcp).join(", ");
   const skillRows = skillList.map((s) => `- **${s.id}** — ${s.description || s.name} (\`${tilde(s.file)}\`)`);
 
   const intro = bot
@@ -181,14 +182,26 @@ async function instructions(bot: Bot | null, team: Bot[], skillList: Skill[]): P
       tr(
         `## ${bot ? "L'équipe" : "Ton équipe"}
 
-Des agents nommés, chacun dans son dossier, avec sa mémoire, sur l'abonnement Claude ou ChatGPT (Codex) de ${who()}. Confie-leur ce qui est dans leur rôle avec \`zenith_delegate\` (\`project\` = leur id), suis-les avec \`zenith_agent\`, puis rends compte. Ils ne voient pas cette conversation : donne une consigne complète.
+Des agents nommés, chacun dans son dossier, avec sa mémoire, sur l'abonnement Claude ou ChatGPT (Codex) de ${who()}. Vous vous parlez :
+
+- **\`zenith_message\`** : écris à un coéquipier (une question, une info, un coup de main) et reçois sa réponse ; la conversation entre vous deux continue au message suivant. C'est le bon outil quand l'autre a ce qui te manque (un agent sur Claude lit Gmail, un agent sur Codex a le navigateur).
+- **\`zenith_delegate\`** (\`project\` = son id) : confie-lui une tâche longue qu'il mène seul, suis-la avec \`zenith_agent\`, puis rends compte.
+- **\`zenith_team\`** : qui fait quoi, et qui est occupé en ce moment.
+
+Ils ne voient pas cette conversation : écris des messages complets. Ne renvoie pas une question à celui qui te l'a posée.
 
 | id | Nom | Sur | Rôle |
 | --- | --- | --- | --- |
 ${mates.join("\n")}`,
         `## ${bot ? "The team" : "Your team"}
 
-Named agents, each in its own folder with its own memory, on ${who()}'s Claude or ChatGPT (Codex) subscription. Hand them what fits their role with \`zenith_delegate\` (\`project\` = their id), follow them with \`zenith_agent\`, then report back. They don't see this conversation: give a complete brief.
+Named agents, each in its own folder with its own memory, on ${who()}'s Claude or ChatGPT (Codex) subscription. You talk to each other:
+
+- **\`zenith_message\`**: write to a teammate (a question, a finding, a hand) and get their answer; the conversation between you two continues with the next message. The right tool when they have what you lack (an agent on Claude reads Gmail, an agent on Codex has the browser).
+- **\`zenith_delegate\`** (\`project\` = their id): hand them a long task they run on their own, follow it with \`zenith_agent\`, then report back.
+- **\`zenith_team\`**: who does what, and who is busy right now.
+
+They don't see this conversation: write complete messages. Don't bounce a question back to whoever asked it.
 
 | id | Name | On | Role |
 | --- | --- | --- | --- |
@@ -217,6 +230,13 @@ ${skillRows.join("\n") || "_(none yet)_"}`,
 - **Actualiser « Ma vie »** : relève Gmail et Google Agenda et écris ${tilde(path.join(ROOT, ".data", "life.json"))} au format décrit dans ${tilde(path.join(ROOT, "docs", "releves.fr.md"))} (type \`Life\` de ${tilde(path.join(ROOT, "src", "lib", "sources", "life.ts"))}).
 - **Classer** : quand une chose de « Maintenant » est réglée, \`zenith_done\` avec son id.
 
+## Agir sur tout
+
+- **Le Mac et ses apps** : \`open\` (fichiers, apps, liens), \`osascript\` (AppleScript : Mail, Calendrier, Notes, Rappels, Messages, Finder, Musique, Safari…), \`shortcuts run "<nom>"\` pour ses Raccourcis (\`shortcuts list\`), \`pbcopy\` / \`pbpaste\`, \`say\`.
+- **Le web** : les outils de navigateur de ta session (sur Codex : navigateur et *computer use* ; sur Claude : ses connecteurs, et Claude in Chrome s'il est activé), sinon \`curl\`.
+- **Ses services** : les serveurs MCP de l'équipe${mcpNames ? ` (${mcpNames})` : ""}, et ses outils en ligne de commande (\`gh\`, \`railway\`, \`supabase\`…). S'il manque un accès, dis lequel ajouter dans \`agent.mcp\` de zenith.config.json plutôt que de bricoler.
+- Ce qui ne se voit pas se vérifie : relis ce que tu as changé (une capture \`screencapture -x\`, une lecture) avant de dire que c'est fait.
+
 ## Apprendre
 
 Tu t'améliores à chaque conversation, sans qu'on te le demande :
@@ -231,6 +251,13 @@ Tu t'améliores à chaque conversation, sans qu'on te le demande :
 - **Code in a project**: to look, read its folder. For real work (a bug, a feature, CI), **hand it** to an agent in that project with \`zenith_delegate\`: it works in parallel and shows up in zenith's sidebar.
 - **Refresh "My life"**: capture Gmail and Google Calendar and write ${tilde(path.join(ROOT, ".data", "life.json"))} in the format described in ${tilde(path.join(ROOT, "docs", "releves.md"))} (the \`Life\` type in ${tilde(path.join(ROOT, "src", "lib", "sources", "life.ts"))}).
 - **File things away**: when something from Now is handled, \`zenith_done\` with its id.
+
+## Acting on anything
+
+- **The Mac and its apps**: \`open\` (files, apps, links), \`osascript\` (AppleScript: Mail, Calendar, Notes, Reminders, Messages, Finder, Music, Safari…), \`shortcuts run "<name>"\` for their Shortcuts (\`shortcuts list\`), \`pbcopy\` / \`pbpaste\`, \`say\`.
+- **The web**: your session's browser tools (on Codex: browser and *computer use*; on Claude: its connectors, and Claude in Chrome when enabled), else \`curl\`.
+- **Their services**: the team's MCP servers${mcpNames ? ` (${mcpNames})` : ""}, and their command-line tools (\`gh\`, \`railway\`, \`supabase\`…). When access is missing, say which one to add under \`agent.mcp\` in zenith.config.json rather than improvising.
+- Check what you can't see: look at what you changed (a \`screencapture -x\`, a read) before saying it's done.
 
 ## Learning
 
@@ -319,18 +346,33 @@ export async function ensureWorkspace(botId?: string | null): Promise<string> {
   await linkSkills(path.join(home, ".claude", "skills"));
   await linkSkills(path.join(home, ".agents", "skills"));
 
-  // zenith's MCP server, for Claude Code (project .mcp.json) and Codex (project config).
-  const server = { command: process.execPath, args: [MCP_SCRIPT], env: { ZENITH_URL: selfOrigin() } };
+  // zenith's MCP server (it knows which teammate it serves) and the team's own MCP servers,
+  // for Claude Code (project .mcp.json) and Codex (project config).
+  const me = { ZENITH_URL: selfOrigin(), ZENITH_AGENT: bot?.id ?? "life" };
+  const shared = config().agent.mcp;
+  const forClaude = Object.fromEntries(
+    Object.entries(shared).map(([name, s]) => [name, "url" in s ? { type: "http", url: s.url, headers: s.headers } : { command: s.command, args: s.args, env: s.env }]),
+  );
   const mcp = await readJson(path.join(home, ".mcp.json"));
   const servers = (mcp.mcpServers as Record<string, unknown> | undefined) ?? {};
-  await put(path.join(home, ".mcp.json"), JSON.stringify({ ...mcp, mcpServers: { ...servers, zenith: server } }, null, 2) + "\n");
+  const zenith = { command: process.execPath, args: [MCP_SCRIPT], env: me };
+  await put(path.join(home, ".mcp.json"), JSON.stringify({ ...mcp, mcpServers: { ...servers, ...forClaude, zenith } }, null, 2) + "\n");
   const settings = await readJson(path.join(home, ".claude", "settings.json"));
-  const enabled = new Set([...((settings.enabledMcpjsonServers as string[] | undefined) ?? []), "zenith"]);
+  const enabled = new Set([...((settings.enabledMcpjsonServers as string[] | undefined) ?? []), ...Object.keys(shared), "zenith"]);
   await put(path.join(home, ".claude", "settings.json"), JSON.stringify({ ...settings, enabledMcpjsonServers: [...enabled] }, null, 2) + "\n");
-  await put(
-    path.join(home, ".codex", "config.toml"),
-    `# Written by zenith.\n[mcp_servers.zenith]\ncommand = ${JSON.stringify(server.command)}\nargs = [${JSON.stringify(MCP_SCRIPT)}]\nenv = { ZENITH_URL = ${JSON.stringify(selfOrigin())} }\n`,
-  );
+  const q = (v: string) => JSON.stringify(v);
+  const table = (o: Record<string, string>) => `{ ${Object.entries(o).map(([k, v]) => `${q(k)} = ${q(v)}`).join(", ")} }`;
+  const toml = [
+    "# Written by zenith.",
+    // Long enough to wait for a teammate's answer (zenith_message).
+    `[mcp_servers.zenith]\ncommand = ${q(process.execPath)}\nargs = [${q(MCP_SCRIPT)}]\nenv = ${table(me)}\ntool_timeout_sec = 900`,
+    ...Object.entries(shared).map(([name, s]) =>
+      "url" in s
+        ? `[mcp_servers.${q(name)}]\nurl = ${q(s.url)}${Object.keys(s.headers).length ? `\nhttp_headers = ${table(s.headers)}` : ""}`
+        : `[mcp_servers.${q(name)}]\ncommand = ${q(s.command)}\nargs = [${s.args.map(q).join(", ")}]${Object.keys(s.env).length ? `\nenv = ${table(s.env)}` : ""}`,
+    ),
+  ];
+  await put(path.join(home, ".codex", "config.toml"), toml.join("\n\n") + "\n");
   // A repository, so zenith code can checkpoint and diff what the agent changes here.
   if (!existsSync(path.join(home, ".git"))) {
     await new Promise<void>((resolve) => execFile("git", ["init", "-q"], { cwd: home }, () => resolve()));

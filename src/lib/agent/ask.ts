@@ -20,7 +20,7 @@ import { serial, writeJson } from "./files";
  * answer and approve.
  */
 
-export type AskSource = "bar" | "command" | "now" | "routine" | "watch" | "mcp" | "gateway";
+export type AskSource = "bar" | "command" | "now" | "routine" | "watch" | "mcp" | "gateway" | "team";
 
 export type AskInput = {
   prompt: string;
@@ -32,6 +32,8 @@ export type AskInput = {
   nowId?: string;
   /** Thread title; default: the prompt's first line. */
   title?: string;
+  /** The teammate who asked (a message between agents). */
+  from?: string;
 };
 
 export type AskResult = { environmentId: string; threadId: string; href: string; target: string };
@@ -138,7 +140,7 @@ function runtimeFor(usual: string, untrusted: boolean): string {
   return i >= 0 && i < MODES.indexOf("auto") ? usual : "auto";
 }
 
-export type AskLogEntry = { at: string; target: string; threadId: string; environmentId: string; source: AskSource; nowId?: string; title: string };
+export type AskLogEntry = { at: string; target: string; threadId: string; environmentId: string; source: AskSource; nowId?: string; title: string; from?: string };
 
 export async function askLog(): Promise<AskLogEntry[]> {
   try {
@@ -227,7 +229,7 @@ export async function ask(input: AskInput): Promise<AskResult> {
   }
 
   const env = await environmentId();
-  await remember({ at: createdAt, target, threadId, environmentId: env, source: input.source ?? "bar", nowId: input.nowId, title });
+  await remember({ at: createdAt, target, threadId, environmentId: env, source: input.source ?? "bar", nowId: input.nowId, title, from: input.from });
   return { environmentId: env, threadId, target, href: `/code/${encodeURIComponent(env)}/${encodeURIComponent(threadId)}` };
 }
 
