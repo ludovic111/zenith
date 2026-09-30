@@ -1,6 +1,7 @@
 import "server-only";
 import { config, type SubscriptionConfig } from "./config";
 import { tr } from "./i18n";
+import { liveArray } from "./live";
 
 /**
  * Subscriptions and recurring fees, listed in zenith.config.json (`subscriptions`).
@@ -29,7 +30,7 @@ export function monthly(s: Pick<Subscription, "amount" | "period">) {
   return s.amount;
 }
 
-export const SUBSCRIPTIONS: Subscription[] = config().subscriptions;
+export const SUBSCRIPTIONS: Subscription[] = liveArray(() => config().subscriptions);
 
 /** What needs action: failing payments, most urgent first. */
 export const urgent = () =>

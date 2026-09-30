@@ -57,6 +57,8 @@ import { agentUi } from "@/lib/agent/ui";
 import { NowList } from "@/components/agent/now-list";
 import { AskButton } from "@/components/agent/ask-button";
 import { setupPrompt } from "@/lib/agent/tasks";
+import { needsWelcome } from "@/lib/setup";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +86,7 @@ function Count({ n }: { n: number }) {
 }
 
 export default function Home() {
+  if (needsWelcome()) redirect("/bienvenue");
   if (!PROJECTS.length) return <Welcome />;
   const agent = agentUi().enabled;
   return (

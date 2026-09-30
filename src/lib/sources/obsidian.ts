@@ -24,7 +24,7 @@ export const vaultPath = () =>
   });
 
 /** Folder where zenith writes its own notes in the vault: nothing else is ever touched. */
-export const EXPORT_DIR = config().obsidian.exportDir;
+export const exportDir = () => config().obsidian.exportDir;
 
 export type Note = {
   path: string;
@@ -58,7 +58,7 @@ async function walk(dir: string, root: string, out: string[] = []) {
     if (e.name.startsWith(".")) continue;
     const p = path.join(dir, e.name);
     if (e.isDirectory()) {
-      if (path.relative(root, p) !== EXPORT_DIR) await walk(p, root, out);
+      if (path.relative(root, p) !== exportDir()) await walk(p, root, out);
     } else if (e.name.endsWith(".md")) out.push(p);
   }
   return out;

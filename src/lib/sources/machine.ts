@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import { cached } from "../source";
-import { PROJECTS, PROJECTS_ROOT } from "../projects";
+import { PROJECTS, projectsRoot } from "../projects";
 import { tr } from "../i18n";
 
 const run = promisify(execFile);
@@ -94,7 +94,7 @@ export const devServers = () =>
     const rows = await Promise.all(
       [...found.values()].map(async (s) => {
         const cwd = (await sh("lsof", ["-a", "-p", s.pid, "-d", "cwd", "-Fn"])).split("\n").find((l) => l.startsWith("n"))?.slice(1) ?? null;
-        const rel = cwd && cwd.startsWith(PROJECTS_ROOT + path.sep) ? path.relative(PROJECTS_ROOT, cwd) : null;
+        const rel = cwd && cwd.startsWith(projectsRoot() + path.sep) ? path.relative(projectsRoot(), cwd) : null;
         return { port: s.port, command: s.command, dir: cwd, project: rel ? rel.split(path.sep)[0] : null };
       }),
     );

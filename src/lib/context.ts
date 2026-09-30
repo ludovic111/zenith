@@ -24,7 +24,7 @@ import { departures } from "./sources/transit";
 import { hackerNews, hnMentions, localNews } from "./sources/news";
 import { crypto } from "./sources/markets";
 import { brewOutdated, devServers, machine } from "./sources/machine";
-import { notes, todo, vaultPath, EXPORT_DIR } from "./sources/obsidian";
+import { notes, todo, vaultPath, exportDir } from "./sources/obsidian";
 import { weather, describe } from "./sources/weather";
 
 /**
@@ -756,14 +756,14 @@ export async function writeContext() {
   const targets = [path.join(process.cwd(), "context")];
   if (process.env.OBSIDIAN_EXPORT !== "0") {
     const vault = await vaultPath().catch(() => null);
-    if (vault) targets.push(path.join(vault, EXPORT_DIR));
+    if (vault) targets.push(path.join(vault, exportDir()));
   }
   for (const dir of targets) {
     await rm(path.join(dir, "projets"), { recursive: true, force: true }).catch(() => {});
     for (const [rel, body] of files) {
       const out = path.join(dir, rel);
       await mkdir(path.dirname(out), { recursive: true });
-      const front = dir.endsWith(EXPORT_DIR)
+      const front = dir.endsWith(exportDir())
         ? tr(`---\ngenere_par: zenith\nmis_a_jour: ${new Date().toISOString()}\n---\n\n`, `---\ngenerated_by: zenith\nupdated: ${new Date().toISOString()}\n---\n\n`)
         : "";
       await writeFile(out, front + body);

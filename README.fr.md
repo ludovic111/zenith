@@ -35,8 +35,7 @@ Il faut macOS ou Linux, Node.js 22.16+ (24+ conseillé) et git. Facultatif : la 
 git clone https://github.com/ludovic111/zenith.git
 cd zenith
 npm install
-cp zenith.config.example.json zenith.config.json   # puis édite-le : projets, ville, langue ("locale": "fr-FR")
-npm run dev                                         # http://127.0.0.1:4748
+npm run dev          # http://127.0.0.1:4748
 ```
 
 Pour construire zenith code (l'espace de code), une fois :
@@ -45,7 +44,7 @@ Pour construire zenith code (l'espace de code), une fois :
 npm run code:build
 ```
 
-Avec zenith code construit et Claude Code ou Codex installé, tu peux sauter l'édition du fichier : la première page a un bouton **Laisser zenith se configurer**. Un agent lit tes dossiers de projets, écrit ta config, et ne te demande que ce qu'il ne peut pas deviner.
+Le premier lancement ouvre un **accueil** en six étapes courtes : ta langue, ton nom et ta ville (météo, fériés, devise), tes projets (trouvés dans ton dossier de code, avec leur dépôt GitHub et leur description), ton agent et son équipe (prénoms, têtes, chacun sur ton abonnement Claude ou ChatGPT — depuis des modèles ou de zéro), et leurs routines. Tout s'enregistre au fil de l'eau et s'applique aussitôt ; tout se change ensuite dans **Réglages → Général, Équipe, Projets**. Aucun fichier à éditer.
 
 ### App Mac
 
@@ -57,7 +56,7 @@ Construit tout, installe **zenith.app** et fait tourner le serveur en arrière-p
 
 ## Configuration
 
-Tout ce qui te concerne vit dans **`zenith.config.json`** — à la racine ou dans `perso/`, tous deux ignorés par git —, validé au démarrage ; `zenith.schema.json` donne l'autocomplétion dans ton éditeur. Chaque champ est décrit dans [docs/configuration.md](docs/configuration.md).
+Tout ce qui te concerne vit dans **`zenith.config.json`** — à la racine ou dans `perso/`, tous deux ignorés par git. L'accueil et les réglages l'écrivent pour toi (chaque changement est vérifié, l'ancien fichier gardé dans `.data/config-backups/`, et zenith le relit sans redémarrer). Tu peux aussi l'éditer à la main : `zenith.schema.json` donne l'autocomplétion dans ton éditeur. Chaque champ est décrit dans [docs/configuration.md](docs/configuration.md).
 
 Les clés d'API se collent dans **Réglages → Sources de données** (`/reglages/sources`) : elles sont écrites dans `.env.local` (ignoré par git) et appliquées sans redémarrage. Sans aucune clé, zenith montre déjà tes dépôts locaux, tes sessions d'agents, la météo, l'actualité et le reste.
 

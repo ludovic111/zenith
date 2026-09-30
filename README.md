@@ -35,8 +35,7 @@ Requirements: macOS or Linux, Node.js 22.16+ (24+ recommended), git. Optional: t
 git clone https://github.com/ludovic111/zenith.git
 cd zenith
 npm install
-cp zenith.config.example.json zenith.config.json   # then edit it: your projects, city, language
-npm run dev                                         # http://127.0.0.1:4748
+npm run dev          # http://127.0.0.1:4748
 ```
 
 To build zenith code (the coding workspace) once:
@@ -45,7 +44,7 @@ To build zenith code (the coding workspace) once:
 npm run code:build
 ```
 
-With zenith code built and Claude Code or Codex installed, you can skip the config editing: the first page has a **Let zenith set itself up** button. An agent reads your project folders, writes your config, and asks only what it can't guess.
+The first launch opens a **welcome** in six short steps: your language, your name and city (weather, holidays, currency), your projects (found in your code folder, with their GitHub repository and description), your agent and its team (first names, faces, each on your Claude or ChatGPT subscription — from templates or your own), and their routines. Everything is saved as you go and applies at once; change any of it later in **Settings → General, Team, Projects**. No file to edit.
 
 ### Mac app
 
@@ -57,7 +56,7 @@ Builds everything, installs **zenith.app** and keeps the server running in the b
 
 ## Configuration
 
-Everything about you lives in **`zenith.config.json`** — at the root or in `perso/`, both git-ignored. It's validated on start; `zenith.schema.json` gives your editor autocompletion. See [docs/configuration.md](docs/configuration.md) for every field.
+Everything about you lives in **`zenith.config.json`** — at the root or in `perso/`, both git-ignored. The welcome and the settings write it for you (each change is validated, the previous file is kept in `.data/config-backups/`, and zenith reloads it without a restart). You can also edit it by hand: `zenith.schema.json` gives your editor autocompletion. See [docs/configuration.md](docs/configuration.md) for every field.
 
 ```jsonc
 {

@@ -2,7 +2,7 @@ import "server-only";
 import { readdir, readFile, stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { PROJECTS, PROJECTS_ROOT, projectDir, type ProjectId } from "../projects";
+import { PROJECTS, projectsRoot, projectDir, type ProjectId } from "../projects";
 import { cached } from "../source";
 
 export type Agent = "claude" | "codex";
@@ -53,7 +53,7 @@ const CODEX_DIR = process.env.CODEX_HOME ?? path.join(os.homedir(), ".codex");
 const ROOTS: [string, Session["project"]][] = [
   ...PROJECTS.flatMap((p) => {
     const dir = projectDir(p);
-    return [...(dir ? [dir] : []), ...p.extraDirs.map((d) => path.resolve(PROJECTS_ROOT, d))].map((d) => [d, p.id] as [string, ProjectId]);
+    return [...(dir ? [dir] : []), ...p.extraDirs.map((d) => path.resolve(projectsRoot(), d))].map((d) => [d, p.id] as [string, ProjectId]);
   }),
   [process.cwd(), "zenith"],
 ];

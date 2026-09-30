@@ -45,6 +45,8 @@ export const SETTINGS = (): { label: string; items: SettingsSection[] }[] => [
     label: "zenith",
     items: [
       { href: "/reglages", name: tr("Général", "General") },
+      { href: "/reglages/equipe", name: tr("Équipe", "Team") },
+      { href: "/reglages/projets", name: tr("Projets", "Projects") },
       { href: "/reglages/sources", name: tr("Sources de données", "Data sources") },
     ],
   },

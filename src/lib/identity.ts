@@ -1,6 +1,7 @@
 import "server-only";
 import { config, type BrandName, type IdentityConfig, type NetworkName } from "./config";
 import type { ProjectId } from "./projects";
+import { liveObject } from "./live";
 
 /**
  * Each project's identity card: what no API can guess (names, handles, ids, services).
@@ -18,17 +19,18 @@ export type Field = Identity["ids"][number];
 
 const EMPTY: Identity = { names: [], domains: [], emails: [], socials: [], stores: [], ids: [], services: [], todo: [] };
 
-const c = config();
+export const OWNER = liveObject(() => {
+  const c = config();
+  return {
+    name: c.owner.name,
+    firstName: c.owner.firstName ?? c.owner.name.split(/\s+/)[0] ?? "",
+    place: c.location?.name ?? "",
+    emails: c.owner.emails,
+    socials: c.owner.socials,
+    accounts: c.owner.accounts,
+  };
+});
 
-export const OWNER = {
-  name: c.owner.name,
-  firstName: c.owner.firstName ?? c.owner.name.split(/\s+/)[0] ?? "",
-  place: c.location?.name ?? "",
-  emails: c.owner.emails,
-  socials: c.owner.socials,
-  accounts: c.owner.accounts,
-};
-
-export const IDENTITY: Record<ProjectId, Identity> = Object.fromEntries(c.projects.map((p) => [p.id, p.identity ?? EMPTY]));
+export const IDENTITY: Record<ProjectId, Identity> = liveObject(() => Object.fromEntries(config().projects.map((p) => [p.id, p.identity ?? EMPTY])));
 
 export const identityOf = (id: ProjectId): Identity => IDENTITY[id] ?? EMPTY;

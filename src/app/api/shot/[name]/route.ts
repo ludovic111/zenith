@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { PROJECTS, PROJECTS_ROOT, findProject, projectDir } from "@/lib/projects";
+import { PROJECTS, findProject, projectDir, projectsRoot } from "@/lib/projects";
 
 const TYPES: Record<string, string> = {
   ".webp": "image/webp",
@@ -14,7 +14,7 @@ const TYPES: Record<string, string> = {
 /** Where a project's `shot` may live: under projectsRoot, else (bare file name) in any project's shots/ folder. */
 function candidates(shot: string) {
   const home = shot.replace(/^~(?=$|\/)/, process.env.HOME ?? "~");
-  const out = [path.resolve(PROJECTS_ROOT, home)];
+  const out = [path.resolve(projectsRoot(), home)];
   if (!shot.includes("/"))
     for (const p of PROJECTS) {
       const dir = projectDir(p);
