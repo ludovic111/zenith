@@ -10,7 +10,7 @@ import { codeNavigate, sameDir, STATUS_STYLE, threadHref, threadKey, useCode } f
 const SHOWN = 8;
 
 /** A project's zenith code threads, live, on its dashboard page. Hidden until it has some. */
-export function CodeThreadsPanel({ dir, glow }: { dir: string; glow: string }) {
+export function CodeThreadsPanel({ dir, className }: { dir: string; className?: string }) {
   const router = useRouter();
   const { snapshot, ready } = useCode();
   const project = snapshot?.projects.find((p) => sameDir(p.workspaceRoot, dir));
@@ -19,11 +19,14 @@ export function CodeThreadsPanel({ dir, glow }: { dir: string; glow: string }) {
   if (!threads.length) return null;
 
   return (
-    <div className="mt-5">
+    <div className={className}>
       <Panel
-        kicker="zenith code"
-        title={tr("Threads en cours", "Open threads")}
-        accent={glow}
+        title={
+          <>
+            {tr("Threads zenith code", "zenith code threads")} <span className="font-normal text-ink-3 tabular">{threads.length}</span>
+          </>
+        }
+        bodyClassName="px-2 pb-2 pt-1"
         action={
           ready && (
             <button
@@ -32,25 +35,25 @@ export function CodeThreadsPanel({ dir, glow }: { dir: string; glow: string }) {
                 router.push("/code");
                 codeNavigate({ to: "new-thread", environmentId: project.environmentId, projectId: project.id });
               }}
-              className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1 text-xs text-ink-2 transition hover:bg-white/[0.06] hover:text-ink"
+              className="inline-flex h-7 items-center gap-1.5 rounded-md border border-line bg-surface px-2 text-xs font-medium text-ink-2 transition-colors hover:bg-hover hover:text-ink"
             >
               <MessageSquarePlus className="size-3.5" /> {tr("Nouveau thread", "New thread")}
             </button>
           )
         }
       >
-        <ul className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
+        <ul className="grid gap-x-2 sm:grid-cols-2">
           {threads.slice(0, SHOWN).map((t) => {
             const s = t.status ? STATUS_STYLE[t.status] : null;
             return (
               <li key={threadKey(t)}>
-                <Link href={threadHref(t)} className="flex items-center gap-3 rounded-xl px-2 py-1.5 text-sm text-ink-2 transition hover:bg-white/[0.04] hover:text-ink">
+                <Link href={threadHref(t)} className="flex h-8 items-center gap-2.5 rounded-md px-2 text-[13px] text-ink-2 transition-colors hover:bg-hover hover:text-ink">
                   <span className="size-1.5 shrink-0 rounded-full" style={{ background: s?.dot ?? "var(--ink-3)" }} />
                   <span className="min-w-0 flex-1 truncate">{t.title}</span>
                   {s ? (
-                    <span className="shrink-0 text-xs" style={{ color: s.dot }}>{tr(...s.label())}</span>
+                    <span className="shrink-0 text-xs text-ink-3">{tr(...s.label())}</span>
                   ) : (
-                    t.branch && <span className="shrink-0 truncate font-mono text-[11px] text-ink-3">{t.branch}</span>
+                    t.branch && <span className="max-w-32 shrink-0 truncate font-mono text-2xs text-ink-3">{t.branch}</span>
                   )}
                 </Link>
               </li>

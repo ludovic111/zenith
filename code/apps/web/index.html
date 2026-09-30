@@ -227,8 +227,19 @@
         };
 
         try {
-          // zenith: no stored preference means the zenith theme (mirrors useTheme.ts).
-          const storedTheme = window.localStorage.getItem("t3code:theme") ?? "zenith";
+          // zenith: the system appearance by default (mirrors useTheme.ts). The night-sky
+          // "zenith" theme used to be the default: drop it once so the app matches the dashboard.
+          try {
+            if (window.localStorage.getItem("zenith:theme-v2") === null) {
+              if (window.localStorage.getItem("t3code:theme") === "zenith") {
+                window.localStorage.removeItem("t3code:theme");
+              }
+              window.localStorage.setItem("zenith:theme-v2", "1");
+            }
+          } catch {
+            // Best-effort: the stored theme still applies below.
+          }
+          const storedTheme = window.localStorage.getItem("t3code:theme");
           const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
           // Older builds stored the dark T3 Chat palette as its own theme id
           // and every maintainer theme under a t3- prefix; keep those

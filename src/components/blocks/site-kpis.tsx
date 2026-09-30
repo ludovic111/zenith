@@ -5,10 +5,20 @@ import { tr } from "@/lib/i18n";
 import { uptime } from "@/lib/sources/uptime";
 import { deployments, traffic } from "@/lib/sources/railway";
 import { localRepo } from "@/lib/sources/git";
+import { cn } from "@/lib/utils";
 import { Stat } from "@/components/z/stat";
 
 const COLS = ["", "xl:grid-cols-1", "xl:grid-cols-2", "xl:grid-cols-3", "xl:grid-cols-4", "xl:grid-cols-5", "xl:grid-cols-6"];
 const MD = ["", "md:grid-cols-1", "md:grid-cols-2", "md:grid-cols-3"];
+
+/** A project's key numbers, in one flat card. Up to six tiles per row. */
+export function KpiStrip({ children, count = 6, className }: { children: React.ReactNode; count?: number; className?: string }) {
+  return (
+    <div className={cn("grid grid-cols-2 gap-x-6 gap-y-5 rounded-xl border border-line bg-surface px-5 py-4", MD[Math.min(3, count)], COLS[Math.min(6, count)], className)}>
+      {children}
+    </div>
+  );
+}
 
 /**
  * A site's numbers: uptime and latency (probes), requests, visitors and last deploy (Railway),
@@ -28,7 +38,7 @@ export async function SiteKpis({ project: p }: { project: Project }) {
   const tiles: React.ReactNode[] = [];
   if (mine.length) {
     tiles.push(
-      <Stat key="up" label={tr("Disponibilité", "Uptime")} value={ratio} format={{ style: "percent", maximumFractionDigits: 2 }} color={p.glow} hint={tr(`${mine[0]?.samples.length ?? 0} mesures récentes`, `${mine[0]?.samples.length ?? 0} recent checks`)} />,
+      <Stat key="up" label={tr("Disponibilité", "Uptime")} value={ratio} format={{ style: "percent", maximumFractionDigits: 2 }} color={p.color} hint={tr(`${mine[0]?.samples.length ?? 0} mesures récentes`, `${mine[0]?.samples.length ?? 0} recent checks`)} />,
       <Stat key="ms" label={tr("Latence", "Latency")} value={mine[0]?.last?.ms ?? null} suffix=" ms" hint={mine[0]?.avg != null ? tr(`moyenne ${mine[0].avg} ms`, `average ${mine[0].avg} ms`) : undefined} />,
     );
   }
@@ -65,9 +75,5 @@ export async function SiteKpis({ project: p }: { project: Project }) {
     );
   }
   if (!tiles.length) return null;
-  return (
-    <div className={`grid grid-cols-2 gap-6 rounded-3xl border border-white/10 bg-black/30 p-6 backdrop-blur ${MD[Math.min(3, tiles.length)]} ${COLS[Math.min(6, tiles.length)]}`}>
-      {tiles}
-    </div>
-  );
+  return <KpiStrip count={tiles.length}>{tiles}</KpiStrip>;
 }

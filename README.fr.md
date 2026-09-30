@@ -1,6 +1,6 @@
 # zenith
 
-**Un ciel privé au-dessus de tes projets et de ta journée.** zenith est un tableau de bord local pour qui mène plusieurs projets à la fois : l'état de chaque projet, ses déploiements, son code et ses agents IA, ton agenda, tes mails, ton argent et l'actualité — et **zenith code**, un vrai espace de code pour Claude Code et Codex, intégré.
+**Tes projets et ta journée, en un coup d'œil.** zenith est un tableau de bord local pour qui mène plusieurs projets à la fois : l'état de chaque projet, ses déploiements, son code et ses agents IA, ton agenda, tes mails, ton argent et l'actualité — et **zenith code**, un vrai espace de code pour Claude Code et Codex, intégré.
 
 Et il agit. **Demande à zenith** n'importe quoi en une phrase (⌘J) : un agent IA s'y met aussitôt, dans le bon projet ou sur toute ta vie, avec tout ce que zenith sait. La liste **Maintenant** montre ce qui t'attend — un paiement en échec, des acheteurs à qui répondre, une CI cassée, un anniversaire — et confie chaque chose à un agent d'un geste. Il prépare, tu valides.
 
@@ -10,19 +10,19 @@ Il tourne sur ta machine, ne répond que sur `127.0.0.1` et n'envoie tes donnée
 
 | Page | Contenu |
 | --- | --- |
-| **Demande à zenith** | Une seule boîte, partout (vue d'ensemble, pages projet, ⌘J, ⌘K) : dis ce que tu veux, un agent le fait et s'ouvre en thread. Va au projet que tu nommes, sinon à ton agent de vie |
+| **Demande à zenith** | Une seule boîte, partout (accueil, pages projet, ⌘J, ⌘K) : dis ce que tu veux, un agent le fait et s'ouvre en thread. Va au projet que tu nommes, sinon à ton agent de vie. La plupart des pages proposent aussi des actions d'agent en un clic sur ce qu'elles montrent (préparer une réponse, réparer une CI, revoir les abonnements…) |
 | **Maintenant** | Ce qui t'attend, le plus pressant d'abord, avec pour chaque chose *Confier* à un agent, *fait* et *plus tard*. Et les routines : des agents qui travaillent seuls chaque matin |
-| Vue d'ensemble | Système orbital des projets (état en direct), chiffres clés, cartes projet, six mois de commits, fil de tout ce qui se passe |
+| Accueil | Aujourd'hui en une ligne, Demande à zenith, Maintenant, tous les projets dans un tableau (état, latence, chiffres clés, commits), l'argent, les agents au travail, six mois de commits, le fil de tout ce qui se passe |
 | Ma vie | Météo, qualité de l'air, UV et pollens, agenda (14 jours, fériés, anniversaires), ce qui t'attend, morceau en cours, temps d'écran, dépenses, rythme de travail |
 | Projets | Une page par projet : disponibilité, latence, trafic et déploiements (Railway), CI, issues et PR (GitHub), releases et téléchargements, note et avis App Store, MRR RevenueCat, sessions d'agents, notes Obsidian, carte d'identité |
 | **Code** | **zenith code** : parle à Claude Code, Codex et d'autres agents dans n'importe lequel de tes projets — diffs, terminaux, worktrees, validations. Ses threads vivent dans la barre latérale de zenith, sous leur projet |
-| **Claude, ChatGPT** | Leurs apps de bureau arrimées dans la fenêtre de zenith (zenith.app), plugins et connecteurs compris |
 | Veille | Qui parle de tes projets (Hacker News, GitHub), notifications, nouvelles étoiles, contributions, actualité, marchés, état du Mac |
-| Agents IA | Toutes les sessions Claude Code et Codex : en cours, coût, lignes écrites, PR, commande pour reprendre |
+| Agents | Toutes les sessions Claude Code et Codex : en cours, coût, lignes écrites, PR, commande pour reprendre ; limites des forfaits ; routines |
 | Abonnements | Tout ce que tu paies, total mensuel dans ta devise, prochains prélèvements, paiements en échec, jauges Claude / ChatGPT |
 | Annuaire | Noms, identifiants, domaines (registraire, renouvellement, certificat, e-mail), stores et services de chaque projet |
+| Réglages | Un seul endroit pour zenith (configuration, zenith code, l'agent, brancher tes outils d'IA, l'app Mac, sources de données et clés) et zenith code (fournisseurs, projets, contrôle de source, raccourcis…) |
 
-**⌘J** pour demander à zenith, **⌘K** pour aller partout (ou tape une phrase pour demander).
+**⌘J** pour demander à zenith, **⌘K** pour aller partout (pages, projets, threads, réglages — ou tape une phrase pour demander), **⌘B** pour masquer la barre latérale, **⌘,** pour les réglages. zenith suit l'apparence claire ou sombre du système.
 
 ## Démarrage
 
@@ -50,13 +50,13 @@ Avec zenith code construit et Claude Code ou Codex installé, tu peux sauter l'�
 npm run mac:install
 ```
 
-Construit tout, installe **zenith.app** (fenêtre native) et fait tourner le serveur en arrière-plan (LaunchAgent sur `127.0.0.1:4747`). À relancer après une mise à jour ; `npm run mac:uninstall` retire tout. L'app lit aussi Calendrier, Rappels, Contacts (anniversaires seulement), Mail, Musique/Spotify et le temps d'écran — en lecture seule, après la demande de macOS.
+Construit tout, installe **zenith.app** et fait tourner le serveur en arrière-plan (LaunchAgent sur `127.0.0.1:4747`). À relancer après une mise à jour ; `npm run mac:uninstall` retire tout. zenith.app est une vraie fenêtre Mac : barre latérale translucide, feux de signalisation dans une barre de titre unifiée qu'on glisse et double-clique, apparence claire et sombre, menus natifs (⌘, réglages, ⌃⌘S barre latérale, ⌘[ ⌘] précédent et suivant), notifications et pastille dans le Dock quand un service tombe. L'app lit aussi Calendrier, Rappels, Contacts (anniversaires seulement), Mail, Musique/Spotify et le temps d'écran — en lecture seule, après la demande de macOS.
 
 ## Configuration
 
 Tout ce qui te concerne vit dans **`zenith.config.json`** — à la racine ou dans `perso/`, tous deux ignorés par git —, validé au démarrage ; `zenith.schema.json` donne l'autocomplétion dans ton éditeur. Chaque champ est décrit dans [docs/configuration.md](docs/configuration.md).
 
-Les clés d'API se collent dans **Sources de données** (`/reglages`) : elles sont écrites dans `.env.local` (ignoré par git) et appliquées sans redémarrage. Sans aucune clé, zenith montre déjà tes dépôts locaux, tes sessions d'agents, la météo, l'actualité et le reste.
+Les clés d'API se collent dans **Réglages → Sources de données** (`/reglages/sources`) : elles sont écrites dans `.env.local` (ignoré par git) et appliquées sans redémarrage. Sans aucune clé, zenith montre déjà tes dépôts locaux, tes sessions d'agents, la météo, l'actualité et le reste.
 
 ## Pour les agents IA
 

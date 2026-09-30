@@ -17,15 +17,15 @@ export function HBars({
   return (
     <ul className={cn("space-y-2.5", className)}>
       {rows.map((r, i) => (
-        <li key={r.key ?? i} className="text-sm">
+        <li key={r.key ?? i} className="text-[13px]">
           <div className="mb-1 flex items-baseline justify-between gap-3">
             <span className="min-w-0 truncate text-ink-2">{r.label}</span>
-            <span className="shrink-0 font-mono text-xs text-ink tabular">
+            <span className="shrink-0 text-xs font-medium text-ink tabular">
               {format(r.value)}
-              {r.hint && <span className="ml-1.5 text-ink-3">{r.hint}</span>}
+              {r.hint && <span className="ml-1.5 font-normal text-ink-3">{r.hint}</span>}
             </span>
           </div>
-          <div className="h-1.5 rounded-full bg-white/[0.05]">
+          <div className="h-1.5 rounded-full bg-muted">
             <div className="h-full rounded-full" style={{ width: `${Math.max(1.5, (r.value / max) * 100)}%`, background: r.color ?? color }} />
           </div>
         </li>

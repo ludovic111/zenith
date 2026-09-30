@@ -50,6 +50,10 @@ const PROJECT_WAIT_MS = 10_000;
 // Coalesce bursts of shell events (a running turn updates its thread often).
 const SNAPSHOT_DEBOUNCE_MS = 250;
 
+/** What a press in the title bar must leave alone. */
+const DRAG_EXCLUDED =
+  "a,button,input,textarea,select,label,summary,[role=button],[role=link],[role=menuitem],[role=tab],[contenteditable],[data-slot=button],[data-slot$=trigger],[draggable=true]";
+
 /**
  * Mounted in the authenticated shell. Opens the project zenith asked for (via
  * `?zenithProject=` or a `zenith-code:open-project` message): its most recent
@@ -99,28 +103,50 @@ export function ZenithEmbedCoordinator() {
     let disposed = false;
     const onMessage = (event: MessageEvent) => {
       if (!isTrustedParentMessage(event, allowed)) return;
-      const { type, path, ownSidebar, request } = event.data;
+      const { type, path, ownSidebar, request, insetLeft } = event.data;
       if (type === ZENITH_MESSAGE.openProject && typeof path === "string" && path.length > 0) {
         setPendingProjectFocus(path);
         firstSeenAt.current = null;
         setPending(path);
       } else if (type === ZENITH_MESSAGE.chrome && typeof ownSidebar === "boolean") {
         setOwnSidebar(ownSidebar);
+        // Room for zenith.app's traffic lights when zenith's sidebar is hidden.
+        const inset = typeof insetLeft === "number" && insetLeft > 0 ? Math.min(insetLeft, 160) : 0;
+        if (inset) {
+          document.documentElement.style.setProperty(
+            "--workspace-controls-left",
+            `calc(${inset}px + 0.75rem)`,
+          );
+        } else {
+          document.documentElement.style.removeProperty("--workspace-controls-left");
+        }
       } else if (type === ZENITH_MESSAGE.navigate) {
         const parsed = parseNavigateRequest(request);
         if (parsed) navigate(parsed);
       }
     };
+    // The top bar is the window's title bar in zenith.app: a press there, off any
+    // control, lets zenith move (or, double-clicked, zoom) the window.
+    const onMouseDown = (event: MouseEvent) => {
+      const topbar =
+        parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--workspace-topbar-height")) || 52;
+      const target = event.target instanceof Element ? event.target : null;
+      if (event.button !== 0 || event.clientY > topbar || !target) return;
+      if (target.closest(DRAG_EXCLUDED)) return;
+      postToZenith({ type: ZENITH_MESSAGE.drag, zoom: event.detail === 2 }, allowed);
+    };
     void zenithParentOrigins().then((resolved) => {
       if (disposed) return;
       allowed = resolved;
       window.addEventListener("message", onMessage);
+      window.addEventListener("mousedown", onMouseDown);
       setOrigins(resolved);
       postToZenith({ type: ZENITH_MESSAGE.ready }, resolved);
     });
     return () => {
       disposed = true;
       window.removeEventListener("message", onMessage);
+      window.removeEventListener("mousedown", onMouseDown);
     };
   }, []);
 

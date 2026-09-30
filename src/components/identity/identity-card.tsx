@@ -8,12 +8,18 @@ import { date } from "@/lib/format";
 import { appStore, domainInfo, type DomainInfo } from "@/lib/sources/domains";
 import { sponsors } from "@/lib/sources/github";
 import { urgent } from "@/lib/subscriptions";
+import { agentUi } from "@/lib/agent/ui";
+import { cn } from "@/lib/utils";
+import { AskButton } from "@/components/agent/ask-button";
 import { Panel } from "@/components/z/panel";
 import { Status } from "@/components/z/status";
 import { BrandIcon } from "./brand-icon";
 import { Copy } from "./copy";
 
 const days = (iso: string | null) => (iso ? Math.round((new Date(iso).getTime() - Date.now()) / 864e5) : null);
+
+/** Tone of a deadline: red under two weeks, orange under two months. */
+export const deadlineTone = (d: number | null) => (d == null ? "text-ink-2" : d < 14 ? "text-bad" : d < 60 ? "text-warn" : "text-ink-2");
 
 /** Tasks that follow from the live state: renewals coming up, failing payments. */
 export async function liveTodos(p: Project, domains: DomainInfo[]) {
@@ -45,6 +51,35 @@ const host = (url?: string) => {
   }
 };
 
+/** A prompt that hands one to-do to an agent: prepare everything, ask before acting. */
+const todoPrompt = (task: string, about?: string) =>
+  tr(
+    `${about ? `${about} — ` : ""}à faire : « ${task} ». Prépare tout ce qu'il faut (étapes exactes, liens, brouillons de messages) et fais ce qui est sans risque. Demande-moi avant d'envoyer, de payer, de publier ou de supprimer quoi que ce soit. Quand c'est réglé, dis-le-moi en une phrase.`,
+    `${about ? `${about} — ` : ""}to do: "${task}". Prepare everything needed (exact steps, links, draft messages) and do what is safe. Ask me before sending, paying, publishing or deleting anything. When it's done, tell me in one sentence.`,
+  );
+
+/** To-dos, each with a button that hands it to an agent when the agent is on. */
+export function TodoList({ items, about, className }: { items: string[]; about?: string; className?: string }) {
+  const ui = agentUi();
+  if (!items.length) return null;
+  return (
+    <ul className={cn("divide-y divide-line", className)}>
+      {items.map((t) => (
+        <li key={t} className="flex items-center gap-3 py-2">
+          <CircleAlert className="size-3.5 shrink-0 text-warn" />
+          <span className="min-w-0 flex-1 text-[13px] text-ink-2">{t}</span>
+          {ui.enabled && <AskButton className="shrink-0" target="life" label={tr("Prépare ça", "Prepare it")} prompt={todoPrompt(t, about)} />}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * Everything tied to a project that no API can guess (names, ids, handles, services), next to
+ * what can be checked live (domains, certificates, mail, the App Store). `full` shows the
+ * project's name as the title (the directory); off, it sits inside the project's own page.
+ */
 export async function IdentityCard({ project: p, full = true }: { project: Project; full?: boolean }) {
   const id = identityOf(p.id);
   const [domains, store] = await Promise.all([
@@ -56,126 +91,157 @@ export async function IdentityCard({ project: p, full = true }: { project: Proje
 
   return (
     <Panel
-      kicker={tr("Carte d'identité", "Identity card")}
-      title={full ? <span className="inline-flex items-center gap-2"><span>{p.emoji}</span>{p.name}</span> : tr("Tout ce qui est lié au projet", "Everything tied to the project")}
-      accent={p.glow}
+      title={
+        full ? (
+          <span className="inline-flex items-center gap-2">
+            <span className="size-2 rounded-full" style={{ background: p.color }} />
+            {p.name}
+          </span>
+        ) : (
+          // Inside a project page, under its own "Identity" heading: no second title.
+          tr("Noms, domaines, comptes", "Names, domains, accounts")
+        )
+      }
+      action={
+        <>
+          {todo.length > 0 && (
+            <span className="inline-flex items-center gap-1 text-warn">
+              <CircleAlert className="size-3.5" />
+              <span className="tabular">{todo.length}</span>
+            </span>
+          )}
+          {p.site && (
+            <a href={p.site} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 hover:text-ink">
+              {siteHost}
+              <ArrowUpRight className="size-3" />
+            </a>
+          )}
+        </>
+      }
     >
-      <div className="grid gap-x-10 gap-y-8 md:grid-cols-2 xl:grid-cols-3">
-        <Section title={tr("Noms & identifiants", "Names & ids")}>
-          {id.names.length + id.ids.length ? <Fields fields={[...id.names, ...id.ids]} /> : <p className="text-sm text-ink-3">{tr("Rien de noté.", "Nothing noted.")}</p>}
+      <div className="grid gap-x-10 gap-y-6 md:grid-cols-2">
+        <Section title={tr("Noms & identifiants", "Names & ids")} n={id.names.length + id.ids.length}>
+          {id.names.length + id.ids.length ? <Fields fields={[...id.names, ...id.ids]} /> : <None>{tr("Rien de noté.", "Nothing noted.")}</None>}
         </Section>
 
-        <Section title={tr("Domaines & adresses", "Domains & addresses")}>
-          {domains.map((d) => <Domain key={d.domain} d={d} />)}
+        <Section title={tr("Domaines", "Domains")} n={id.domains.length}>
+          {domains.map((d) => (
+            <Domain key={d.domain} d={d} />
+          ))}
           {!id.domains.length &&
             (siteHost ? (
-              <div className="text-sm">
-                <div className="flex items-center gap-2 text-ink-2">
-                  <Globe className="size-3.5 text-ink-3" />
+              <dl className="grid grid-cols-[7rem_1fr] gap-x-3 gap-y-1.5 text-[13px]">
+                <dt className="text-xs leading-5 text-ink-3">{tr("Adresse", "Address")}</dt>
+                <dd className="min-w-0">
                   <Copy value={siteHost} mono />
-                </div>
-                <div className="mt-1 text-xs text-ink-3">
-                  {p.railway ? tr("Adresse Railway, pas de domaine propre", "Railway address, no custom domain") : tr("Pas de domaine propre", "No custom domain")}
-                </div>
-              </div>
+                  <div className="text-xs text-ink-3">{p.railway ? tr("Adresse Railway, pas de domaine propre", "Railway address, no custom domain") : tr("Pas de domaine propre", "No custom domain")}</div>
+                </dd>
+              </dl>
             ) : (
-              <p className="text-sm text-ink-3">{tr("Aucun domaine.", "No domain.")}</p>
+              <None>{tr("Aucun domaine.", "No domain.")}</None>
             ))}
         </Section>
 
-        <Section title={tr("E-mails", "Email")}>
+        <Section title={tr("E-mails", "Email")} n={id.emails.length}>
           {id.emails.length ? (
-            <ul className="space-y-2.5">
+            <dl className="grid grid-cols-[7rem_1fr] gap-x-3 gap-y-1.5 text-[13px]">
               {id.emails.map((e) => (
-                <li key={e.address} className="text-sm">
-                  <div className="flex items-center gap-2">
-                    <a href={`mailto:${e.address}`} aria-label={tr(`Écrire à ${e.address}`, `Write to ${e.address}`)}><Mail className="size-3.5" style={{ color: p.glow }} /></a>
+                <div key={e.address} className="contents">
+                  <dt className="truncate text-xs leading-5 text-ink-3" title={e.role}>
+                    {e.role || tr("Adresse", "Address")}
+                  </dt>
+                  <dd className="flex min-w-0 items-center gap-2">
                     <Copy value={e.address} />
-                  </div>
-                  <div className="ml-5.5 text-xs text-ink-3">{e.role}</div>
-                </li>
+                    <a href={`mailto:${e.address}`} aria-label={tr(`Écrire à ${e.address}`, `Write to ${e.address}`)} className="shrink-0 text-ink-3 hover:text-ink">
+                      <Mail className="size-3.5" />
+                    </a>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <None>{tr("Aucune adresse propre au projet.", "No project-specific address.")}</None>
+          )}
+        </Section>
+
+        <Section title={tr("Réseaux sociaux", "Social accounts")} n={id.socials.length}>
+          {id.socials.length ? <Socials socials={id.socials} /> : <None>{tr("Pas de compte dédié.", "No dedicated account.")}</None>}
+        </Section>
+
+        <Section title={tr("Stores & téléchargement", "Stores & downloads")} n={id.stores.length}>
+          {id.stores.length ? (
+            <ul className="space-y-1.5">
+              {id.stores.map((s) => (
+                <Service key={s.label} s={s} />
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-ink-3">{tr("Aucune adresse propre au projet.", "No project-specific address.")}</p>
-          )}
-          {domains.map((d) => (
-            <p key={d.domain} className="mt-2 text-xs text-ink-3">
-              {d.domain}{tr(" : ", ": ")}{d.mail ? d.mail.provider : tr("ne reçoit pas d'e-mails (aucun MX)", "receives no email (no MX)")}
-            </p>
-          ))}
-        </Section>
-
-        <Section title={tr("Réseaux sociaux", "Social accounts")}>
-          {id.socials.length ? <Socials socials={id.socials} /> : <p className="text-sm text-ink-3">{tr("Pas de compte dédié.", "No dedicated account.")}</p>}
-        </Section>
-
-        <Section title={tr("Stores & téléchargement", "Stores & downloads")}>
-          {id.stores.length ? (
-            <ul className="space-y-2.5">
-              {id.stores.map((s) => <Service key={s.label} s={s} />)}
-            </ul>
-          ) : (
-            <p className="text-sm text-ink-3">{p.appStore ? tr("Voir l'App Store ci-dessous.", "See the App Store below.") : tr("Application web, rien à installer.", "Web app, nothing to install.")}</p>
+            <None>{p.appStore ? tr("App Store ci-dessous.", "App Store below.") : tr("Application web, rien à installer.", "Web app, nothing to install.")}</None>
           )}
           {store && store.ok && store.data && (
-            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl border border-line bg-black/20 px-3 py-2 text-xs text-ink-2">
-              <span>{tr("En ligne : ", "Live: ")}<span className="font-mono text-ink">v{store.data.version}</span></span>
-              <span>{tr("depuis le", "since")} {date(store.data.updated, { day: "numeric", month: "long" })}</span>
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md bg-muted px-2.5 py-1.5 text-xs text-ink-2">
+              <span>
+                App Store <span className="font-medium text-ink tabular">v{store.data.version}</span>
+              </span>
+              <span className="text-ink-3">{tr("depuis le", "since")} {date(store.data.updated, { day: "numeric", month: "short" })}</span>
               <span className="inline-flex items-center gap-1">
-                <Star className="size-3 text-sun" />
-                {store.data.rating != null
-                  ? `${store.data.rating.toFixed(1)} (${store.data.ratings} ${plural(store.data.ratings, ["avis", "avis"], ["rating", "ratings"])})`
-                  : tr("pas encore de note", "no rating yet")}
+                <Star className="size-3 text-ink-3" />
+                {store.data.rating != null ? `${store.data.rating.toFixed(1)} (${store.data.ratings} ${plural(store.data.ratings, ["avis", "avis"], ["rating", "ratings"])})` : tr("pas encore de note", "no rating yet")}
               </span>
             </div>
           )}
         </Section>
 
-        <Section title={tr("Services & comptes", "Services & accounts")}>
+        <Section title={tr("Services & comptes", "Services & accounts")} n={id.services.length}>
           {id.services.length ? (
-            <ul className="space-y-2.5">
-              {id.services.map((s) => <Service key={s.label} s={s} />)}
+            <ul className="space-y-1.5">
+              {id.services.map((s) => (
+                <Service key={s.label} s={s} />
+              ))}
             </ul>
           ) : (
-            <p className="text-sm text-ink-3">{tr("Aucun service noté.", "No service noted.")}</p>
+            <None>{tr("Aucun service noté.", "No service noted.")}</None>
           )}
         </Section>
       </div>
 
       {todo.length > 0 && (
-        <div className="mt-8 rounded-2xl border border-warn/25 bg-warn/[0.04] p-4">
-          <div className="mb-2 text-[11px] uppercase tracking-[0.18em] text-warn">{tr("À faire", "To do")}</div>
-          <ul className="space-y-1.5">
-            {todo.map((t) => (
-              <li key={t} className="flex gap-2 text-sm text-ink-2">
-                <CircleAlert className="mt-0.5 size-3.5 shrink-0 text-warn" />
-                {t}
-              </li>
-            ))}
-          </ul>
+        <div className="mt-6 border-t border-line pt-3">
+          <div className="text-xs font-medium text-ink-3">
+            {tr("À faire", "To do")} <span className="tabular">{todo.length}</span>
+          </div>
+          <TodoList items={todo} about={p.name} className="mt-1" />
         </div>
       )}
     </Panel>
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, n, children }: { title: string; n?: number; children: React.ReactNode }) {
   return (
     <div className="min-w-0">
-      <div className="mb-3 text-[11px] uppercase tracking-[0.18em] text-ink-3">{title}</div>
+      <div className="mb-2 flex items-baseline gap-1.5 border-b border-line pb-1.5 text-xs font-medium text-ink-3">
+        {title}
+        {!!n && <span className="font-normal tabular">{n}</span>}
+      </div>
       {children}
     </div>
   );
 }
 
+const None = ({ children }: { children: React.ReactNode }) => <p className="text-[13px] text-ink-3">{children}</p>;
+
 function Fields({ fields }: { fields: Field[] }) {
   return (
-    <dl className="space-y-2">
+    <dl className="grid grid-cols-[7rem_1fr] gap-x-3 gap-y-1.5 text-[13px]">
       {fields.map((f) => (
-        <div key={f.label + f.value} className="grid grid-cols-[minmax(0,9rem)_1fr] items-baseline gap-3 text-sm">
-          <dt className="truncate text-xs text-ink-3">{f.label}</dt>
-          <dd className="min-w-0"><Copy value={f.value} mono={f.mono} /></dd>
+        <div key={f.label + f.value} className="contents">
+          <dt className="truncate text-xs leading-5 text-ink-3" title={f.label}>
+            {f.label}
+          </dt>
+          <dd className="min-w-0">
+            <Copy value={f.value} mono={f.mono} />
+          </dd>
         </div>
       ))}
     </dl>
@@ -184,15 +250,17 @@ function Fields({ fields }: { fields: Field[] }) {
 
 export function Socials({ socials }: { socials: Social[] }) {
   return (
-    <ul className="space-y-2.5">
+    <ul className="space-y-1.5">
       {socials.map((s) => (
-        <li key={s.url} className="text-sm">
-          <a href={s.url} target="_blank" rel="noopener noreferrer" className="group inline-flex items-center gap-2 text-ink-2 hover:text-ink">
-            <BrandIcon brand={s.network} size={15} />
-            <span>{s.handle}</span>
-            <ArrowUpRight className="size-3 opacity-0 transition group-hover:opacity-70" />
-          </a>
-          {s.note && <div className="ml-6 text-xs text-ink-3">{s.note}</div>}
+        <li key={s.url} className="text-[13px]">
+          <div className="flex items-center gap-2">
+            <BrandIcon brand={s.network} size={14} className="shrink-0 text-ink-3" />
+            <Copy value={s.handle} />
+            <a href={s.url} target="_blank" rel="noopener noreferrer" aria-label={tr(`Ouvrir ${s.handle}`, `Open ${s.handle}`)} className="shrink-0 text-ink-3 hover:text-ink">
+              <ArrowUpRight className="size-3.5" />
+            </a>
+          </div>
+          {s.note && <div className="ml-[22px] text-xs text-ink-3">{s.note}</div>}
         </li>
       ))}
     </ul>
@@ -200,22 +268,19 @@ export function Socials({ socials }: { socials: Social[] }) {
 }
 
 export function Service({ s }: { s: Link }) {
-  const body = (
-    <>
-      <BrandIcon brand={s.brand} size={15} className="shrink-0" />
-      <span className="min-w-0">
-        <span className="block truncate text-ink-2 group-hover:text-ink">{s.label}</span>
-        {s.value && <span className="block truncate font-mono text-[11px] text-ink-3">{s.value}</span>}
-      </span>
-      {s.url && <ArrowUpRight className="ml-auto size-3 shrink-0 opacity-0 transition group-hover:opacity-70" />}
-    </>
-  );
   return (
-    <li className="text-sm">
-      {s.url ? (
-        <a href={s.url} target="_blank" rel="noopener noreferrer" className="group flex items-center gap-2.5">{body}</a>
-      ) : (
-        <div className="flex items-center gap-2.5">{body}</div>
+    <li className="flex min-w-0 items-center gap-2 text-[13px]">
+      <BrandIcon brand={s.brand} size={14} className="shrink-0 text-ink-3" />
+      <span className="shrink-0 text-ink-2">{s.label}</span>
+      {s.value && (
+        <span className="min-w-0 flex-1">
+          <Copy value={s.value} mono className="text-ink-3" />
+        </span>
+      )}
+      {s.url && (
+        <a href={s.url} target="_blank" rel="noopener noreferrer" aria-label={tr(`Ouvrir ${s.label}`, `Open ${s.label}`)} className={cn("shrink-0 text-ink-3 hover:text-ink", !s.value && "ml-auto")}>
+          <ArrowUpRight className="size-3.5" />
+        </a>
       )}
     </li>
   );
@@ -225,28 +290,47 @@ function Domain({ d }: { d: DomainInfo }) {
   const reg = days(d.expires);
   const cert = days(d.tlsExpires);
   const up = d.status != null && d.status < 400;
+  const long = { day: "numeric", month: "short", year: "numeric" } as const;
   return (
-    <div className="mb-4 text-sm last:mb-0">
-      <div className="flex items-center justify-between gap-3">
-        <a href={`https://${d.domain}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 font-medium text-ink hover:underline">
-          <Globe className="size-3.5 text-ink-3" />
-          {d.domain}
-        </a>
-        <Status health={d.status == null ? "unknown" : up ? "up" : "down"} label={d.status == null ? "?" : String(d.status)} />
+    <div className="mb-4 last:mb-0">
+      <div className="mb-1.5 flex items-center justify-between gap-3">
+        <span className="flex min-w-0 items-center gap-2 text-[13px] font-medium text-ink">
+          <Globe className="size-3.5 shrink-0 text-ink-3" />
+          <Copy value={d.domain} className="text-ink" />
+          <a href={`https://${d.domain}`} target="_blank" rel="noopener noreferrer" aria-label={tr(`Ouvrir ${d.domain}`, `Open ${d.domain}`)} className="shrink-0 text-ink-3 hover:text-ink">
+            <ArrowUpRight className="size-3.5" />
+          </a>
+        </span>
+        <Status health={d.status == null ? "unknown" : up ? "up" : "down"} label={d.status == null ? "—" : `HTTP ${d.status}`} />
       </div>
-      <dl className="mt-2 grid grid-cols-[6.5rem_1fr] gap-x-3 gap-y-1 text-xs">
+      <dl className="grid grid-cols-[7rem_1fr] gap-x-3 gap-y-1 text-xs">
         <dt className="text-ink-3">{tr("Registraire", "Registrar")}</dt>
         <dd className="text-ink-2">{d.registrar ?? "—"}</dd>
         <dt className="text-ink-3">{tr("Renouvellement", "Renewal")}</dt>
-        <dd className={reg != null && reg < 60 ? "text-warn" : "text-ink-2"}>
-          {d.expires ? `${date(d.expires, { day: "numeric", month: "long", year: "numeric" })} · ${reg} ${tr("j", "d")}` : "—"}
+        <dd className={deadlineTone(reg)}>
+          {d.expires ? (
+            <>
+              {date(d.expires, long)} <span className="tabular">· {tr(`${reg} j`, `${reg} d`)}</span>
+            </>
+          ) : (
+            "—"
+          )}
         </dd>
         <dt className="text-ink-3">{tr("Certificat", "Certificate")}</dt>
-        <dd className={cert != null && cert < 14 ? "text-warn" : "text-ink-2"}>
-          {d.tlsExpires ? `${d.tlsIssuer ? `${d.tlsIssuer} · ` : ""}${cert} ${tr("j", "d")}` : "—"}
+        <dd className={cert != null && cert < 14 ? "text-bad" : "text-ink-2"}>
+          {d.tlsExpires ? (
+            <>
+              {d.tlsIssuer ? `${d.tlsIssuer} · ` : ""}
+              <span className="tabular">{tr(`${cert} j`, `${cert} d`)}</span>
+            </>
+          ) : (
+            "—"
+          )}
         </dd>
+        <dt className="text-ink-3">{tr("E-mail", "Email")}</dt>
+        <dd className={d.mail ? "text-ink-2" : "text-ink-3"}>{d.mail ? d.mail.provider : tr("aucun MX, ne reçoit rien", "no MX, receives nothing")}</dd>
         <dt className="text-ink-3">{tr("Acheté le", "Registered")}</dt>
-        <dd className="text-ink-2">{d.created ? date(d.created, { day: "numeric", month: "long", year: "numeric" }) : "—"}</dd>
+        <dd className="text-ink-2">{d.created ? date(d.created, long) : "—"}</dd>
       </dl>
     </div>
   );

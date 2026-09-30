@@ -3,31 +3,11 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
-import { motion } from "motion/react";
-import {
-  Bot,
-  ChevronRight,
-  Command,
-  Contact,
-  FolderPlus,
-  GitPullRequest,
-  LayoutGrid,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Plus,
-  Radar,
-  RotateCw,
-  Search,
-  Settings2,
-  SlidersHorizontal,
-  Sparkles,
-  SquareTerminal,
-  Sun,
-  Wallet,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, FolderPlus, GitPullRequest, PanelLeft, Plus, RotateCw, Search, Settings, SquarePen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { tr } from "@/lib/i18n";
 import { BRAND } from "@/lib/code/brand";
+import { PAGES, SETTINGS, isSettingsPath } from "@/lib/nav";
 import {
   appPathOf,
   codeHref,
@@ -44,17 +24,16 @@ import {
   type CodeThread,
   type CodeThreadStatus,
 } from "@/components/code/store";
-import { ZenithMark } from "./logo";
-import { AssistantIcon } from "@/components/assistants/assistant-icon";
-import { ASSISTANTS, assistantHref, type AssistantId } from "@/lib/assistants";
 import { readPref, subscribePrefs, writePref } from "@/lib/prefs";
 import { openAsk } from "@/components/agent/client";
+import { ZenithMark } from "./logo";
+import { setDrawer, toggleSidebar, useDrawer } from "./sidebar-state";
 
-type NavProject = { id: string; name: string; href: string; color: string; glow: string; emoji: string; tagline: string; dir: string | null };
+export type NavProject = { id: string; name: string; href: string; color: string; tagline: string; dir: string | null };
 
-const COLLAPSED_KEY = "zenith:sidebar";
 const FOLDED_KEY = "zenith:sidebar:folded";
 const FULL_KEY = "zenith:sidebar:full";
+const BACK_KEY = "zenith:settings:back";
 // Threads shown under a project before "more": the rest, unless they need you.
 const THREADS_SHOWN = 4;
 
@@ -80,50 +59,54 @@ function useStoredSet(key: string) {
 }
 
 /**
- * zenith's one sidebar: the dashboard's pages, your projects with their zenith code
- * threads live underneath, and zenith code's own projects and settings. It folds to a
- * rail (⌘B); the choice is kept per browser and applied before paint (layout.tsx).
+ * zenith's one sidebar, in zenith code's style: the pages, your projects with their
+ * threads underneath, zenith code's other projects, and Settings. On settings pages it
+ * becomes the settings navigation, for zenith and zenith code alike. ⌘B hides it; below
+ * lg it is a drawer.
  */
-export function Sidebar({
-  projects,
-  code = true,
-  home,
-  assistants = [],
-  agent = null,
-}: {
-  projects: NavProject[];
-  code?: boolean;
-  home: string;
-  assistants?: AssistantId[];
-  /** The zenith agent's folder, whose threads are your conversations. */
-  agent?: { home: string } | null;
-}) {
+export function Sidebar({ projects, code = true, home, agent = null }: { projects: NavProject[]; code?: boolean; home: string; agent?: { home: string } | null }) {
   const path = usePathname();
+  const drawer = useDrawer();
+  const settings = isSettingsPath(path);
+
+  useEffect(() => setDrawer(false), [path]);
+  // Where "back" leaves settings for.
+  useEffect(() => {
+    if (!settings) sessionStorage.setItem(BACK_KEY, path);
+  }, [path, settings]);
+
+  return (
+    <>
+      {drawer && <div className="fixed inset-0 z-40 bg-black/30 lg:hidden" onClick={() => setDrawer(false)} aria-hidden />}
+      <aside
+        className={cn(
+          "z-50 h-dvh shrink-0 flex-col overflow-hidden border-r border-line bg-sidebar select-none",
+          drawer
+            ? "fixed inset-y-0 left-0 flex w-72 shadow-2xl lg:hidden"
+            : "hidden w-[var(--sidebar-w)] mac:border-black/10 mac:bg-transparent lg:flex dark:mac:border-black/50 [html[data-sidebar=hidden]_&]:lg:hidden",
+        )}
+      >
+        <div data-drag className="flex h-[var(--titlebar-h)] shrink-0 items-center gap-2 pl-4 pr-2 mac:pl-[84px] [html[data-fullscreen]_&]:pl-4">
+          <Link href="/" className="flex min-w-0 items-center gap-2 text-ink" title="zenith">
+            <ZenithMark size={16} />
+            <span className="text-[13px] font-semibold tracking-tight">zenith</span>
+          </Link>
+          <button type="button" onClick={toggleSidebar} title={tr("Masquer la barre latérale (⌘B)", "Hide sidebar (⌘B)")} className="ml-auto grid size-7 place-items-center rounded-md text-ink-3 transition hover:bg-hover hover:text-ink">
+            <PanelLeft className="size-4" />
+          </button>
+        </div>
+        {settings ? <SettingsNav path={path} /> : <MainNav path={path} projects={projects} code={code} home={home} agent={agent} />}
+      </aside>
+    </>
+  );
+}
+
+function MainNav({ path, projects, code, home, agent }: { path: string; projects: NavProject[]; code: boolean; home: string; agent: { home: string } | null }) {
   const router = useRouter();
   const { status, snapshot, ready } = useCode();
-  const collapsed = useSyncExternalStore(subscribePrefs, () => readPref(COLLAPSED_KEY) === "collapsed", () => false);
   const [folded, toggleFolded] = useStoredSet(FOLDED_KEY);
   const [full, toggleFull] = useStoredSet(FULL_KEY);
   const onCode = appPathOf(path) !== null;
-
-  const toggleCollapsed = useCallback(() => {
-    const next = readPref(COLLAPSED_KEY) !== "collapsed";
-    if (next) document.documentElement.dataset.sidebar = "collapsed";
-    else delete document.documentElement.dataset.sidebar;
-    writePref(COLLAPSED_KEY, next ? "collapsed" : "expanded");
-  }, []);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "b" || !(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey) return;
-      const t = e.target as HTMLElement | null;
-      if (t?.isContentEditable || t?.tagName === "INPUT" || t?.tagName === "TEXTAREA") return;
-      e.preventDefault();
-      toggleCollapsed();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [toggleCollapsed]);
 
   // zenith code's projects and threads, matched to zenith's projects by folder.
   const { byZenithProject, others, life, all } = useMemo(() => {
@@ -158,233 +141,173 @@ export function Sidebar({
 
   const activeThread = onCode ? snapshot?.activeThread ?? null : null;
   const codeReady = code && !!status?.running && !!snapshot;
-  const codeTop = topStatus(all);
-
-  const pages = [
-    { href: "/", name: tr("Vue d'ensemble", "Overview"), glow: "#FFD166", icon: <LayoutGrid className="size-4" /> },
-    { href: "/vie", name: tr("Ma vie", "My life"), glow: "#FDBA74", icon: <Sun className="size-4" /> },
-    { href: "/veille", name: tr("Veille", "Radar"), glow: "#7dd3fc", icon: <Radar className="size-4" /> },
-    { href: "/agents", name: tr("Agents IA", "AI agents"), glow: "#D4724F", icon: <Bot className="size-4" /> },
-    { href: "/annuaire", name: tr("Annuaire", "Directory"), glow: "#FFD166", icon: <Contact className="size-4" /> },
-    { href: "/abonnements", name: tr("Abonnements", "Subscriptions"), glow: "#34d399", icon: <Wallet className="size-4" /> },
-  ];
   const isActive = (href: string) => (href === "/" ? path === "/" : path === href || path.startsWith(`${href}/`));
-  const codeLink = codeHref(snapshot?.pathname && !snapshot.pathname.startsWith("/pair") ? snapshot.pathname : "/");
+  const codeLink = codeHref(snapshot?.pathname && !snapshot.pathname.startsWith("/pair") && !snapshot.pathname.startsWith("/settings") ? snapshot.pathname : "/");
 
   return (
     <>
-      <aside className="sticky top-0 z-40 hidden h-screen w-[var(--zenith-sidebar-w)] shrink-0 flex-col border-r border-line bg-black/20 backdrop-blur-xl transition-[width] duration-200 lg:flex">
-        <div className="flex items-center gap-3 px-4 pb-4 pt-5 collapsed:flex-col collapsed:px-0">
-          <Link href="/" className="group flex min-w-0 flex-1 items-center gap-3 px-1 collapsed:flex-none collapsed:px-0" title="zenith">
-            <ZenithMark size={34} />
-            <div className="min-w-0 collapsed:hidden">
-              <div className="font-display text-base font-black tracking-[0.18em]">zenith</div>
-              <div className="truncate font-serif text-[13px] italic text-ink-3">{tr("tout ce qui brille au-dessus", "everything that shines above")}</div>
-            </div>
-          </Link>
-          <button
-            type="button"
-            onClick={toggleCollapsed}
-            title={`${collapsed ? tr("Déplier la barre", "Expand sidebar") : tr("Replier la barre", "Collapse sidebar")} (⌘B)`}
-            aria-label={collapsed ? tr("Déplier la barre", "Expand sidebar") : tr("Replier la barre", "Collapse sidebar")}
-            className="grid size-7 shrink-0 place-items-center rounded-lg text-ink-3 transition hover:bg-white/[0.06] hover:text-ink"
-          >
-            {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
-          </button>
+      <div className="flex flex-col gap-px px-2 pb-2">
+        {agent && <Row icon={<SquarePen className="size-4" />} label={tr("Demander à zenith", "Ask zenith")} kbd="⌘J" onClick={() => openAsk()} />}
+        <Row icon={<Search className="size-4" />} label={tr("Rechercher", "Search")} kbd="⌘K" onClick={() => window.dispatchEvent(new Event("zenith:command"))} />
+      </div>
+
+      <nav className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden px-2 pb-3">
+        <div className="flex flex-col gap-px">
+          {PAGES().map((p) => (
+            <Row key={p.href} href={p.href} icon={<p.icon className="size-4" />} label={p.name} active={isActive(p.href)} />
+          ))}
         </div>
 
-        {agent && (
-          <div className="px-3 pb-3 collapsed:px-2">
-            <button
-              type="button"
-              onClick={() => openAsk()}
-              title={`${tr("Demander à zenith", "Ask zenith")} (⌘J)`}
-              className="group/ask relative flex w-full items-center gap-3 overflow-hidden rounded-xl border border-sun/25 bg-sun/[0.06] px-3 py-2 text-sm text-ink transition hover:border-sun/50 hover:bg-sun/[0.1] collapsed:justify-center collapsed:px-0"
-            >
-              <Sparkles className="size-4 shrink-0 text-sun transition group-hover/ask:rotate-12" />
-              <span className="truncate collapsed:hidden">{tr("Demander à zenith", "Ask zenith")}</span>
-              <kbd className="ml-auto rounded-md border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-3 collapsed:hidden">⌘J</kbd>
-            </button>
-          </div>
+        {agent && codeReady && life && life.threads.length > 0 && (
+          <Group label={tr("Conversations", "Conversations")} actions={<IconButton label={tr("Demander à zenith", "Ask zenith")} onClick={() => openAsk()}><Plus className="size-3.5" /></IconButton>}>
+            <Threads id="zenith:life" threads={life.threads} activeThread={activeThread} full={full.has("zenith:life")} onFull={() => toggleFull("zenith:life")} />
+          </Group>
         )}
 
-        <nav className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto overflow-x-hidden px-3 pb-4 [scrollbar-width:thin] collapsed:px-2">
-          <div className="flex flex-col gap-0.5">
-            {pages.map((it) => (
-              <NavRow key={it.href} href={it.href} name={it.name} glow={it.glow} icon={it.icon} active={isActive(it.href)} />
-            ))}
-          </div>
+        {projects.length > 0 && (
+          <Group label={tr("Projets", "Projects")}>
+            {projects.map((p) => {
+              const c = byZenithProject.get(p.id);
+              return (
+                <ProjectBlock
+                  key={p.id}
+                  id={p.id}
+                  href={p.href}
+                  name={p.name}
+                  color={p.color}
+                  active={isActive(p.href)}
+                  threads={codeReady ? c?.threads ?? [] : []}
+                  activeThread={activeThread}
+                  folded={folded.has(p.id)}
+                  full={full.has(p.id)}
+                  onFold={() => toggleFolded(p.id)}
+                  onFull={() => toggleFull(p.id)}
+                  onNewThread={c && ready ? () => navigate({ to: "new-thread", environmentId: c.project.environmentId, projectId: c.project.id }) : undefined}
+                />
+              );
+            })}
+          </Group>
+        )}
 
-          {agent && codeReady && life && life.threads.length > 0 && (
-            <Group label="zenith">
-              <ProjectBlock
-                id="zenith:life"
-                name={tr("Conversations", "Conversations")}
-                title={agent.home}
-                glow="#FFD166"
-                threads={life.threads}
-                activeThread={activeThread}
-                folded={folded.has("zenith:life")}
-                full={full.has("zenith:life")}
-                onFold={() => toggleFolded("zenith:life")}
-                onFull={() => toggleFull("zenith:life")}
-                onNewThread={() => openAsk()}
-              />
-            </Group>
-          )}
-
-          {assistants.length > 0 && (
-            <Group label={tr("Assistants", "Assistants")}>
-              {assistants.map((id) => (
-                <NavRow key={id} href={assistantHref(id)} name={ASSISTANTS[id].name} glow={ASSISTANTS[id].color} icon={<AssistantIcon id={id} size={15} />} active={isActive(assistantHref(id))} />
-              ))}
-            </Group>
-          )}
-
-          {projects.length > 0 && (
-            <Group label={tr("Projets", "Projects")}>
-              {projects.map((p) => {
-                const c = byZenithProject.get(p.id);
+        {code && (
+          <Group
+            label="Code"
+            href={codeLink}
+            status={topStatus(all)}
+            health={status?.running ? "up" : status?.starting ? "busy" : status ? "down" : null}
+            actions={
+              <>
+                {ready && (
+                  <IconButton label={tr("Ajouter un projet", "Add a project")} onClick={() => navigate({ to: "palette", open: "add-project" })}>
+                    <FolderPlus className="size-3.5" />
+                  </IconButton>
+                )}
+                {status?.enabled && status.built && (
+                  <IconButton label={tr(`Redémarrer ${BRAND} code`, `Restart ${BRAND} code`)} onClick={() => window.dispatchEvent(new Event("zenith:code-restart"))}>
+                    <RotateCw className="size-3.5" />
+                  </IconButton>
+                )}
+              </>
+            }
+          >
+            {codeReady &&
+              others.map(({ project, threads }) => {
+                const id = `code:${project.environmentId}:${project.id}`;
+                const isHome = sameDir(project.workspaceRoot, home);
                 return (
                   <ProjectBlock
-                    key={p.id}
-                    id={p.id}
-                    href={p.href}
-                    name={p.name}
-                    glow={p.glow}
-                    active={isActive(p.href)}
-                    threads={codeReady ? c?.threads ?? [] : []}
+                    key={id}
+                    id={id}
+                    name={isHome ? "zenith" : project.title}
+                    title={project.workspaceRoot}
+                    color={isHome ? "var(--foreground)" : "var(--ink-3)"}
+                    threads={threads}
                     activeThread={activeThread}
-                    folded={folded.has(p.id)}
-                    full={full.has(p.id)}
-                    onFold={() => toggleFolded(p.id)}
-                    onFull={() => toggleFull(p.id)}
-                    onNewThread={c && ready ? () => navigate({ to: "new-thread", environmentId: c.project.environmentId, projectId: c.project.id }) : undefined}
+                    folded={folded.has(id)}
+                    full={full.has(id)}
+                    onFold={() => toggleFolded(id)}
+                    onFull={() => toggleFull(id)}
+                    onNewThread={ready ? () => navigate({ to: "new-thread", environmentId: project.environmentId, projectId: project.id }) : undefined}
                   />
                 );
               })}
-            </Group>
-          )}
+            {ready && <Row icon={<GitPullRequest className="size-4" />} label="Pull requests" href={codeHref("/pull-requests")} active={path === "/code/pull-requests"} quiet />}
+          </Group>
+        )}
+      </nav>
 
-          {code && (
-            <Group
-              label="Code"
-              href={codeLink}
-              active={onCode && !activeThread}
-              status={codeTop}
-              health={status?.running ? "up" : status?.starting ? "busy" : status ? "down" : null}
-              actions={
-                <>
-                  {ready && (
-                    <IconButton label={tr("Chercher dans les threads", "Search threads")} onClick={() => navigate({ to: "palette" })}>
-                      <Search className="size-3.5" />
-                    </IconButton>
-                  )}
-                  {status?.enabled && status.built && (
-                    <IconButton label={tr(`Redémarrer ${BRAND} code`, `Restart ${BRAND} code`)} onClick={() => window.dispatchEvent(new Event("zenith:code-restart"))}>
-                      <RotateCw className="size-3.5" />
-                    </IconButton>
-                  )}
-                </>
-              }
-            >
-              {codeReady &&
-                others.map(({ project, threads }) => {
-                  const id = `code:${project.environmentId}:${project.id}`;
-                  const isHome = sameDir(project.workspaceRoot, home);
-                  return (
-                    <ProjectBlock
-                      key={id}
-                      id={id}
-                      name={isHome ? "zenith" : project.title}
-                      title={project.workspaceRoot}
-                      glow={isHome ? "#FFD166" : "#A5B4FC"}
-                      threads={threads}
-                      activeThread={activeThread}
-                      folded={folded.has(id)}
-                      full={full.has(id)}
-                      onFold={() => toggleFolded(id)}
-                      onFull={() => toggleFull(id)}
-                      onNewThread={ready ? () => navigate({ to: "new-thread", environmentId: project.environmentId, projectId: project.id }) : undefined}
-                    />
-                  );
-                })}
-              {ready && (
-                <>
-                  <SmallRow icon={<FolderPlus className="size-3.5" />} label={tr("Ajouter un projet", "Add a project")} onClick={() => navigate({ to: "palette", open: "add-project" })} />
-                  <SmallRow icon={<GitPullRequest className="size-3.5" />} label="Pull requests" onClick={() => router.push(codeHref("/pull-requests"))} active={path === "/code/pull-requests"} />
-                </>
-              )}
-            </Group>
-          )}
-        </nav>
+      <div className="flex flex-col gap-px border-t border-line px-2 py-2 mac:border-black/5 dark:mac:border-white/5">
+        <Row icon={<Settings className="size-4" />} label={tr("Réglages", "Settings")} kbd="⌘," href="/reglages" />
+      </div>
+    </>
+  );
+}
 
-        <div className="flex flex-col gap-0.5 border-t border-line px-3 py-3 collapsed:px-2">
-          <button
-            onClick={() => window.dispatchEvent(new Event("zenith:command"))}
-            title={tr("Aller à…", "Go to…")}
-            className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-ink-2 hover:bg-white/[0.04] hover:text-ink collapsed:justify-center collapsed:px-0"
-          >
-            <Command className="size-4 shrink-0" />
-            <span className="collapsed:hidden">{tr("Aller à…", "Go to…")}</span>
-            <kbd className="ml-auto rounded-md border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-3 collapsed:hidden">⌘K</kbd>
-          </button>
-          <FooterLink href="/reglages" active={path.startsWith("/reglages")} icon={<Settings2 className="size-4 shrink-0" />} label={tr("Sources de données", "Data sources")} />
-          {code && <FooterLink href="/code/settings" active={path.startsWith("/code/settings")} icon={<SlidersHorizontal className="size-4 shrink-0" />} label={tr("Réglages de code", "Code settings")} />}
-        </div>
-      </aside>
-
-      {/* Mobile: bottom bar */}
-      <nav className="fixed inset-x-3 bottom-3 z-40 flex items-center gap-1 overflow-x-auto rounded-2xl border border-line bg-[#0b0a14]/90 p-2 backdrop-blur-xl [scrollbar-width:none] lg:hidden">
-        {[
-          ...pages.slice(0, 2),
-          ...projects.map((p) => ({ href: p.href, name: p.name, icon: <span className="size-3 rounded-full" style={{ background: p.glow, boxShadow: `0 0 12px ${p.glow}` }} /> })),
-          ...(code ? [{ href: "/code", name: "Code", icon: <SquareTerminal className="size-4" /> }] : []),
-          ...assistants.map((id) => ({ href: assistantHref(id), name: ASSISTANTS[id].name, icon: <AssistantIcon id={id} size={16} /> })),
-          ...pages.slice(2),
-        ].map((it) => (
-          <Link
-            key={it.href}
-            href={it.href === "/code" ? codeLink : it.href}
-            aria-label={it.name}
-            className={cn("grid size-10 shrink-0 place-items-center rounded-xl", isActive(it.href) && "bg-white/10")}
-          >
-            {it.icon}
-          </Link>
+/** Settings: zenith's sections, then zenith code's, in one list. */
+function SettingsNav({ path }: { path: string }) {
+  const router = useRouter();
+  const back = () => router.push(sessionStorage.getItem(BACK_KEY) ?? "/");
+  return (
+    <>
+      <div className="px-2 pb-2">
+        <Row icon={<ChevronLeft className="size-4" />} label={tr("Retour", "Back")} onClick={back} />
+      </div>
+      <nav className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-2 pb-3">
+        {SETTINGS().map((g) => (
+          <Group key={g.label} label={g.label}>
+            {g.items.map((s) => (
+              <Row key={s.href} href={s.href} label={s.name} active={path === s.href || (s.href === "/code/settings/general" && path === "/code/settings")} />
+            ))}
+          </Group>
         ))}
       </nav>
     </>
   );
 }
 
-function NavRow({ href, name, glow, icon, active }: { href: string; name: string; glow: string; icon: React.ReactNode; active: boolean }) {
-  return (
-    <Link
-      href={href}
-      title={name}
-      className={cn(
-        "relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors collapsed:justify-center collapsed:px-0",
-        active ? "text-ink" : "text-ink-2 hover:bg-white/[0.04] hover:text-ink",
-      )}
-    >
-      {active && (
-        <motion.span
-          layoutId="nav-active"
-          className="absolute inset-0 rounded-xl border border-white/10"
-          style={{ background: `linear-gradient(90deg, ${glow}26, transparent 80%)` }}
-          transition={{ type: "spring", stiffness: 380, damping: 32 }}
-        />
-      )}
-      <span className="relative grid size-5 shrink-0 place-items-center">{icon}</span>
-      <span className="relative truncate collapsed:hidden">{name}</span>
+/** One line of the sidebar: a link, or a button. */
+function Row({
+  href,
+  onClick,
+  icon,
+  label,
+  kbd,
+  active = false,
+  quiet = false,
+}: {
+  href?: string;
+  onClick?: () => void;
+  icon?: React.ReactNode;
+  label: string;
+  kbd?: string;
+  active?: boolean;
+  quiet?: boolean;
+}) {
+  const className = cn(
+    "flex h-7 items-center gap-2 rounded-md px-2 text-left text-[13px] transition-colors",
+    active ? "bg-selected font-medium text-ink" : cn(quiet ? "text-ink-3" : "text-ink-2", "hover:bg-hover hover:text-ink"),
+  );
+  const body = (
+    <>
+      {icon && <span className="grid size-4 shrink-0 place-items-center text-ink-3 [.bg-selected_&]:text-ink">{icon}</span>}
+      <span className="min-w-0 flex-1 truncate">{label}</span>
+      {kbd && <kbd className="font-sans text-2xs text-ink-3">{kbd}</kbd>}
+    </>
+  );
+  return href ? (
+    <Link href={href} title={label} className={className} aria-current={active ? "page" : undefined}>
+      {body}
     </Link>
+  ) : (
+    <button type="button" onClick={onClick} title={label} className={className}>
+      {body}
+    </button>
   );
 }
 
 function Group({
   label,
   href,
-  active,
   status,
   health,
   actions,
@@ -392,7 +315,6 @@ function Group({
 }: {
   label: string;
   href?: string;
-  active?: boolean;
   status?: CodeThreadStatus | null;
   health?: "up" | "busy" | "down" | null;
   actions?: React.ReactNode;
@@ -400,34 +322,26 @@ function Group({
 }) {
   const heading = (
     <>
-      {href && <SquareTerminal className="hidden size-4 collapsed:block" />}
-      <span className="collapsed:hidden">{label}</span>
+      {label}
       {health && (
         <span
-          className={cn("size-1.5 rounded-full collapsed:absolute collapsed:right-2 collapsed:top-1.5", health === "busy" && "animate-pulse")}
-          style={{ background: status ? STATUS_STYLE[status].dot : health === "up" ? "var(--good)" : health === "busy" ? "#7dd3fc" : "var(--ink-3)" }}
+          className={cn("size-1.5 rounded-full", health === "busy" && "animate-pulse")}
+          style={{ background: status ? STATUS_STYLE[status].dot : health === "up" ? "var(--good)" : health === "busy" ? "#0ea5e9" : "var(--ink-3)" }}
         />
       )}
     </>
   );
   return (
-    <section className="flex flex-col gap-0.5">
-      <div className="group/heading flex h-7 items-center gap-2 px-3 collapsed:justify-center collapsed:px-0">
+    <section className="flex flex-col gap-px">
+      <div className="group/heading flex h-6 items-center gap-2 px-2">
         {href ? (
-          <Link
-            href={href}
-            title={label}
-            className={cn(
-              "relative flex items-center gap-2 rounded-md text-[11px] font-medium uppercase tracking-[0.18em] transition-colors collapsed:grid collapsed:size-9 collapsed:place-items-center collapsed:rounded-xl collapsed:text-ink-2 collapsed:hover:bg-white/[0.04]",
-              active ? "text-ink" : "text-ink-3 hover:text-ink",
-            )}
-          >
+          <Link href={href} className="flex items-center gap-1.5 text-2xs font-medium text-ink-3 transition-colors hover:text-ink">
             {heading}
           </Link>
         ) : (
-          <span className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.18em] text-ink-3 collapsed:hidden">{heading}</span>
+          <span className="flex items-center gap-1.5 text-2xs font-medium text-ink-3">{heading}</span>
         )}
-        {actions && <div className="ml-auto flex items-center gap-0.5 opacity-0 transition group-hover/heading:opacity-100 focus-within:opacity-100 collapsed:hidden">{actions}</div>}
+        {actions && <div className="ml-auto flex items-center opacity-0 transition group-hover/heading:opacity-100 focus-within:opacity-100">{actions}</div>}
       </div>
       {children}
     </section>
@@ -439,7 +353,7 @@ function ProjectBlock({
   href,
   name,
   title,
-  glow,
+  color,
   active = false,
   threads,
   activeThread,
@@ -453,7 +367,7 @@ function ProjectBlock({
   href?: string;
   name: string;
   title?: string;
-  glow: string;
+  color: string;
   active?: boolean;
   threads: CodeThread[];
   activeThread: string | null;
@@ -464,71 +378,67 @@ function ProjectBlock({
   onNewThread?: () => void;
 }) {
   const live = threads.filter((t) => t.section === "pinned" || t.section === "active");
-  const shown = full ? threads : live.filter((t, i) => i < THREADS_SHOWN || (t.status && NEEDS_YOU.has(t.status)) || threadKey(t) === activeThread);
-  const hidden = threads.length - shown.length;
   const top = topStatus(threads);
   const hasThreads = threads.length > 0;
-  const openFirst = !href && live[0] ? threadHref(live[0]) : undefined;
-  const target = href ?? openFirst;
-  const dot = <span className="size-2.5 rounded-full" style={{ background: glow, boxShadow: `0 0 10px ${glow}` }} />;
-
+  const target = href ?? (live[0] ? threadHref(live[0]) : undefined);
   const label = (
     <>
-      <span className="relative grid size-5 shrink-0 place-items-center">
-        {dot}
-        {top && <StatusDot status={top} className="absolute -right-0.5 -top-0.5 hidden ring-2 ring-[#0b0a14] collapsed:block" />}
+      <span className="grid size-4 shrink-0 place-items-center">
+        <span className="size-2 rounded-full" style={{ background: color }} />
       </span>
-      <span className="relative min-w-0 flex-1 truncate collapsed:hidden">{name}</span>
+      <span className="min-w-0 flex-1 truncate">{name}</span>
     </>
   );
+  const rowClass = "flex h-7 min-w-0 flex-1 items-center gap-2 pl-2 text-left";
 
   return (
     <div className="flex flex-col" data-project={id}>
-      <div
-        className={cn(
-          "group/project relative flex items-center rounded-xl text-sm transition-colors",
-          active ? "bg-white/[0.06] text-ink" : "text-ink-2 hover:bg-white/[0.04] hover:text-ink",
-        )}
-      >
+      <div className={cn("group/project flex items-center rounded-md text-[13px] transition-colors", active ? "bg-selected font-medium text-ink" : "text-ink-2 hover:bg-hover hover:text-ink")}>
         {target ? (
-          <Link href={target} title={title ?? name} className="flex min-w-0 flex-1 items-center gap-3 py-2 pl-3 collapsed:justify-center collapsed:px-0">
+          <Link href={target} title={title ?? name} className={rowClass}>
             {label}
           </Link>
         ) : (
-          <button type="button" onClick={onFold} title={title ?? name} className="flex min-w-0 flex-1 items-center gap-3 py-2 pl-3 text-left collapsed:justify-center collapsed:px-0">
+          <button type="button" onClick={onFold} title={title ?? name} className={rowClass}>
             {label}
           </button>
         )}
-        <div className="flex shrink-0 items-center gap-0.5 pr-1.5 collapsed:hidden">
-          {top && folded && <StatusDot status={top} className="mr-1.5" />}
+        <div className="flex shrink-0 items-center pr-1">
+          {top && (folded || !hasThreads) && <StatusDot status={top} className="mr-1.5 group-hover/project:hidden" />}
           {onNewThread && (
-            <IconButton label={tr(`Nouveau thread dans ${name}`, `New thread in ${name}`)} onClick={onNewThread} className="opacity-0 group-hover/project:opacity-100">
+            <IconButton label={tr(`Nouveau thread dans ${name}`, `New thread in ${name}`)} onClick={onNewThread} className="hidden group-hover/project:grid">
               <Plus className="size-3.5" />
             </IconButton>
           )}
           {hasThreads && (
-            <IconButton label={folded ? tr("Afficher les threads", "Show threads") : tr("Masquer les threads", "Hide threads")} onClick={onFold} className="opacity-0 group-hover/project:opacity-100">
+            <IconButton label={folded ? tr("Afficher les threads", "Show threads") : tr("Masquer les threads", "Hide threads")} onClick={onFold} className="hidden group-hover/project:grid">
               <ChevronRight className={cn("size-3.5 transition-transform", !folded && "rotate-90")} />
             </IconButton>
           )}
         </div>
       </div>
-
-      {hasThreads && !folded && (
-        <ul className="mb-1 ml-[21px] flex flex-col gap-px border-l border-line pl-2 collapsed:hidden">
-          {shown.map((t) => (
-            <ThreadRow key={threadKey(t)} thread={t} active={threadKey(t) === activeThread} />
-          ))}
-          {(hidden > 0 || full) && (
-            <li>
-              <button type="button" onClick={onFull} className="w-full rounded-lg px-2 py-1 text-left text-xs text-ink-3 transition hover:text-ink-2">
-                {full ? tr("Moins", "Show less") : tr(`${hidden} de plus`, `${hidden} more`)}
-              </button>
-            </li>
-          )}
-        </ul>
-      )}
+      {hasThreads && !folded && <Threads id={id} threads={threads} activeThread={activeThread} full={full} onFull={onFull} indent />}
     </div>
+  );
+}
+
+function Threads({ threads, activeThread, full, onFull, indent = false }: { id: string; threads: CodeThread[]; activeThread: string | null; full: boolean; onFull: () => void; indent?: boolean }) {
+  const live = threads.filter((t) => t.section === "pinned" || t.section === "active");
+  const shown = full ? threads : live.filter((t, i) => i < THREADS_SHOWN || (t.status && NEEDS_YOU.has(t.status)) || threadKey(t) === activeThread);
+  const hidden = threads.length - shown.length;
+  return (
+    <ul className={cn("flex flex-col gap-px", indent && "pl-6")}>
+      {shown.map((t) => (
+        <ThreadRow key={threadKey(t)} thread={t} active={threadKey(t) === activeThread} />
+      ))}
+      {(hidden > 0 || full) && (
+        <li>
+          <button type="button" onClick={onFull} className="h-6 w-full rounded-md px-2 text-left text-xs text-ink-3 transition hover:text-ink-2">
+            {full ? tr("Moins", "Show less") : tr(`${hidden} de plus`, `${hidden} more`)}
+          </button>
+        </li>
+      )}
+    </ul>
   );
 }
 
@@ -540,8 +450,8 @@ function ThreadRow({ thread, active }: { thread: CodeThread; active: boolean }) 
         href={threadHref(thread)}
         title={thread.branch ? `${thread.title} · ${thread.branch}` : thread.title}
         className={cn(
-          "flex items-center gap-2 rounded-lg px-2 py-1 text-[13px] transition-colors",
-          active ? "bg-white/[0.08] text-ink" : quiet ? "text-ink-3 hover:bg-white/[0.04] hover:text-ink-2" : "text-ink-2 hover:bg-white/[0.04] hover:text-ink",
+          "flex h-7 items-center gap-2 rounded-md px-2 text-[13px] transition-colors",
+          active ? "bg-selected text-ink" : quiet ? "text-ink-3 hover:bg-hover hover:text-ink-2" : "text-ink-2 hover:bg-hover hover:text-ink",
         )}
       >
         <span className="min-w-0 flex-1 truncate">{thread.title}</span>
@@ -554,15 +464,7 @@ function ThreadRow({ thread, active }: { thread: CodeThread; active: boolean }) 
 function StatusDot({ status, className }: { status: CodeThreadStatus; className?: string }) {
   const s = STATUS_STYLE[status];
   const [fr, en] = s.label();
-  return (
-    <span
-      role="img"
-      aria-label={tr(fr, en)}
-      title={tr(fr, en)}
-      className={cn("inline-block size-1.5 shrink-0 rounded-full", s.pulse && "animate-pulse", className)}
-      style={{ background: s.dot, boxShadow: `0 0 8px ${s.dot}` }}
-    />
-  );
+  return <span role="img" aria-label={tr(fr, en)} title={tr(fr, en)} className={cn("inline-block size-1.5 shrink-0 rounded-full", s.pulse && "animate-pulse", className)} style={{ background: s.dot }} />;
 }
 
 function IconButton({ label, onClick, className, children }: { label: string; onClick: () => void; className?: string; children: React.ReactNode }) {
@@ -576,42 +478,9 @@ function IconButton({ label, onClick, className, children }: { label: string; on
         e.stopPropagation();
         onClick();
       }}
-      className={cn("grid size-6 place-items-center rounded-md text-ink-3 transition hover:bg-white/[0.08] hover:text-ink focus-visible:opacity-100", className)}
+      className={cn("grid size-6 place-items-center rounded-md text-ink-3 transition hover:bg-hover hover:text-ink", className)}
     >
       {children}
     </button>
-  );
-}
-
-function SmallRow({ icon, label, onClick, active }: { icon: React.ReactNode; label: string; onClick: () => void; active?: boolean }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={label}
-      className={cn(
-        "flex items-center gap-3 rounded-xl px-3 py-1.5 text-left text-[13px] transition-colors collapsed:hidden",
-        active ? "text-ink" : "text-ink-3 hover:bg-white/[0.04] hover:text-ink-2",
-      )}
-    >
-      <span className="grid size-5 shrink-0 place-items-center">{icon}</span>
-      {label}
-    </button>
-  );
-}
-
-function FooterLink({ href, active, icon, label }: { href: string; active: boolean; icon: React.ReactNode; label: string }) {
-  return (
-    <Link
-      href={href}
-      title={label}
-      className={cn(
-        "flex items-center gap-3 rounded-xl px-3 py-2 text-sm hover:bg-white/[0.04] collapsed:justify-center collapsed:px-0",
-        active ? "text-ink" : "text-ink-2 hover:text-ink",
-      )}
-    >
-      {icon}
-      <span className="truncate collapsed:hidden">{label}</span>
-    </Link>
   );
 }

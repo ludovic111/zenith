@@ -32,8 +32,9 @@ layout (`src/components/code/code-host.tsx`), lives across page changes and show
 full-bleed on `/code/*`. zenith's URL mirrors the app's (`/code/<environment>/<thread>`,
 `/code/settings/…`), so reloads, links, back and forward land on the same thread.
 zenith's sidebar lists every thread under its project (matched by folder), ⌘K searches
-them, project pages show theirs, and on desktop widths the app hides its own sidebar
-(it keeps it on settings pages and on narrow screens, where zenith's is a bottom bar).
+them, project pages show theirs, and on desktop widths the app hides its own sidebar,
+settings included: zenith's sidebar has one Settings list, zenith's sections then the
+app's (`/code/settings/*`). On narrow screens the app keeps its own sidebar.
 
 | `zenith.config.json` | default | |
 | --- | --- | --- |
@@ -82,8 +83,12 @@ Shared sidebar (`apps/web/src/zenith/embed.ts` has the types):
   thread and the app's path. Debounced, sent only when it changes.
 - parent → app `zenith-code:navigate` `{ request }`: a thread, a new thread in a project,
   an in-app path (validated: same-origin paths only, never `/pair`), or the command palette.
-- parent → app `zenith-code:chrome` `{ ownSidebar }`, and `?zenithChrome=bare|full` on
-  first load: whether the app draws its own thread sidebar.
+- parent → app `zenith-code:chrome` `{ ownSidebar, insetLeft }`, and `?zenithChrome=bare|full`
+  on first load: whether the app draws its own sidebar (threads and settings), and room to
+  leave on the left of its title bar for zenith.app's traffic lights (`--workspace-controls-left`).
+- app → parent `zenith-code:drag` `{ zoom }`: a press in the app's top bar, off its controls.
+  In zenith.app the dashboard hands it to the native window, which moves (or zooms) as with
+  any title bar.
 
 "Open in its own window" goes through `GET /api/code/open`, which mints a token and
 redirects to `/pair#token=…`, only for navigations started by the user or zenith
@@ -107,8 +112,8 @@ than rewrite them (and conflict on every sync), a build plugin swaps the name in
 first-party modules and `index.html` for both the web and server builds. Direct edits
 are limited to: `apps/web/src/branding.ts` (no "Alpha" suffix), `index.html` (title),
 `public/manifest.webmanifest`, the icons (`apps/web/public/*`, `assets/*/…-web-*`,
-generated from zenith's icon), `components/T3Wordmark.tsx` (now zenith's sun mark,
-export name kept), and the sidebar/welcome wordmarks (`SidebarChrome.tsx`,
+generated from zenith's icon), `components/T3Wordmark.tsx` (now zenith's mark in the
+current color, export name kept), and the sidebar/welcome wordmarks (`SidebarChrome.tsx`,
 `WelcomeWizard.tsx`).
 
 **Kept upstream names on purpose:** package names (`@t3tools/*`, `t3`), the `t3`
@@ -118,12 +123,12 @@ renaming them would touch hundreds of files and conflict on every sync, and zeni
 never installs the `t3` binary on your PATH (it runs `bin.mjs` directly), so it
 cannot shadow an upstream install.
 
-**Theme.** A built-in dark theme `zenith` (`packages/shared/src/zenithTheme.ts`,
-registered in `themePalettes.ts`) with zenith's deep-space canvas and sun accent,
-plus Geist / JetBrains Mono / Unbounded (self-hosted via `@fontsource-variable/*`,
-`apps/web/src/index.css`). It is the default when nothing is stored
-(`hooks/useTheme.ts`, mirrored in the `index.html` boot script); other themes stay
-selectable in Settings → Appearance.
+**Theme.** The default is upstream's stock palette following the system's light or dark
+appearance (`hooks/useTheme.ts`, mirrored in the `index.html` boot script), the same
+palette the zenith dashboard uses, so both read as one app. The boot script drops a stored
+`zenith` theme once (it used to be the default). That older dark theme stays selectable
+(`packages/shared/src/zenithTheme.ts`, registered in `themePalettes.ts`; its Geist /
+JetBrains Mono fonts are self-hosted via `@fontsource-variable/*` in `apps/web/src/index.css`).
 
 **Nothing phones home to T3's infrastructure by default.**
 - Telemetry (PostHog) is off unless `T3CODE_TELEMETRY_ENABLED=true` *and*
@@ -146,9 +151,10 @@ frame-ancestors policy, registered in `server.ts` and `http.ts`); `auth pairing 
 
 **Web additions:** `apps/web/src/zenith/` (embed messaging, embedded pairing hook used
 by `components/auth/PairingRouteSurface.tsx`, the coordinator mounted in
-`routes/__root.tsx` that focuses projects, follows navigation requests and publishes the
-sidebar snapshot, `?zenithProject=` / `?zenithChrome=` captured in `main.tsx`), and
-`components/AppSidebarLayout.tsx` skipping its sidebar when zenith draws it.
+`routes/__root.tsx` that focuses projects, follows navigation requests, publishes the
+sidebar snapshot and forwards title-bar presses, `?zenithProject=` / `?zenithChrome=`
+captured in `main.tsx`), and `components/AppSidebarLayout.tsx` skipping its sidebar
+(settings nav included) when zenith draws it.
 
 Edits inside upstream files are marked with a `zenith:` comment where the format
 allows (`grep -rn "zenith:" code`); `git log -p -- code` after the import commit shows

@@ -160,8 +160,6 @@ export const ConfigSchema = z.object({
     .default({ exportDir: "zenith" }),
   /** Native Mac app. Changing the bundle id resets macOS permissions. */
   mac: z.object({ bundleId: z.string().default("dev.zenith.app") }).default({ bundleId: "dev.zenith.app" }),
-  /** Claude and ChatGPT in the sidebar: their desktop apps docked in zenith.app, else a web view. */
-  assistants: z.array(z.enum(["claude", "chatgpt"])).default(["claude", "chatgpt"]),
   /** zenith code, the coding workspace. */
   code: z
     .object({ enabled: z.boolean().default(true), port: z.number().default(4749), home: z.string().optional() })

@@ -42,11 +42,11 @@ export function AskDialog({ targets, provider, suggestions }: { targets: AgentTa
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 px-4 pt-[16vh] backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-start justify-center bg-black/20 px-4 pt-[14vh] dark:bg-black/50"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
+          transition={{ duration: 0.12 }}
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) setOpen(false);
           }}
@@ -55,19 +55,20 @@ export function AskDialog({ targets, provider, suggestions }: { targets: AgentTa
           aria-label={tr("Demande à zenith", "Ask zenith")}
         >
           <motion.div
-            className="w-[min(680px,100%)]"
-            initial={{ opacity: 0, y: 12, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.98 }}
-            transition={{ type: "spring", stiffness: 420, damping: 34 }}
+            className="w-[min(640px,100%)] overflow-visible rounded-xl border border-line bg-popover shadow-2xl"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.12 }}
           >
-            <div className="mb-3 flex items-baseline justify-between px-2">
-              <span className="font-display text-sm font-medium tracking-wide text-ink">{tr("Demande à zenith", "Ask zenith")}</span>
-              <span className="text-[11px] text-ink-3">
-                <kbd className="rounded border border-line px-1 font-mono">esc</kbd> {tr("pour fermer", "to close")}
+            <div className="flex h-10 items-center justify-between border-b border-line px-4">
+              <span className="text-[13px] font-semibold text-ink">{tr("Demande à zenith", "Ask zenith")}</span>
+              <span className="inline-flex items-center gap-1.5 text-2xs text-ink-3">
+                <kbd className="rounded border border-line bg-muted px-1 font-sans text-3xs text-ink-2">esc</kbd>
+                {tr("pour fermer", "to close")}
               </span>
             </div>
-            <AskBar key={key} targets={targets} provider={provider} suggestions={suggestions} initialText={text} autoFocus onLaunched={() => setOpen(false)} />
+            <AskBar key={key} bare targets={targets} provider={provider} suggestions={suggestions} initialText={text} autoFocus onLaunched={() => setOpen(false)} />
           </motion.div>
         </motion.div>
       )}

@@ -226,10 +226,10 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
   const panelAnimationsSuppressed = usePanelNavigationSuppression(pathname);
   const routePanelAnimationsActive = panelAnimationsActive && !panelAnimationsSuppressed;
   const isOnSettings = pathname === "/settings" || pathname.startsWith("/settings/");
-  // zenith: inside the dashboard, zenith's sidebar lists the threads; settings
-  // keep their own nav.
+  // zenith: inside the dashboard, zenith's sidebar lists the threads and the
+  // settings sections (one Settings for zenith and zenith code).
   const ownSidebar = useSyncExternalStore(subscribeOwnSidebar, readOwnSidebar);
-  const showSidebar = ownSidebar || isOnSettings;
+  const showSidebar = ownSidebar;
   const isMacosDesktop = isElectron && isMacPlatform(navigator.platform);
   const [sidebarWidth, setSidebarWidth] = useState(readInitialThreadSidebarWidth);
   // Subscribed rather than read once: the clamp must track live window size,

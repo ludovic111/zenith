@@ -5,8 +5,8 @@ import type { SessionRow } from "./session-list";
 
 export function toRows(list: Session[]): SessionRow[] {
   return list.map((s) => {
-    // zenith's own sessions get its sun color, unless it is listed as a project.
-    const p = PROJECTS.find((x) => x.id === s.project) ?? (s.project === "zenith" ? { name: "zenith", color: "#FFD166" } : undefined);
+    // zenith's own sessions get a neutral dot, unless it is listed as a project.
+    const p = PROJECTS.find((x) => x.id === s.project) ?? (s.project === "zenith" ? { name: "zenith", color: "var(--ink-3)" } : undefined);
     return {
       agent: s.agent,
       id: s.id,

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check, GitBranch, GitPullRequest, Terminal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ProviderIcon } from "@/components/agent/provider-icon";
 import { l10n, plural, tr } from "@/lib/i18n";
 
 export type SessionRow = {
@@ -27,8 +28,8 @@ export type SessionRow = {
 };
 
 const AGENT = {
-  claude: { name: "Claude Code", color: "#D4724F", mark: "✳" },
-  codex: { name: "Codex", color: "#5B8DEF", mark: "◎" },
+  claude: { name: "Claude Code" },
+  codex: { name: "Codex" },
 };
 
 const rel = (t: number) => {
@@ -55,28 +56,29 @@ export function SessionList({ rows, compact }: { rows: SessionRow[]; compact?: b
     setCopied(r.id);
     setTimeout(() => setCopied(null), 1500);
   };
-  if (!rows.length) return <p className="text-sm text-ink-3">{tr("Aucune session pour l'instant.", "No sessions yet.")}</p>;
+  if (!rows.length) return <p className="py-2 text-[13px] text-ink-3">{tr("Aucune session pour l'instant.", "No sessions yet.")}</p>;
   return (
     <ul className="divide-y divide-line">
       {rows.map((r) => {
         const a = AGENT[r.agent];
         return (
-          <li key={r.agent + r.id} className="group flex gap-3 py-3">
-            <span
-              className="relative mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl text-sm font-bold"
-              style={{ background: `${a.color}22`, color: a.color }}
-              title={a.name}
-            >
-              {a.mark}
-              {r.live && <span className="live-dot absolute -right-0.5 -top-0.5 size-2.5 rounded-full ring-2 ring-[#0b0a14]" style={{ color: "var(--good)", background: "var(--good)" }} />}
+          <li key={r.agent + r.id} className="group flex items-center gap-3 py-2.5">
+            <span className="relative grid size-7 shrink-0 place-items-center rounded-md border border-line bg-muted text-ink-2" title={a.name}>
+              <ProviderIcon id={r.agent} size={14} />
+              {r.live && (
+                <span
+                  className="live-dot absolute -right-0.5 -top-0.5 size-2 rounded-full ring-2 ring-surface"
+                  style={{ color: "var(--good)", background: "var(--good)" }}
+                />
+              )}
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="truncate text-sm font-medium text-ink">{r.title}</span>
-                {r.live && <span className="shrink-0 rounded-full bg-good/15 px-2 py-0.5 text-[10px] font-medium text-good">{tr("en cours", "live")}</span>}
+                <span className="truncate text-[13px] font-medium text-ink">{r.title}</span>
+                {r.live && <span className="shrink-0 rounded bg-good/10 px-1.5 py-px text-2xs font-medium text-good">{tr("en cours", "live")}</span>}
               </div>
-              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-3">
-                <span style={{ color: a.color }}>{a.name}</span>
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-ink-3">
+                <span>{a.name}</span>
                 {!compact && r.projectName && (
                   <span className="inline-flex items-center gap-1.5">
                     <span className="size-1.5 rounded-full" style={{ background: r.projectColor ?? "var(--ink-3)" }} />
@@ -84,18 +86,22 @@ export function SessionList({ rows, compact }: { rows: SessionRow[]; compact?: b
                   </span>
                 )}
                 {r.branch && (
-                  <span className="inline-flex max-w-48 items-center gap-1 truncate font-mono">
+                  <span className="inline-flex max-w-48 items-center gap-1 truncate">
                     <GitBranch className="size-3 shrink-0" />
-                    {r.branch.replace(/^claude\//, "")}
+                    <span className="truncate">{r.branch.replace(/^claude\//, "")}</span>
                   </span>
                 )}
-                <span>{rel(r.end)}</span>
-                <span>{dur(r.end - r.start)}</span>
-                {r.turns > 0 && <span>{r.turns} {plural(r.turns, ["message", "messages"], ["message", "messages"])}</span>}
-                {r.costUSD != null && <span className="font-mono text-ink-2">{tr(`${r.costUSD.toFixed(2)} $`, `$${r.costUSD.toFixed(2)}`)}</span>}
-                {r.costUSD == null && r.tokens != null && <span className="font-mono text-ink-2">{tok(r.tokens)} tokens</span>}
+                <span className="tabular">{rel(r.end)}</span>
+                <span className="tabular">{dur(r.end - r.start)}</span>
+                {r.turns > 0 && (
+                  <span className="tabular">
+                    {r.turns} {plural(r.turns, ["message", "messages"], ["message", "messages"])}
+                  </span>
+                )}
+                {r.costUSD != null && <span className="text-ink-2 tabular">{tr(`${r.costUSD.toFixed(2)} $`, `$${r.costUSD.toFixed(2)}`)}</span>}
+                {r.costUSD == null && r.tokens != null && <span className="text-ink-2 tabular">{tok(r.tokens)} tokens</span>}
                 {r.linesAdded != null && (
-                  <span className="font-mono">
+                  <span className="tabular">
                     <span className="text-good">+{r.linesAdded}</span> <span className="text-bad">−{r.linesRemoved ?? 0}</span>
                   </span>
                 )}
@@ -108,18 +114,23 @@ export function SessionList({ rows, compact }: { rows: SessionRow[]; compact?: b
               </div>
             </div>
             <button
+              type="button"
               onClick={() => copy(r)}
               className={cn(
-                "h-8 shrink-0 self-center rounded-lg border border-line px-2.5 text-xs text-ink-3 transition hover:text-ink",
-                "opacity-100 lg:opacity-0 lg:group-hover:opacity-100",
+                "inline-flex h-7 shrink-0 items-center gap-1 rounded-md border border-line bg-surface px-2 text-xs text-ink-2 transition-colors hover:bg-hover hover:text-ink",
+                "opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:focus-visible:opacity-100",
                 copied === r.id && "lg:opacity-100",
               )}
               title={r.resume}
             >
               {copied === r.id ? (
-                <span className="inline-flex items-center gap-1 text-good"><Check className="size-3.5" /> {tr("copié", "copied")}</span>
+                <>
+                  <Check className="size-3.5 text-good" /> {tr("copié", "copied")}
+                </>
               ) : (
-                <span className="inline-flex items-center gap-1"><Terminal className="size-3.5" /> {tr("reprendre", "resume")}</span>
+                <>
+                  <Terminal className="size-3.5" /> {tr("reprendre", "resume")}
+                </>
               )}
             </button>
           </li>

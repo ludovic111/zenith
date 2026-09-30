@@ -56,8 +56,8 @@ type Extension = {
 | `money` | Money panel and the brief's money section | `{ label, value, currency, sign, hint, project? }`: `sign` 1 for income, -1 for spending. |
 | `facts` | One bullet each under the project in `brief.md` and `projets/<id>.md` | Short sentences. Return `[]` for projects that are not yours to describe. |
 | `context` | A block appended to `projets/<id>.md` | Markdown, usually a `## Heading` and a list. Return `""` when there is nothing to say. |
-| `sources` | A row on the Data sources page (`/reglages`) | `SourceRow`: `group` (`projects`, `around`, `app` or `claude`), `name`, `feeds`, `vars`, `how`, `url?`, `src` (the result of `source(...)`), and `key?`, `placeholder?`, `secret?` to show a paste-your-key form. |
-| `keys` | Env vars the Data sources page is allowed to write to `.env.local` | Names only. Anything not listed (here or built in) is refused. |
+| `sources` | A row on Settings → Data sources (`/reglages/sources`) | `SourceRow`: `group` (`projects`, `around`, `app` or `claude`), `name`, `feeds`, `vars`, `how`, `url?`, `src` (the result of `source(...)`), and `key?`, `placeholder?`, `secret?` to show a paste-your-key form. |
+| `keys` | Env vars Settings → Data sources is allowed to write to `.env.local` | Names only. Anything not listed (here or built in) is refused. |
 | `pages` | A whole page at `/<slug>` | `{ slug, title, Page }`: `Page` is a React server component. Point a project's `href` at `/<slug>` to use it as the project's page. |
 | `routes` | An API route at `/api/perso/<path>` | `{ path, GET }`: GET only, same-origin, for your pages' client components. |
 
@@ -129,7 +129,7 @@ const analytics: Extension = {
 export const PERSO: Extension[] = [analytics];
 ```
 
-Restart zenith after adding an extension. Its tile appears on the overview, its fact in `context/brief.md` (rewritten every 10 minutes, and served live at `/api/context`), and its row on the Data sources page, where pasting the key writes it to `.env.local` and lights the source up without a restart.
+Restart zenith after adding an extension. Its tile appears on the overview, its fact in `context/brief.md` (rewritten every 10 minutes, and served live at `/api/context`), and its row on Settings → Data sources, where pasting the key writes it to `.env.local` and lights the source up without a restart.
 
 ## Custom pages
 

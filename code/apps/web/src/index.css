@@ -2,7 +2,6 @@
 /* zenith: self-hosted zenith fonts (no CDN request). */
 @import "@fontsource-variable/geist";
 @import "@fontsource-variable/jetbrains-mono";
-@import "@fontsource-variable/unbounded";
 
 @custom-variant dark (&:is(.dark, .dark *));
 @custom-variant light (&:not(.dark, .dark *));
@@ -1583,8 +1582,8 @@ html[data-theme-id="t3-chat"] [data-app-sidebar] {
   );
 }
 
-/* zenith theme typography: Geist for text, JetBrains Mono for code, Unbounded
-   for display. A font picked in Settings -> Appearance still wins (inline). */
+/* zenith theme typography: Geist for text, JetBrains Mono for code. A font
+   picked in Settings -> Appearance still wins (inline). */
 html[data-theme-id="zenith"] {
   --font-sans: "Geist Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --font-mono:
@@ -1592,7 +1591,7 @@ html[data-theme-id="zenith"] {
 }
 
 .zenith-display {
-  font-family: "Unbounded Variable", var(--font-sans);
+  font-weight: 600;
   letter-spacing: -0.01em;
 }
 

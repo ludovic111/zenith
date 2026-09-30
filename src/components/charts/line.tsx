@@ -8,7 +8,7 @@ export type Point = { t: number; v: number | null };
 const time = (t: number) =>
   new Intl.DateTimeFormat(l10n().locale, { timeZone: l10n().timeZone, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(t);
 
-/** 2px line + gradient area, crosshair and tooltip on hover. Gaps (null) break the line. */
+/** 1.5px line + faint area, crosshair and tooltip on hover. Gaps (null) break the line. */
 export function Line({
   points,
   color,
@@ -28,9 +28,12 @@ export function Line({
   const W = 400;
   const vals = points.map((p) => p.v).filter((v): v is number => v != null);
   if (points.length < 2 || !vals.length) return <div style={{ height }} className="grid place-items-center text-xs text-ink-3">{tr("Pas encore de mesures", "No measurements yet")}</div>;
-  const max = Math.max(...vals) * 1.15 || 1;
+  // From zero (or below it, for a series that goes negative) to a little above the top.
+  const lo = Math.min(0, ...vals);
+  const hi = Math.max(0, ...vals);
+  const span = (hi - lo) * 1.15 || 1;
   const x = (i: number) => (i / (points.length - 1)) * W;
-  const y = (v: number) => height - 3 - (v / max) * (height - 8);
+  const y = (v: number) => height - 3 - ((v - lo) / span) * (height - 8);
 
   const segments: string[] = [];
   let cur = "";
@@ -58,32 +61,32 @@ export function Line({
       <svg ref={ref} viewBox={`0 0 ${W} ${height}`} preserveAspectRatio="none" className="block w-full overflow-visible" style={{ height }} onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
         <defs>
           <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.35" />
+            <stop offset="0%" stopColor={color} stopOpacity="0.16" />
             <stop offset="100%" stopColor={color} stopOpacity="0" />
           </linearGradient>
         </defs>
         {area.map((d, i) => <path key={i} d={d} fill={`url(#${id})`} />)}
-        <path d={line} fill="none" stroke={color} strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
+        <path d={line} fill="none" stroke={color} strokeWidth={1.5} vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
         {h && hover != null && (
-          <line x1={x(hover)} x2={x(hover)} y1={0} y2={height} stroke="rgb(255 255 255 / .35)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+          <line x1={x(hover)} x2={x(hover)} y1={0} y2={height} stroke="var(--ink-3)" strokeOpacity={0.5} strokeWidth={1} vectorEffect="non-scaling-stroke" />
         )}
       </svg>
       {h && hover != null && (
         <>
           {h.v != null && (
-            <span className="pointer-events-none absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-[#0b0a14]" style={{ left: `${(hover / (points.length - 1)) * 100}%`, top: y(h.v), background: color }} />
+            <span className="pointer-events-none absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-surface" style={{ left: `${(hover / (points.length - 1)) * 100}%`, top: y(h.v), background: color }} />
           )}
           <div
-            className="pointer-events-none absolute -top-2 z-20 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-lg border border-white/10 bg-[#141224]/95 px-2.5 py-1.5 text-xs shadow-xl"
+            className="pointer-events-none absolute -top-2 z-20 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-lg border border-line bg-popover px-2.5 py-1.5 text-xs shadow-lg"
             style={{ left: `clamp(60px, ${(hover / (points.length - 1)) * 100}%, calc(100% - 60px))` }}
           >
             <span className="text-ink-3">{time(h.t)}</span>{" "}
-            <span className="font-mono text-ink">{h.v == null ? tr("sans réponse", "no response") : `${Math.round(h.v)} ${unit}`}</span>
+            <span className="font-medium text-ink tabular">{h.v == null ? tr("sans réponse", "no response") : `${Math.round(h.v)} ${unit}`}</span>
           </div>
         </>
       )}
       {axis && (
-        <div className="mt-1 flex justify-between font-mono text-[10px] text-ink-3">
+        <div className="mt-1 flex justify-between text-3xs text-ink-3 tabular">
           <span>{time(points[0].t)}</span>
           <span>{time(points.at(-1)!.t)}</span>
         </div>

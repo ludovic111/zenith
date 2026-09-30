@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CalendarClock, LoaderCircle, Play } from "lucide-react";
-import { ago } from "@/lib/format";
+import { ago, date } from "@/lib/format";
 import { tr } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import { threadHref } from "@/components/code/store";
 
 export type RoutineView = {
@@ -16,6 +17,8 @@ export type RoutineView = {
   enabled: boolean;
   target: string;
   last: { at: string; threadId?: string; environmentId?: string; error?: string } | null;
+  /** Next scheduled run (ISO), null when paused. */
+  next?: string | null;
 };
 
 const DAY = () => [tr("lun", "Mon"), tr("mar", "Tue"), tr("mer", "Wed"), tr("jeu", "Thu"), tr("ven", "Fri"), tr("sam", "Sat"), tr("dim", "Sun")];
@@ -30,8 +33,8 @@ function when(r: RoutineView) {
   return tr(`${days} à ${r.at}`, `${days} at ${r.at}`);
 }
 
-/** Agents that run on their own, once a day: when, where, their last run, and a way to run one now. */
-export function RoutinesList({ routines }: { routines: RoutineView[] }) {
+/** Agents that run on their own, once a day: when, where, their last and next run, and a way to run one now. */
+export function RoutinesList({ routines, className }: { routines: RoutineView[]; className?: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -51,45 +54,52 @@ export function RoutinesList({ routines }: { routines: RoutineView[] }) {
   }
 
   return (
-    <ul className="divide-y divide-line">
+    <ul className={cn("divide-y divide-line", className)}>
       {routines.map((r) => (
-        <li key={r.id} className="flex items-center gap-3 py-3">
-          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-sun/10 text-sun">
-            <CalendarClock className="size-4" />
-          </span>
+        <li key={r.id} className="flex items-center gap-3 px-4 py-2.5">
+          <CalendarClock className={cn("size-4 shrink-0", r.enabled ? "text-ink-3" : "text-ink-3/50")} />
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm text-ink">
-              {r.title}
-              {!r.enabled && <span className="ml-2 text-xs text-ink-3">{tr("en pause", "paused")}</span>}
+            <div className="flex items-center gap-2 text-[13px]">
+              <span className={cn("truncate", r.enabled ? "text-ink" : "text-ink-3")}>{r.title}</span>
+              {!r.enabled && <span className="shrink-0 rounded border border-line px-1 text-2xs text-ink-3">{tr("en pause", "paused")}</span>}
             </div>
             <div className="truncate text-xs text-ink-3" suppressHydrationWarning>
-              {when(r)} · {r.target}
+              {when(r)}
+              {r.target && ` · ${r.target}`}
               {r.last && (
                 <>
                   {" · "}
                   {r.last.error ? (
-                    <span className="text-bad">{tr(`échec ${ago(r.last.at)}`, `failed ${ago(r.last.at)}`)}</span>
+                    <span className="text-bad" title={r.last.error}>{tr(`échec ${ago(r.last.at)}`, `failed ${ago(r.last.at)}`)}</span>
                   ) : r.last.threadId && r.last.environmentId ? (
                     <Link href={threadHref({ environmentId: r.last.environmentId, id: r.last.threadId })} className="text-ink-2 underline-offset-4 hover:underline">
-                      {tr(`dernière fois ${ago(r.last.at)}`, `last run ${ago(r.last.at)}`)}
+                      {tr(`dernière ${ago(r.last.at)}`, `last ${ago(r.last.at)}`)}
                     </Link>
-                  ) : null}
+                  ) : (
+                    tr(`dernière ${ago(r.last.at)}`, `last ${ago(r.last.at)}`)
+                  )}
                 </>
               )}
             </div>
           </div>
+          {r.next && (
+            <span className="hidden shrink-0 text-right text-xs text-ink-3 tabular sm:block" suppressHydrationWarning title={tr("Prochaine exécution", "Next run")}>
+              {date(r.next, { weekday: "short", hour: "2-digit", minute: "2-digit" })}
+            </span>
+          )}
           <button
             type="button"
             onClick={() => run(r.id)}
             disabled={busy !== null}
-            className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-ink-2 transition hover:border-white/20 hover:text-ink disabled:opacity-60"
+            title={tr("Lancer maintenant", "Run now")}
+            className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md border border-line bg-surface px-2 text-xs text-ink-2 transition-colors hover:bg-hover hover:text-ink disabled:opacity-60"
           >
             {busy === r.id ? <LoaderCircle className="size-3.5 animate-spin" /> : <Play className="size-3.5" />}
             {tr("Lancer", "Run")}
           </button>
         </li>
       ))}
-      {error && <li className="py-2 text-xs text-bad">{error}</li>}
+      {error && <li className="px-4 py-2 text-xs text-bad">{error}</li>}
     </ul>
   );
 }

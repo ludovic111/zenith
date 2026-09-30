@@ -1,20 +1,24 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { Bell, Cpu, GitPullRequest, HardDrive, MessageSquare, Newspaper, Package, Server, Star } from "lucide-react";
+import { CircleCheck, CircleDot, CircleX, GitPullRequest, Info, MessageSquare, Package, Server, ShieldAlert, Star, Tag } from "lucide-react";
 import { PROJECTS } from "@/lib/projects";
 import { source } from "@/lib/source";
-import { ago, money, pct } from "@/lib/format";
+import { ago, money, nf, pct } from "@/lib/format";
 import { plural, tr } from "@/lib/i18n";
 import { config } from "@/lib/config";
 import { hackerNews, hnMentions, localNews, WATCH, type Headline } from "@/lib/sources/news";
-import { githubMentions, groupNotifications, notifications, profile, recentStars } from "@/lib/sources/github";
+import { githubMentions, groupNotifications, notifications, profile, recentStars, type Notification } from "@/lib/sources/github";
 import { brewOutdated, devServers, machine } from "@/lib/sources/machine";
 import { crypto } from "@/lib/sources/markets";
 import { fx } from "@/lib/sources/plans";
-import { Panel, Skeleton, Empty, Chip } from "@/components/z/panel";
+import { agentUi } from "@/lib/agent/ui";
+import { AskButton } from "@/components/agent/ask-button";
+import { Empty, PageHeader, Panel, SectionTitle, Skeleton } from "@/components/z/panel";
 import { Gate } from "@/components/z/gate";
 import { Stat } from "@/components/z/stat";
 import { Heatmap } from "@/components/charts/heatmap";
+import { Counted, Row, Rows } from "@/components/life/rows";
+import { ciPrompt, mentionPrompt } from "@/components/life/prompts";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -22,38 +26,40 @@ export function generateMetadata(): Metadata {
   return { title: tr("Veille", "Watch") };
 }
 
-const ACCENT = "#7dd3fc";
-
 export default function Veille() {
+  const agent = agentUi().enabled;
   return (
     <>
-      <header className="mb-8">
-        <div className="font-mono text-xs uppercase tracking-[0.25em] text-ink-3">{tr("Ce qui bouge autour de toi", "What moves around you")}</div>
-        <h1 className="mt-3 font-display text-5xl font-black tracking-tight sm:text-6xl">{tr("Veille", "Watch")}</h1>
-        <p className="mt-2 max-w-2xl font-serif text-xl italic text-ink-2">
-          {tr(
-            "Qui parle de tes projets, ce qui t'attend sur GitHub, l'actualité, les marchés et l'état de ce Mac.",
-            "Who talks about your projects, what waits for you on GitHub, the news, the markets and the state of this Mac.",
-          )}
-        </p>
-      </header>
+      <PageHeader
+        title={tr("Veille", "Watch")}
+        description={tr(
+          "Qui parle de tes projets, ce qui t'attend sur GitHub, l'actualité, les marchés et l'état de ce Mac.",
+          "Who talks about your projects, what waits on GitHub, the news, the markets and the state of this Mac.",
+        )}
+      />
 
-      <div className="grid gap-5 xl:grid-cols-[1.4fr_1fr]">
-        <Suspense fallback={<Skeleton className="h-80" />}>
-          <Mentions />
+      <div className="grid items-start gap-4 lg:grid-cols-2">
+        <Suspense fallback={<Skeleton className="h-96" />}>
+          <GitHubInbox agent={agent} />
         </Suspense>
-        <Suspense fallback={<Skeleton className="h-80" />}>
-          <Inbox />
-        </Suspense>
+        <div className="grid gap-4">
+          <Suspense fallback={<Skeleton className="h-40" />}>
+            <Mentions agent={agent} />
+          </Suspense>
+          <Suspense fallback={<Skeleton className="h-64" />}>
+            <Contributions />
+          </Suspense>
+          <Suspense fallback={<Skeleton className="h-40" />}>
+            <Stars />
+          </Suspense>
+        </div>
       </div>
 
-      <div className="mt-5">
-        <Suspense fallback={<Skeleton className="h-64" />}>
-          <Contributions />
-        </Suspense>
-      </div>
-
-      <div className="mt-5 grid gap-5 xl:grid-cols-2">
+      <SectionTitle>{tr("Le monde", "The world")}</SectionTitle>
+      <Suspense fallback={<Skeleton className="h-20" />}>
+        <Markets />
+      </Suspense>
+      <div className="mt-4 grid items-start gap-4 lg:grid-cols-2">
         <Suspense fallback={<Skeleton className="h-96" />}>
           <News />
         </Suspense>
@@ -62,66 +68,78 @@ export default function Veille() {
         </Suspense>
       </div>
 
-      <div className="mt-5 grid gap-5 xl:grid-cols-[1.4fr_1fr]">
-        <Suspense fallback={<Skeleton className="h-72" />}>
-          <ThisMac />
-        </Suspense>
-        <Suspense fallback={<Skeleton className="h-72" />}>
-          <Markets />
-        </Suspense>
-      </div>
+      <SectionTitle>{tr("Ce Mac", "This Mac")}</SectionTitle>
+      <Suspense fallback={<Skeleton className="h-72" />}>
+        <ThisMac />
+      </Suspense>
     </>
   );
 }
 
+const ListBody = "p-0 pb-1.5 pt-1";
+
 /** Mentions of your projects outside your own repositories: Hacker News and GitHub. */
-async function Mentions() {
+async function Mentions({ agent }: { agent: boolean }) {
+  const title = (n?: number) => <Counted count={n}>{tr("On parle de toi", "People talk about you")}</Counted>;
   if (!WATCH.length)
     return (
-      <Panel kicker="Mentions" title={tr("On parle de toi", "People talk about you")} accent={ACCENT}>
+      <Panel title={title()} action="Hacker News · GitHub">
         <Empty>
-          {tr("Ajoute les mots qui te désignent, toi ou tes projets, sous ", "Add the words that mean you or your projects under ")}
-          <code className="font-mono text-xs text-sun">watch</code>
-          {tr(" dans ", " in ")}
-          <code className="font-mono text-xs">zenith.config.json</code>.
+          <span>
+            {tr("Ajoute les mots qui te désignent, toi ou tes projets, sous ", "Add the words that mean you or your projects under ")}
+            <code className="font-mono text-xs text-ink">watch</code>
+            {tr(" dans ", " in ")}
+            <code className="font-mono text-xs">zenith.config.json</code>.
+          </span>
         </Empty>
       </Panel>
     );
   const [hn, gh] = await Promise.all([source(hnMentions), source(() => githubMentions(WATCH.map((w) => w.term)))]);
   const items = [
-    ...(hn.ok ? hn.data.map((m) => ({ key: m.url, where: m.where, who: m.label, title: m.title, excerpt: m.excerpt, url: m.url, at: m.at })) : []),
+    ...(hn.ok ? hn.data.map((m) => ({ key: m.url, term: m.term, where: m.where, who: m.label, title: m.title, excerpt: m.excerpt, url: m.url, at: m.at, pr: false })) : []),
     ...(gh.ok
-      ? gh.data.map((m) => ({ key: m.url, where: `GitHub · ${m.repo}`, who: WATCH.find((w) => w.term === m.term)?.label ?? m.term, title: m.title, excerpt: m.kind === "pr" ? "Pull request" : "Issue", url: m.url, at: m.at }))
+      ? gh.data.map((m) => ({ key: m.url, term: m.term, where: `GitHub · ${m.repo}`, who: WATCH.find((w) => w.term === m.term)?.label ?? m.term, title: m.title, excerpt: "", url: m.url, at: m.at, pr: m.kind === "pr" }))
       : []),
   ]
     .filter((m, i, all) => all.findIndex((x) => x.key === m.key) === i)
     .sort((a, b) => b.at.localeCompare(a.at));
+  // The project a mention is about, when its word or label names one.
+  const projectOf = (m: { term: string; who: string }) =>
+    PROJECTS.find((p) => [p.id, p.name].some((x) => x.toLowerCase() === m.term || x.toLowerCase() === m.who.toLowerCase()))?.id;
   return (
-    <Panel kicker="Mentions" title={tr("On parle de toi", "People talk about you")} accent={ACCENT}>
+    <Panel title={title(items.length)} action="Hacker News · GitHub" bodyClassName={ListBody}>
       {!hn.ok && !gh.ok ? (
-        <Gate src={hn}>{() => null}</Gate>
+        <div className="px-4 pb-3">
+          <Gate src={hn}>{() => null}</Gate>
+        </div>
       ) : items.length ? (
-        <ul className="space-y-3">
+        <Rows>
           {items.slice(0, 10).map((m) => (
-            <li key={m.key}>
-              <a href={m.url} target="_blank" rel="noopener noreferrer" className="group flex gap-3 text-sm">
-                <MessageSquare className="mt-0.5 size-4 shrink-0 text-sky-300" />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-ink group-hover:underline">{m.title}</div>
-                  {m.excerpt && <div className="line-clamp-2 text-xs text-ink-2">{m.excerpt}</div>}
-                  <div className="text-xs text-ink-3">{m.who} · {m.where} · {ago(m.at)}</div>
-                </div>
-              </a>
-            </li>
+            <Row
+              key={m.key}
+              icon={m.where === "Hacker News" ? MessageSquare : m.pr ? GitPullRequest : CircleDot}
+              title={m.title}
+              href={m.url}
+              meta={
+                <>
+                  {m.who} · {m.where}
+                  {m.excerpt && <span className="text-ink-3"> · {m.excerpt}</span>}
+                </>
+              }
+              aside={ago(m.at)}
+              action={agent && <AskButton prompt={mentionPrompt(m)} target={projectOf(m)} label={tr("Prépare une réponse", "Draft a reply")} />}
+            />
           ))}
-        </ul>
+        </Rows>
       ) : (
-        <Empty>
-          {tr(
-            `Personne ne parle encore de ${WATCH.map((w) => w.term).join(", ")} sur Hacker News ni dans les issues GitHub des autres (90 jours).`,
-            `Nobody mentions ${WATCH.map((w) => w.term).join(", ")} on Hacker News or in other people's GitHub issues yet (90 days).`,
-          )}
-        </Empty>
+        <div className="px-4 pb-3">
+          <Empty>
+            {tr(
+              `Personne ne parle encore de ${WATCH.map((w) => w.term).join(", ")} sur Hacker News ni dans les issues GitHub des autres (90 jours).`,
+              `Nobody mentions ${WATCH.map((w) => w.term).join(", ")} on Hacker News or in other people's GitHub issues yet (90 days).`,
+            )}
+          </Empty>
+        </div>
       )}
     </Panel>
   );
@@ -141,48 +159,75 @@ const REASON = (): Record<string, string> => ({
   manual: tr("suivi", "watching"),
 });
 
-async function Inbox() {
-  const repos = PROJECTS.flatMap((p) => (p.repo ? [p.repo] : []));
-  const [n, stars] = await Promise.all([source(notifications), source(() => recentStars(repos))]);
+const failed = (n: Notification) => n.reason === "ci_activity" && /fail/i.test(n.title);
+const projectOfRepo = (repo: string) => PROJECTS.find((p) => p.repo?.toLowerCase() === repo.toLowerCase()) ?? null;
+
+/** Unread GitHub notifications, grouped by repository, CI failures first with a one-click fix. */
+async function GitHubInbox({ agent }: { agent: boolean }) {
+  const n = await source(notifications);
   const reason = REASON();
+  const count = n.ok ? n.data.length : undefined;
   return (
-    <Panel kicker="GitHub" title={tr("Notifications & étoiles", "Notifications & stars")} accent={ACCENT}>
+    <Panel title={<Counted count={count}>{tr("Notifications GitHub", "GitHub notifications")}</Counted>} action={tr("non lues", "unread")} bodyClassName={ListBody}>
       <Gate src={n}>
         {(list) => {
-          const groups = groupNotifications(list);
-          return list.length ? (
-            <ul className="space-y-2.5">
-              {groups.slice(0, 8).map((x) => (
-                <li key={x.id}>
-                  <a href={x.url} target="_blank" rel="noopener noreferrer" className="group flex gap-3 text-sm">
-                    {x.type === "PullRequest" ? <GitPullRequest className="mt-0.5 size-4 shrink-0 text-good" /> : <Bell className={cn("mt-0.5 size-4 shrink-0", x.reason === "ci_activity" ? "text-bad" : "text-sun")} />}
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-ink group-hover:underline">{x.title}</div>
-                      <div className="text-xs text-ink-3">{x.repo} · {reason[x.reason] ?? x.reason} · {ago(x.at)}{x.count > 1 ? tr(` · ${x.count} fois`, ` · ${x.count} times`) : ""}</div>
-                    </div>
+          if (!list.length)
+            return (
+              <div className="px-4 pb-3">
+                <Empty>{tr("Aucune notification non lue.", "No unread notification.")}</Empty>
+              </div>
+            );
+          const byRepo = new Map<string, ReturnType<typeof groupNotifications>>();
+          for (const x of groupNotifications(list)) byRepo.set(x.repo, [...(byRepo.get(x.repo) ?? []), x]);
+          // Repositories with a failing workflow first, then the most recent.
+          const repos = [...byRepo.entries()].sort(([, a], [, b]) => Number(b.some(failed)) - Number(a.some(failed)) || b[0].at.localeCompare(a[0].at));
+          return repos.map(([repo, items], i) => {
+            const proj = projectOfRepo(repo);
+            const failures = items.filter(failed);
+            // A failing default branch is what matters; old tags come after.
+            const main = failures.filter((f) => /\b(main|master)\b/i.test(f.title));
+            return (
+              <div key={repo} className={cn(i > 0 && "border-t border-line")}>
+                <div className="flex h-10 items-center gap-2.5 px-4">
+                  <span className="size-2 shrink-0 rounded-full" style={{ background: proj?.color ?? "var(--ink-3)" }} />
+                  <a href={`https://github.com/${repo}`} target="_blank" rel="noopener noreferrer" className="min-w-0 truncate text-[13px] font-medium text-ink hover:underline">
+                    {proj?.name ?? repo.split("/")[1]}
                   </a>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <Empty>{tr("Aucune notification non lue.", "No unread notification.")}</Empty>
-          );
+                  <span className="truncate text-xs text-ink-3 max-sm:hidden">{repo}</span>
+                  <span className="text-xs text-ink-3 tabular">{items.reduce((a, x) => a + x.count, 0)}</span>
+                  <span className="flex-1" />
+                  {failures.length > 0 && (
+                    <span className={cn("shrink-0 text-xs", main.length ? "text-bad" : "text-ink-3")}>
+                      {main.length ? tr("CI principale en échec", "Main CI failing") : `${failures.length} ${plural(failures.length, ["échec", "échecs"], ["failure", "failures"])}`}
+                    </span>
+                  )}
+                  {agent && failures.length > 0 && (
+                    <AskButton prompt={ciPrompt(repo, (main.length ? [...main, ...failures.filter((f) => !main.includes(f))] : failures).slice(0, 8))} target={proj?.id} label={tr("Répare", "Fix")} />
+                  )}
+                </div>
+                <Rows className="border-t border-line">
+                  {items.slice(0, 6).map((x) => {
+                    const bad = failed(x);
+                    const Icon = bad ? CircleX : x.reason === "ci_activity" ? CircleCheck : x.reason === "security_alert" ? ShieldAlert : x.type === "PullRequest" ? GitPullRequest : x.type === "Release" ? Tag : x.type === "Issue" ? CircleDot : Info;
+                    return (
+                      <Row
+                        key={x.id}
+                        icon={Icon}
+                        tone={bad && /\b(main|master)\b/i.test(x.title) ? "text-bad" : x.reason === "security_alert" ? "text-warn" : undefined}
+                        title={x.title}
+                        href={x.url}
+                        meta={`${reason[x.reason] ?? x.reason}${x.count > 1 ? tr(` · ${x.count} fois`, ` · ${x.count} times`) : ""}`}
+                        aside={ago(x.at)}
+                      />
+                    );
+                  })}
+                  {items.length > 6 && <li className="flex h-8 items-center px-4 pl-11 text-xs text-ink-3">{tr(`et ${items.length - 6} de plus`, `and ${items.length - 6} more`)}</li>}
+                </Rows>
+              </div>
+            );
+          });
         }}
       </Gate>
-      {stars.ok && stars.data.length > 0 && (
-        <div className="mt-5 border-t border-line pt-4">
-          <div className="mb-2 text-[11px] uppercase tracking-[0.18em] text-ink-3">{tr("Nouvelles étoiles · 30 jours", "New stars · 30 days")}</div>
-          <div className="flex flex-wrap gap-2">
-            {stars.data.slice(0, 16).map((s) => (
-              <a key={s.repo + s.user} href={s.url} target="_blank" rel="noopener noreferrer">
-                <Chip>
-                  <Star className="size-3 fill-sun text-sun" /> {s.user} → {s.repo.split("/")[1]} · {ago(s.at)}
-                </Chip>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
     </Panel>
   );
 }
@@ -190,18 +235,20 @@ async function Inbox() {
 async function Contributions() {
   const p = await source(profile);
   return (
-    <Panel kicker="GitHub" title={tr("Contributions de l'année", "Contributions this year")} accent={ACCENT}>
+    <Panel title={tr("Contributions", "Contributions")} action={p.ok ? `@${p.data.login}` : "GitHub"}>
       <Gate src={p}>
         {(g) => (
           <>
-            <div className="mb-5 grid grid-cols-2 gap-5 sm:grid-cols-5">
-              <Stat label="Contributions" value={g.contributions} hint={tr("12 derniers mois", "last 12 months")} color={ACCENT} />
-              <Stat label={tr("Série", "Streak")} value={g.streak} suffix={tr(" j", " d")} hint={g.streak ? tr("jours d'affilée", "days in a row") : tr("à relancer aujourd'hui", "restart it today")} />
-              <Stat label={tr("Étoiles", "Stars")} value={g.stars} hint={tr(`sur ${g.repos} dépôts`, `across ${g.repos} repositories`)} />
-              <Stat label={tr("Abonnés", "Followers")} value={g.followers} hint={`@${g.login}`} />
-              <Stat label={tr("7 jours", "7 days")} value={g.days.slice(-7).reduce((a, d) => a + d.count, 0)} hint="contributions" />
+            <div className="grid grid-cols-3 gap-4 sm:grid-cols-5">
+              <Stat label={tr("12 mois", "12 months")} value={g.contributions} />
+              <Stat label={tr("7 jours", "7 days")} value={g.days.slice(-7).reduce((a, d) => a + d.count, 0)} />
+              <Stat label={tr("Série", "Streak")} value={g.streak} suffix={tr(" j", " d")} hint={g.streak ? undefined : tr("à relancer aujourd'hui", "restart it today")} />
+              <Stat label={tr("Étoiles", "Stars")} value={g.stars} hint={tr(`${g.repos} dépôts`, `${g.repos} repositories`)} />
+              <Stat label={tr("Abonnés", "Followers")} value={g.followers} />
             </div>
-            <Heatmap days={g.days.slice(-182).map((d) => ({ t: Date.parse(`${d.date}T00:00:00Z`), total: d.count, parts: [{ name: "Contributions", color: "#ffd166", value: d.count }] }))} />
+            <div className="mt-5 border-t border-line pt-4">
+              <Heatmap days={g.days.slice(-182).map((d) => ({ t: Date.parse(`${d.date}T00:00:00Z`), total: d.count, parts: [{ name: "Contributions", color: "var(--primary)", value: d.count }] }))} />
+            </div>
           </>
         )}
       </Gate>
@@ -209,48 +256,102 @@ async function Contributions() {
   );
 }
 
-function Headlines({ list, showScore }: { list: Headline[]; showScore?: boolean }) {
+async function Stars() {
+  const repos = PROJECTS.flatMap((p) => (p.repo ? [p.repo] : []));
+  const s = await source(() => recentStars(repos));
+  const count = s.ok ? s.data.length : undefined;
   return (
-    <ul className="space-y-3">
+    <Panel title={<Counted count={count}>{tr("Nouvelles étoiles", "New stars")}</Counted>} action={tr("30 jours", "30 days")} bodyClassName={ListBody}>
+      <Gate src={s}>
+        {(list) =>
+          list.length ? (
+            <Rows>
+              {list.slice(0, 8).map((x) => {
+                const proj = projectOfRepo(x.repo);
+                return (
+                  <Row
+                    key={x.repo + x.user}
+                    icon={Star}
+                    title={x.user}
+                    href={x.url}
+                    meta={
+                      <span className="inline-flex items-center gap-1.5">
+                        {proj && <span className="size-1.5 rounded-full" style={{ background: proj.color }} />}
+                        {proj?.name ?? x.repo.split("/")[1]}
+                      </span>
+                    }
+                    aside={ago(x.at)}
+                  />
+                );
+              })}
+            </Rows>
+          ) : (
+            <div className="px-4 pb-3">
+              <Empty>{tr("Pas de nouvelle étoile ce mois-ci.", "No new star this month.")}</Empty>
+            </div>
+          )
+        }
+      </Gate>
+    </Panel>
+  );
+}
+
+function Headlines({ list, hn }: { list: Headline[]; hn?: boolean }) {
+  return (
+    <Rows>
       {list.map((h) => (
-        <li key={h.url} className="flex gap-3 text-sm">
-          <Newspaper className="mt-0.5 size-4 shrink-0 text-ink-3" />
+        <li key={h.url} className="flex min-h-10 items-center gap-3 px-4 py-2 transition-colors hover:bg-hover">
           <div className="min-w-0 flex-1">
-            <a href={h.url} target="_blank" rel="noopener noreferrer" className="text-ink hover:underline">{h.title}</a>
-            <div className="flex flex-wrap gap-x-3 text-xs text-ink-3">
-              <span>{h.source}</span>
-              {h.at && <span>{ago(h.at)}</span>}
-              {showScore && h.score != null && <span>{h.score} {plural(h.score, ["point", "points"], ["point", "points"])}</span>}
-              {h.discussion && (
-                <a href={h.discussion} target="_blank" rel="noopener noreferrer" className="hover:text-ink">
-                  {h.comments} {plural(h.comments ?? 0, ["commentaire", "commentaires"], ["comment", "comments"])}
+            <a href={h.url} target="_blank" rel="noopener noreferrer" className="line-clamp-1 text-[13px] text-ink underline-offset-2 hover:underline" title={h.title}>
+              {h.title}
+            </a>
+            <div className="flex gap-2 text-xs text-ink-3">
+              {!hn && <span className="truncate">{h.source}</span>}
+              {hn && h.score != null && <span className="tabular">{h.score} {plural(h.score, ["point", "points"], ["point", "points"])}</span>}
+              {hn && h.discussion && (
+                <a href={h.discussion} target="_blank" rel="noopener noreferrer" className="tabular hover:text-ink">
+                  {h.comments ?? 0} {plural(h.comments ?? 0, ["commentaire", "commentaires"], ["comment", "comments"])}
                 </a>
               )}
             </div>
           </div>
+          {h.at && <span className="shrink-0 text-xs text-ink-3 tabular">{ago(h.at)}</span>}
         </li>
       ))}
-    </ul>
+    </Rows>
   );
 }
 
 async function News() {
-  const kicker = config().location?.name ?? tr("Actualité", "News");
+  const where = config().location?.name ?? null;
+  const title = (n?: number) => <Counted count={n}>{tr("Actualité", "News")}</Counted>;
   if (!config().news.length)
     return (
-      <Panel kicker={kicker} title={tr("L'actualité", "The news")} accent={ACCENT}>
+      <Panel title={title()}>
         <Empty>
-          {tr("Ajoute tes flux RSS sous ", "Add your RSS feeds under ")}
-          <code className="font-mono text-xs text-sun">news</code>
-          {tr(" dans ", " in ")}
-          <code className="font-mono text-xs">zenith.config.json</code>.
+          <span>
+            {tr("Ajoute tes flux RSS sous ", "Add your RSS feeds under ")}
+            <code className="font-mono text-xs text-ink">news</code>
+            {tr(" dans ", " in ")}
+            <code className="font-mono text-xs">zenith.config.json</code>.
+          </span>
         </Empty>
       </Panel>
     );
   const n = await source(localNews);
   return (
-    <Panel kicker={kicker} title={tr("L'actualité", "The news")} accent={ACCENT}>
-      <Gate src={n}>{(list) => (list.length ? <Headlines list={list.slice(0, 10)} /> : <Empty>{tr("Pas d'article.", "No article.")}</Empty>)}</Gate>
+    <Panel title={title(n.ok ? Math.min(n.data.length, 12) : undefined)} action={where} bodyClassName={ListBody}>
+      <Gate src={n}>
+        {(list) =>
+          list.length ? (
+            <Headlines list={list.slice(0, 12)} />
+          ) : (
+            <div className="px-4 pb-3">
+              <Empty>{tr("Pas d'article.", "No article.")}</Empty>
+            </div>
+          )
+        }
+      </Gate>
     </Panel>
   );
 }
@@ -258,9 +359,54 @@ async function News() {
 async function HackerNews() {
   const n = await source(hackerNews);
   return (
-    <Panel kicker="Tech" title="Hacker News" accent={ACCENT}>
-      <Gate src={n}>{(list) => <Headlines list={list} showScore />}</Gate>
+    <Panel title={<Counted count={n.ok ? n.data.length : undefined}>Hacker News</Counted>} action={tr("à la une", "front page")} bodyClassName={ListBody}>
+      <Gate src={n}>{(list) => <Headlines list={list.slice(0, 12)} hn />}</Gate>
     </Panel>
+  );
+}
+
+/** Exchange rates and crypto, in one strip. */
+async function Markets() {
+  const [q, rates] = await Promise.all([source(crypto), fx()]);
+  const cur = rates.base;
+  // Two reference currencies other than yours.
+  const refs = ["EUR", "USD", "GBP"].filter((c) => c !== cur && rates.toBase[c]).slice(0, 2);
+  const usdTo = rates.toBase.USD;
+  const cells = [
+    ...refs.map((c) => ({ key: c, label: `1 ${c}`, value: money(rates.toBase[c], cur, 4), change: null as number | null })),
+    ...(q.ok ? q.data : []).map((x) => ({
+      key: x.symbol,
+      label: x.name,
+      value: usdTo ? money(x.usd * usdTo, cur, x.usd > 1000 ? 0 : 2) : money(x.usd, "USD", x.usd > 1000 ? 0 : 2),
+      change: x.change,
+    })),
+  ];
+  return (
+    <section className="overflow-hidden rounded-xl border border-line bg-surface">
+      <div className="grid grid-cols-2 divide-line sm:grid-cols-3 lg:grid-cols-5 lg:divide-x">
+        {cells.map((c) => (
+          <div key={c.key} className="min-w-0 px-4 py-3">
+            <div className="truncate text-xs text-ink-3">{c.label}</div>
+            <div className="mt-0.5 flex items-baseline gap-2">
+              <span className="truncate text-[15px] font-semibold text-ink tabular">{c.value}</span>
+              {c.change != null && (
+                <span className={cn("shrink-0 text-xs tabular", c.change >= 0 ? "text-good" : "text-bad")}>
+                  {c.change >= 0 ? "+" : ""}
+                  {pct(c.change, 1)}
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-4 py-2 text-2xs text-ink-3">
+        <span>
+          {rates.date ? tr(`Change BCE du ${rates.date} (Frankfurter)`, `ECB rates of ${rates.date} (Frankfurter)`) : tr("Change approximatif (Frankfurter injoignable)", "Approximate rates (Frankfurter unreachable)")}
+          {tr(" · cryptos Kraken, variation depuis minuit UTC", " · crypto from Kraken, change since midnight UTC")}
+        </span>
+        {!q.ok && <Gate src={q} compact>{() => null}</Gate>}
+      </div>
+    </section>
   );
 }
 
@@ -273,105 +419,94 @@ const duration = (s: number) => {
 async function ThisMac() {
   const [m, servers, brew] = await Promise.all([source(machine), source(devServers), source(brewOutdated)]);
   return (
-    <Panel kicker={tr("Ce Mac", "This Mac")} title={m.ok ? `${m.data.chip} · macOS ${m.data.macos}` : tr("Ce Mac", "This Mac")} accent={ACCENT}>
-      <Gate src={m}>
-        {(x) => {
-          const usedDisk = 1 - x.disk.freeGB / x.disk.totalGB;
-          return (
-            <div className="grid grid-cols-2 gap-5 sm:grid-cols-4">
-              <Stat
-                label={tr("Disque libre", "Free disk")}
-                value={Math.round(x.disk.freeGB)}
-                suffix={tr(" Go", " GB")}
-                hint={tr(`${pct(usedDisk)} utilisés sur ${Math.round(x.disk.totalGB)} Go`, `${pct(usedDisk)} used of ${Math.round(x.disk.totalGB)} GB`)}
-                color={usedDisk > 0.9 ? "#fb5a6b" : ACCENT}
-              />
-              <Stat label={tr("Mémoire libre", "Free memory")} value={x.memoryFree} suffix={tr(" %", "%")} hint={tr(`${x.memoryGB} Go au total`, `${x.memoryGB} GB in total`)} />
-              <Stat label={tr("Charge", "Load")} value={Math.round(x.load * 10) / 10} hint={tr(`${x.cores} cœurs`, `${x.cores} cores`)} />
-              {x.battery ? (
-                <Stat label={tr("Batterie", "Battery")} value={x.battery.percent} suffix={tr(" %", "%")} hint={x.battery.charging ? tr("en charge", "charging") : tr(`sur ${x.battery.source}`, `on ${x.battery.source}`)} />
-              ) : (
-                <Stat label={tr("Allumé depuis", "Up for")} value={Math.floor(x.uptime / 86400)} suffix={tr(" j", " d")} hint={duration(x.uptime)} />
-              )}
-            </div>
-          );
-        }}
-      </Gate>
-      <div className="mt-5 grid gap-5 border-t border-line pt-4 md:grid-cols-2">
-        <div>
-          <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-ink-3"><Server className="size-3.5" /> {tr("Serveurs de dev en marche", "Running dev servers")}</div>
-          {servers.ok && servers.data.length ? (
-            <ul className="space-y-1.5 text-sm">
-              {servers.data.map((s) => (
-                <li key={s.port} className="flex items-center gap-2">
-                  <a href={`http://127.0.0.1:${s.port}`} target="_blank" rel="noopener noreferrer" className="font-mono text-xs text-sky-300 hover:underline">:{s.port}</a>
-                  <span className="truncate text-ink-2" title={s.dir ?? undefined}>{s.project ?? s.dir?.split("/").pop() ?? s.command}</span>
-                  <span className="ml-auto font-mono text-[11px] text-ink-3">{s.command}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="text-sm text-ink-3">{tr("Aucun.", "None.")}</div>
-          )}
-        </div>
-        <div>
-          <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-ink-3"><Package className="size-3.5" /> {tr("Homebrew à mettre à jour", "Homebrew updates")}</div>
-          {brew.ok && brew.data ? (
-            brew.data.length ? (
+    <div className="grid items-start gap-4 lg:grid-cols-3">
+      <Panel title={m.ok ? `${m.data.chip} · macOS ${m.data.macos}` : tr("Ce Mac", "This Mac")}>
+        <Gate src={m}>
+          {(x) => {
+            const usedDisk = 1 - x.disk.freeGB / x.disk.totalGB;
+            const bars = [
+              { label: tr("Disque", "Disk"), used: usedDisk, text: tr(`${Math.round(x.disk.freeGB)} Go libres sur ${Math.round(x.disk.totalGB)}`, `${Math.round(x.disk.freeGB)} GB free of ${Math.round(x.disk.totalGB)}`) },
+              ...(x.memoryFree != null ? [{ label: tr("Mémoire", "Memory"), used: 1 - x.memoryFree / 100, text: tr(`${x.memoryFree} % libre sur ${x.memoryGB} Go`, `${x.memoryFree}% free of ${x.memoryGB} GB`) }] : []),
+              { label: tr("Charge", "Load"), used: Math.min(1, x.load / x.cores), text: tr(`${nf(x.load, 1)} sur ${x.cores} cœurs`, `${nf(x.load, 1)} on ${x.cores} cores`) },
+              ...(x.battery ? [{ label: tr("Batterie", "Battery"), used: x.battery.percent / 100, text: `${x.battery.percent}${tr(" %", "%")} · ${x.battery.charging ? tr("en charge", "charging") : tr(`sur ${x.battery.source}`, `on ${x.battery.source}`)}`, battery: true }] : []),
+            ];
+            return (
               <>
-                <div className="flex flex-wrap gap-1.5">
-                  {brew.data.slice(0, 14).map((b) => (
-                    <Chip key={b.name} className="font-mono">{b.name} {b.current}→{b.latest}</Chip>
-                  ))}
-                </div>
-                <code className="mt-2 block font-mono text-[11px] text-sun">brew upgrade</code>
+              <ul className="space-y-3.5">
+                {bars.map((b) => {
+                  // Full is bad for disk, memory and load; empty is bad for a battery.
+                  const level = "battery" in b ? 1 - b.used : b.used;
+                  return (
+                    <li key={b.label}>
+                      <div className="mb-1 flex items-baseline justify-between gap-3 text-xs">
+                        <span className="text-ink-2">{b.label}</span>
+                        <span className="truncate text-ink-3 tabular">{b.text}</span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                        <div className={cn("h-full rounded-full", level > 0.9 ? "bg-bad" : level > 0.75 ? "bg-warn" : "bg-ink-3")} style={{ width: `${Math.max(2, Math.round(b.used * 100))}%` }} />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="mt-4 text-2xs text-ink-3">{tr(`Allumé depuis ${duration(x.uptime)} · ${x.model}`, `Up for ${duration(x.uptime)} · ${x.model}`)}</p>
               </>
-            ) : (
-              <div className="text-sm text-ink-3">{tr("Tout est à jour.", "Everything is up to date.")}</div>
-            )
-          ) : (
-            <div className="text-sm text-ink-3">{tr("Homebrew introuvable.", "Homebrew not found.")}</div>
-          )}
-        </div>
-      </div>
-      <p className="mt-4 flex items-center gap-1.5 text-xs text-ink-3"><Cpu className="size-3" /><HardDrive className="size-3" /> {tr("Lu localement : sysctl, memory_pressure, pmset, lsof, brew.", "Read locally: sysctl, memory_pressure, pmset, lsof, brew.")}</p>
-    </Panel>
-  );
-}
+            );
+          }}
+        </Gate>
+      </Panel>
 
-async function Markets() {
-  const [q, rates] = await Promise.all([source(crypto), fx()]);
-  const cur = rates.base;
-  // Two reference currencies other than yours.
-  const refs = ["EUR", "USD", "GBP"].filter((c) => c !== cur && rates.toBase[c]).slice(0, 2);
-  const usdTo = rates.toBase.USD;
-  return (
-    <Panel kicker={tr("Marchés", "Markets")} title={tr("Cours du moment", "Current prices")} accent={ACCENT}>
-      <ul className="space-y-3 text-sm">
-        {refs.map((c) => (
-          <li key={c} className="flex items-baseline justify-between gap-3">
-            <span className="text-ink-2">1 {c}</span>
-            <span className="font-mono text-ink">{money(rates.toBase[c], cur, 4)}</span>
-          </li>
-        ))}
-        {q.ok &&
-          q.data.map((x) => (
-            <li key={x.symbol} className="flex items-baseline justify-between gap-3">
-              <span className="text-ink-2">{x.name}</span>
-              <span className="font-mono text-ink">
-                {usdTo ? money(x.usd * usdTo, cur, x.usd > 1000 ? 0 : 2) : money(x.usd, "USD", x.usd > 1000 ? 0 : 2)}{" "}
-                <span className={cn("text-xs", x.change >= 0 ? "text-good" : "text-bad")}>{x.change >= 0 ? "+" : ""}{pct(x.change, 1)}</span>
-              </span>
-            </li>
-          ))}
-      </ul>
-      {!q.ok && <div className="mt-3"><Gate src={q} compact>{() => null}</Gate></div>}
-      <p className="mt-4 text-xs text-ink-3">
-        {rates.date
-          ? tr(`Change BCE du ${rates.date} (Frankfurter)`, `ECB rates of ${rates.date} (Frankfurter)`)
-          : tr("Change approximatif (Frankfurter injoignable)", "Approximate rates (Frankfurter unreachable)")}
-        {tr(", cryptos Kraken, variation depuis minuit UTC.", ", crypto from Kraken, change since midnight UTC.")}
-      </p>
-    </Panel>
+      <Panel title={<Counted count={servers.ok ? servers.data.length : undefined}>{tr("Serveurs de dev", "Dev servers")}</Counted>} action={tr("en marche", "running")} bodyClassName={ListBody}>
+        {servers.ok && servers.data.length ? (
+          <Rows>
+            {servers.data.map((s) => (
+              <Row
+                key={s.port}
+                icon={Server}
+                title={
+                  <>
+                    <span className="tabular text-ink-2">:{s.port}</span> <span>{s.project ?? s.dir?.split("/").pop() ?? s.command}</span>
+                  </>
+                }
+                href={`http://127.0.0.1:${s.port}`}
+                aside={<span className="font-mono">{s.command}</span>}
+              />
+            ))}
+          </Rows>
+        ) : (
+          <p className="px-4 pb-3 text-[13px] text-ink-3">{tr("Aucun serveur de dev en marche.", "No dev server running.")}</p>
+        )}
+      </Panel>
+
+      <Panel
+        title={<Counted count={brew.ok && brew.data ? brew.data.length : undefined}>{tr("Mises à jour Homebrew", "Homebrew updates")}</Counted>}
+        action={brew.ok && brew.data?.length ? <code className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-2xs text-ink-2">brew upgrade</code> : null}
+        bodyClassName={ListBody}
+      >
+        {brew.ok && brew.data ? (
+          brew.data.length ? (
+            <Rows>
+              {brew.data.slice(0, 10).map((b) => (
+                <Row
+                  key={b.name}
+                  icon={Package}
+                  title={b.name}
+                  aside={
+                    <span className="font-mono">
+                      {b.current} → <span className="text-ink-2">{b.latest}</span>
+                    </span>
+                  }
+                />
+              ))}
+              {brew.data.length > 10 && <li className="flex h-8 items-center px-4 pl-11 text-xs text-ink-3">{tr(`et ${brew.data.length - 10} de plus`, `and ${brew.data.length - 10} more`)}</li>}
+            </Rows>
+          ) : (
+            <p className="px-4 pb-3 text-[13px] text-ink-3">{tr("Tout est à jour.", "Everything is up to date.")}</p>
+          )
+        ) : (
+          <p className="px-4 pb-3 text-[13px] text-ink-3">{tr("Homebrew introuvable.", "Homebrew not found.")}</p>
+        )}
+      </Panel>
+    </div>
   );
 }

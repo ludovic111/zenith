@@ -9,7 +9,7 @@ export const LIFE = "life";
 export type AgentTarget = {
   id: string;
   name: string;
-  glow: string;
+  color: string;
   emoji?: string;
   /** Lowercase words that name it: id, name, folder, repository, single-word identity names. */
   aliases: string[];

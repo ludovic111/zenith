@@ -37,9 +37,10 @@ type DesktopThemeBridge = Pick<DesktopBridge, "setTheme">;
 
 const STORAGE_KEY = "t3code:theme";
 const MEDIA_QUERY = "(prefers-color-scheme: dark)";
-// zenith: the zenith palette is the default look (index.html mirrors this).
+// zenith: the stock palette, following the system's appearance, is the default look,
+// as in the zenith dashboard (index.html mirrors this).
 const DEFAULT_THEME_SNAPSHOT: ThemeSnapshot = {
-  theme: "zenith",
+  theme: "system",
   resolvedTheme: "dark",
   systemDark: false,
   followSystem: true,

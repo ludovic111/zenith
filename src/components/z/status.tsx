@@ -8,7 +8,7 @@ const STYLE: Record<Health, { color: string; icon: typeof CircleCheck; label: ()
   up: { color: "var(--good)", icon: CircleCheck, label: () => tr("En ligne", "Online") },
   down: { color: "var(--bad)", icon: CircleX, label: () => tr("Hors ligne", "Offline") },
   warn: { color: "var(--warn)", icon: CircleAlert, label: () => tr("À surveiller", "Needs attention") },
-  busy: { color: "#7dd3fc", icon: LoaderCircle, label: () => tr("En cours", "In progress") },
+  busy: { color: "#0ea5e9", icon: LoaderCircle, label: () => tr("En cours", "In progress") },
   unknown: { color: "var(--ink-3)", icon: CircleDashed, label: () => tr("Inconnu", "Unknown") },
 };
 

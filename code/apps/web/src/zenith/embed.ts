@@ -19,6 +19,8 @@ export const ZENITH_MESSAGE = {
   navigate: "zenith-code:navigate",
   /** app → parent: a `ZenithSidebarSnapshot`, whenever it changes. */
   sidebar: "zenith-code:sidebar",
+  /** app → parent: `{ zoom: boolean }`, a press in the title bar (zenith.app moves the window). */
+  drag: "zenith-code:drag",
 } as const;
 
 export type ZenithThreadSection = "pinned" | "active" | "snoozed" | "settled";

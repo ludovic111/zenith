@@ -21,6 +21,7 @@ export const MSG = {
   chrome: "zenith-code:chrome",
   navigate: "zenith-code:navigate",
   sidebar: "zenith-code:sidebar",
+  drag: "zenith-code:drag",
 } as const;
 
 export type CodeThreadStatus = "approval" | "input" | "working" | "connecting" | "plan" | "monitoring" | "completed" | "failed";
@@ -136,14 +137,14 @@ export function sameDir(a: string, b: string) {
 export const NEEDS_YOU: ReadonlySet<CodeThreadStatus> = new Set(["approval", "input", "plan", "failed"]);
 
 export const STATUS_STYLE: Record<CodeThreadStatus, { dot: string; pulse: boolean; label: () => [string, string] }> = {
-  approval: { dot: "#fcd34d", pulse: false, label: () => ["Approbation requise", "Pending approval"] },
-  input: { dot: "#a5b4fc", pulse: false, label: () => ["Attend ta réponse", "Awaiting input"] },
-  working: { dot: "#7dd3fc", pulse: true, label: () => ["En cours", "Working"] },
-  connecting: { dot: "#7dd3fc", pulse: true, label: () => ["Connexion…", "Connecting"] },
-  plan: { dot: "#c4b5fd", pulse: false, label: () => ["Plan prêt", "Plan ready"] },
-  monitoring: { dot: "#7dd3fc", pulse: false, label: () => ["Surveille", "Monitoring"] },
-  completed: { dot: "#6ee7b7", pulse: false, label: () => ["Terminé", "Completed"] },
-  failed: { dot: "#fb7185", pulse: false, label: () => ["Échec", "Failed"] },
+  approval: { dot: "#f59e0b", pulse: false, label: () => ["Approbation requise", "Pending approval"] },
+  input: { dot: "#6366f1", pulse: false, label: () => ["Attend ta réponse", "Awaiting input"] },
+  working: { dot: "#0ea5e9", pulse: true, label: () => ["En cours", "Working"] },
+  connecting: { dot: "#0ea5e9", pulse: true, label: () => ["Connexion…", "Connecting"] },
+  plan: { dot: "#8b5cf6", pulse: false, label: () => ["Plan prêt", "Plan ready"] },
+  monitoring: { dot: "#0ea5e9", pulse: false, label: () => ["Surveille", "Monitoring"] },
+  completed: { dot: "#22c55e", pulse: false, label: () => ["Terminé", "Completed"] },
+  failed: { dot: "#ef4444", pulse: false, label: () => ["Échec", "Failed"] },
 };
 
 const PRIORITY: Record<CodeThreadStatus, number> = {

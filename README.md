@@ -1,6 +1,6 @@
 # zenith
 
-**A private sky over your projects and your day.** zenith is a local dashboard for people who build many things at once: every project's health, deploys, code and AI agents, your calendar, mail, money and news — plus **zenith code**, a full coding workspace for Claude Code and Codex, built in.
+**Your projects and your day, at a glance.** zenith is a local dashboard for people who build many things at once: every project's health, deploys, code and AI agents, your calendar, mail, money and news — plus **zenith code**, a full coding workspace for Claude Code and Codex, built in.
 
 And it acts. **Ask zenith** anything in one sentence (⌘J): an AI agent starts on it at once, in the right project or across your whole life, with everything zenith knows. The **Now** list shows what is waiting for you — a failing payment, buyers to answer, a broken CI, a birthday — and hands each one to an agent in one tap. It prepares; you approve.
 
@@ -10,19 +10,19 @@ It runs on your machine, answers only on `127.0.0.1`, and never sends your data 
 
 | Page | What it shows |
 | --- | --- |
-| **Ask zenith** | One box, everywhere (overview, project pages, ⌘J, ⌘K): say what you want, an agent does it and opens as a thread. Routes to the project you name, else to your life agent |
+| **Ask zenith** | One box, everywhere (home, project pages, ⌘J, ⌘K): say what you want, an agent does it and opens as a thread. Routes to the project you name, else to your life agent. Most pages also offer one-click agent actions on what they show (draft a reply, fix a CI, review subscriptions…) |
 | **Now** | What is waiting for you, most pressing first, each with a one-tap *Hand off* to an agent, *done* and *later*. Plus routines: agents that run on their own every morning |
-| Overview | An orbit of your projects with live status, key numbers, project cards, six months of commits, a live feed of everything that happens |
+| Home | Today in one line, Ask zenith, Now, every project in one table (status, latency, key numbers, commits), money, agents at work, six months of commits, a live feed |
 | My day | Weather, air quality, UV and pollen, calendar (14 days, holidays, birthdays), what's waiting for you, now playing, screen time, spending, work rhythm |
 | Projects | One page per project: uptime, latency, HTTP traffic and deploys (Railway), CI, issues and PRs (GitHub), releases and downloads, App Store rating and reviews, RevenueCat MRR, agent sessions, Obsidian notes, identity card |
 | **Code** | **zenith code**: chat with Claude Code, Codex and other agents inside any of your projects — diffs, terminals, worktrees, approvals. Its threads live in zenith's sidebar, under their project |
-| **Claude, ChatGPT** | Their desktop apps docked right in zenith's window (zenith.app), plugins and connectors included |
 | Watch | Who talks about your projects (Hacker News, GitHub), notifications, new stars, contributions, news, markets, the state of your Mac |
-| AI agents | Every Claude Code and Codex session: live, cost, lines written, PRs, the command to resume it |
+| Agents | Every Claude Code and Codex session: live, cost, lines written, PRs, the command to resume it; plan limits; routines |
 | Subscriptions | Everything you pay for, monthly total in your currency, next charges, failing payments, Claude / ChatGPT plan gauges |
 | Directory | Every project's names, handles, domains (registrar, renewal, certificate, email), stores and services |
+| Settings | One place for zenith (configuration, zenith code, the agent, connecting your AI tools, the Mac app, data sources and keys) and zenith code (providers, projects, source control, keybindings…) |
 
-Press **⌘J** to ask zenith, **⌘K** to jump (pages, projects, threads — or type a sentence to ask), **⌘B** to fold the sidebar.
+Press **⌘J** to ask zenith, **⌘K** to jump (pages, projects, threads, settings — or type a sentence to ask), **⌘B** to hide the sidebar, **⌘,** for settings. zenith follows your system's light or dark appearance.
 
 ## Quick start
 
@@ -50,7 +50,7 @@ With zenith code built and Claude Code or Codex installed, you can skip the conf
 npm run mac:install
 ```
 
-Builds everything, installs **zenith.app** (a native window) and keeps the server running in the background (a LaunchAgent on `127.0.0.1:4747`). Run it again after pulling changes; `npm run mac:uninstall` removes it. The app also reads Calendar, Reminders, Contacts (birthdays only), Mail, Music/Spotify and screen time — read-only, after macOS asks you.
+Builds everything, installs **zenith.app** and keeps the server running in the background (a LaunchAgent on `127.0.0.1:4747`). Run it again after pulling changes; `npm run mac:uninstall` removes it. zenith.app is a native Mac window: translucent sidebar, traffic lights in a unified title bar you can drag and double-click, light and dark appearance, native menus (⌘, settings, ⌃⌘S sidebar, ⌘[ ⌘] back and forward), notifications and a Dock badge when a service goes down. The app also reads Calendar, Reminders, Contacts (birthdays only), Mail, Music/Spotify and screen time — read-only, after macOS asks you.
 
 ## Configuration
 
@@ -77,7 +77,7 @@ Everything about you lives in **`zenith.config.json`** — at the root or in `pe
 }
 ```
 
-API keys are pasted from **Data sources** (`/reglages`): they're written to `.env.local` (git-ignored) and applied without a restart. See `.env.example`. Without any key, zenith still shows your local repos, agent sessions, weather, news and more.
+API keys are pasted from **Settings → Data sources** (`/reglages/sources`): they're written to `.env.local` (git-ignored) and applied without a restart. See `.env.example`. Without any key, zenith still shows your local repos, agent sessions, weather, news and more.
 
 ## For AI agents
 
@@ -107,7 +107,7 @@ Built-in integrations (GitHub, Railway, RevenueCat, App Store, Obsidian, Claude 
 
 ## Stack
 
-Next.js 16, React 19, Tailwind 4, Motion, cmdk, NumberFlow, Magic UI components. Fonts: Unbounded, Instrument Serif, Geist, JetBrains Mono. zenith code: Effect, Vite, TanStack Router.
+Next.js 16, React 19, Tailwind 4, Motion, cmdk, NumberFlow; the system font. zenith.app: AppKit and WebKit. zenith code: Effect, Vite, TanStack Router.
 
 ## License
 

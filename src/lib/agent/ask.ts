@@ -44,11 +44,11 @@ const FALLBACK_MODEL: Record<Provider, string> = { claude: "claude-fable-5-1", c
 export function targets(): AgentTarget[] {
   const c = config();
   return [
-    { id: LIFE, name: tr("Ma vie", "My life"), glow: "#FFD166", emoji: "✦", aliases: [] },
+    { id: LIFE, name: tr("Ma vie", "My life"), color: "#D9A21B", emoji: "✦", aliases: [] },
     ...PROJECTS.filter((p) => projectDir(p)).map((p) => ({
       id: p.id,
       name: p.name,
-      glow: p.glow,
+      color: p.color,
       emoji: p.emoji,
       aliases: aliasesOf(
         p.id,
@@ -58,7 +58,7 @@ export function targets(): AgentTarget[] {
         ...(p.identity?.names ?? []).map((n) => n.value),
       ),
     })),
-    ...(c.code.enabled ? [{ id: "zenith", name: "zenith", glow: "#B18CFF", emoji: "☀︎", aliases: [] }] : []),
+    ...(c.code.enabled ? [{ id: "zenith", name: "zenith", color: "#71717B", emoji: "☀︎", aliases: [] }] : []),
   ];
 }
 

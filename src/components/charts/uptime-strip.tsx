@@ -20,21 +20,19 @@ export function UptimeStrip({ samples, slots = 60 }: { samples: Sample[]; slots?
             onMouseEnter={() => setHover(i)}
             className="flex-1 rounded-[2px] transition-opacity"
             style={{
-              background: s == null ? "rgb(255 255 255 / .06)" : up(s) ? "var(--good)" : "var(--bad)",
-              opacity: hover != null && hover !== i ? 0.45 : s && up(s) ? 0.8 : 1,
+              background: s == null ? "color-mix(in srgb, var(--foreground) 8%, transparent)" : up(s) ? "var(--good)" : "var(--bad)",
+              opacity: hover != null && hover !== i ? 0.45 : s && up(s) ? 0.75 : 1,
             }}
           />
         ))}
       </div>
       {h && hover != null && (
         <div
-          className="pointer-events-none absolute -top-2 z-20 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-lg border border-white/10 bg-[#141224]/95 px-2.5 py-1.5 text-xs shadow-xl"
+          className="pointer-events-none absolute -top-2 z-20 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-lg border border-line bg-popover px-2.5 py-1.5 text-xs shadow-lg"
           style={{ left: `clamp(70px, ${((hover + 0.5) / cells.length) * 100}%, calc(100% - 70px))` }}
         >
-          <span className="text-ink-3">
-            {new Intl.DateTimeFormat(l10n().locale, { timeZone: l10n().timeZone, hour: "2-digit", minute: "2-digit" }).format(h.t)}
-          </span>{" "}
-          <span className="font-mono text-ink">{up(h) ? `${h.status} · ${h.ms} ms` : h.status ? `HTTP ${h.status}` : tr("sans réponse", "no response")}</span>
+          <span className="text-ink-3">{new Intl.DateTimeFormat(l10n().locale, { timeZone: l10n().timeZone, hour: "2-digit", minute: "2-digit" }).format(h.t)}</span>{" "}
+          <span className="font-medium text-ink tabular">{up(h) ? `${h.status} · ${h.ms} ms` : h.status ? `HTTP ${h.status}` : tr("sans réponse", "no response")}</span>
         </div>
       )}
     </div>
