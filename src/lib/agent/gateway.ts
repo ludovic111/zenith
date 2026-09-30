@@ -174,4 +174,12 @@ export function startGateway() {
   });
 }
 
+/** Sends a message to every allowed chat (an agent reaching you); false when the gateway isn't on. */
+export async function sendToChats(text: string): Promise<boolean> {
+  const chats = settings()?.chats ?? [];
+  if (!token() || !chats.length) return false;
+  for (const c of chats) await say(Number(c), text).catch(() => {});
+  return true;
+}
+
 export const gatewayStatus = () => ({ configured: !!settings(), token: !!token(), running: !!g.__zenithGateway, chats: settings()?.chats.length ?? 0 });

@@ -194,6 +194,15 @@
           "name": {
             "type": "string"
           },
+          "autonomy": {
+            "default": "auto",
+            "type": "string",
+            "enum": [
+              "auto",
+              "propose",
+              "off"
+            ]
+          },
           "tagline": {
             "default": "",
             "type": "string"
@@ -845,6 +854,7 @@
         "enabled": true,
         "home": "~/.zenith/life",
         "name": "zenith",
+        "improve": "propose",
         "provider": "claude",
         "routines": [],
         "bots": [],
@@ -860,6 +870,14 @@
         "home": {
           "default": "~/.zenith/life",
           "type": "string"
+        },
+        "improve": {
+          "default": "propose",
+          "type": "string",
+          "enum": [
+            "propose",
+            "ship"
+          ]
         },
         "name": {
           "default": "zenith",
@@ -940,6 +958,18 @@
                   "maximum": 7
                 }
               },
+              "every": {
+                "type": "string",
+                "pattern": "^\\d+(m|h)$"
+              },
+              "from": {
+                "type": "string",
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+              },
+              "until": {
+                "type": "string",
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+              },
               "on": {
                 "minItems": 1,
                 "type": "array",
@@ -960,7 +990,8 @@
               "task": {
                 "type": "string",
                 "enum": [
-                  "refresh-life"
+                  "refresh-life",
+                  "improve-zenith"
                 ]
               },
               "skill": {

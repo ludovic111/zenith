@@ -128,6 +128,94 @@ function builtIns(): Record<string, string> {
 4. Answer per project, two lines at most each, with links. Write this watch's date in MEMORY.md.`,
       ),
     ),
+    reflect: skill(
+      "reflect",
+      tr("Apprendre de la journée, et apprendre à mieux apprendre : chaque nuit, et quand on te le demande.", "Learn from the day, and learn to learn better: every night, and when asked."),
+      tr(
+        `# Réfléchir
+
+Tu apprends de la personne et de ton propre travail, puis tu améliores ta façon d'apprendre. C'est une boucle : chaque passage part des leçons du précédent.
+
+1. **Relis la journée** : \`zenith_history\` (les conversations de toute l'équipe depuis 24 h) et le dernier journal (\`journal/\` dans le dossier de l'agent principal, les 7 derniers jours).
+2. **Repère les signaux** : ce que la personne a corrigé, redemandé, refusé, félicité ; ce qui a échoué ou pris trop de temps ; ce qu'un agent a dû deviner faute de savoir.
+3. **Juge les leçons passées** : pour chaque leçon des journaux récents, a-t-elle servi aujourd'hui ? Garde ce qui marche, corrige ce qui a induit en erreur, efface ce qui est faux.
+4. **Écris ce qui dure**, court et daté :
+   - préférences et façons de faire de la personne → USER.md ;
+   - décisions et état des affaires → le MEMORY.md de l'agent concerné (chaque agent a le sien, dans son dossier) ;
+   - démarche refaite ou corrigée → un skill nouveau ou amélioré (voir **write-skill**) ;
+   - ton ou habitudes d'un agent que la personne a corrigés → quelques mots dans son SOUL.md, sans jamais retirer une règle de prudence ;
+   - une gêne dans zenith lui-même → une idée dans IMPROVE.md (dossier de l'agent principal).
+5. **Améliore cette boucle** : si ta réflexion a raté quelque chose (un signal ignoré, une leçon inutile), modifie ce skill-ci, \`reflect\`, pour que la prochaine réflexion le voie.
+6. **Consolide** : fusionne les doublons, raccourcis, supprime ce qui est dépassé. Chaque fichier doit rester lisible en une minute.
+7. **Garde une trace** : écris \`journal/AAAA-MM-JJ.md\` (ce que tu as appris, ce que tu as changé, ce que tu surveilleras), puis, dans chaque dossier d'agent modifié, \`git add -A && git commit -m "Réflexion du <date>"\` : tout reste réversible.
+
+Jamais de secret, de mot de passe ou de numéro dans ces fichiers. Rien ne sort du Mac.`,
+        `# Reflect
+
+You learn from the person and from your own work, then improve the way you learn. It's a loop: each pass starts from the previous one's lessons.
+
+1. **Reread the day**: \`zenith_history\` (the whole team's conversations over 24 h) and the latest journal (\`journal/\` in the main agent's folder, the last 7 days).
+2. **Spot the signals**: what the person corrected, asked again, refused, praised; what failed or took too long; what an agent had to guess for lack of knowing.
+3. **Judge past lessons**: for each lesson in recent journals, did it help today? Keep what works, fix what misled, delete what is wrong.
+4. **Write what lasts**, short and dated:
+   - the person's preferences and ways → USER.md;
+   - decisions and where things stand → the MEMORY.md of the agent concerned (each agent has its own, in its folder);
+   - a job redone or corrected → a new or better skill (see **write-skill**);
+   - an agent's tone or habits the person corrected → a few words in its SOUL.md, never removing a safety rule;
+   - something bothering in zenith itself → an idea in IMPROVE.md (main agent's folder).
+5. **Improve this loop**: if your reflection missed something (an ignored signal, a useless lesson), edit this very skill, \`reflect\`, so the next one sees it.
+6. **Consolidate**: merge duplicates, shorten, delete what's outdated. Each file should read in a minute.
+7. **Keep a trace**: write \`journal/YYYY-MM-DD.md\` (what you learned, what you changed, what you'll watch), then in every agent folder you changed, \`git add -A && git commit -m "Reflection of <date>"\`: everything stays reversible.
+
+Never secrets, passwords or numbers in these files. Nothing leaves the Mac.`,
+      ),
+    ),
+    heartbeat: skill(
+      "heartbeat",
+      tr("Faire le tour de ce qui se passe et prendre de l'avance, sans qu'on le demande.", "Look around at what is going on and get ahead of it, unasked."),
+      tr(
+        `# Faire le tour
+
+Tu passes régulièrement voir ce qui se passe, et tu prépares ce qui aidera la personne avant qu'elle le demande.
+
+1. Lis le brief, \`zenith_now\`, l'agenda des prochaines 24 h, ce que l'équipe a en cours (\`zenith_team\`) et ton dernier journal.
+2. Pour chaque chose qui approche ou qui attend, demande-toi : qu'est-ce qui lui ferait gagner du temps maintenant ? Un brouillon, une recherche, un rappel, un résumé, une PR, un créneau proposé.
+3. **Fais-le** si c'est sans risque et réversible (préparer, rechercher, rédiger en brouillon, ouvrir une PR), ou confie-le au bon coéquipier. Ce qui sort du Mac ou ne se défait pas reste une proposition.
+4. Ne refais pas ce qui est déjà fait ou en cours (\`zenith_now\` dit si un agent s'en occupe).
+5. **Préviens seulement si ça vaut une interruption** (\`zenith_notify\`) : une échéance proche, un problème, une décision à prendre. Sinon, tais-toi : ton travail sera là quand la personne passera.
+6. Termine par une ligne : ce que tu as fait, ou « rien à signaler ».`,
+        `# Look around
+
+You come by regularly to see what's going on, and prepare what will help the person before they ask.
+
+1. Read the brief, \`zenith_now\`, the next 24 h of calendar, what the team has going (\`zenith_team\`) and your latest journal.
+2. For each thing coming up or waiting, ask: what would save them time now? A draft, some research, a reminder, a summary, a PR, a proposed slot.
+3. **Do it** if it is safe and reversible (prepare, research, draft, open a PR), or hand it to the right teammate. What leaves the Mac or can't be undone stays a proposal.
+4. Don't redo what is done or underway (\`zenith_now\` says when an agent is on it).
+5. **Only notify when it's worth an interruption** (\`zenith_notify\`): a close deadline, a problem, a decision to make. Otherwise stay quiet: your work will be there when they come by.
+6. End with one line: what you did, or "nothing to report".`,
+      ),
+    ),
+    upkeep: skill(
+      "upkeep",
+      tr("Tout garder à jour : dépendances, failles, outils, dans chaque projet.", "Keep everything up to date: dependencies, vulnerabilities, tools, in every project."),
+      tr(
+        `# Entretien
+
+1. Pour chaque projet (table des projets) : dépendances en retard (\`npm outdated\`, \`cargo outdated\`, \`pip list --outdated\`…), failles connues (\`npm audit\`, alertes Dependabot via \`gh\`), CI qui ralentit.
+2. Regroupe par projet ce qui mérite une mise à jour : failles d'abord, puis versions mineures sûres. Les versions majeures restent une proposition.
+3. Confie chaque projet à un agent dans son dossier (\`zenith_delegate\`) : mise à jour sur une branche, tests, PR. **Jamais de fusion sur main d'un projet** : la personne relit.
+4. zenith lui-même se met à jour tout seul depuis GitHub ; ne t'en occupe pas.
+5. Résume en 5 lignes : ce qui est proposé, ce qui presse.`,
+        `# Upkeep
+
+1. For each project (projects table): outdated dependencies (\`npm outdated\`, \`cargo outdated\`, \`pip list --outdated\`…), known vulnerabilities (\`npm audit\`, Dependabot alerts via \`gh\`), CI getting slow.
+2. Group per project what deserves an update: vulnerabilities first, then safe minor versions. Major versions stay a proposal.
+3. Hand each project to an agent in its folder (\`zenith_delegate\`): update on a branch, tests, PR. **Never merge to a project's main**: the person reviews.
+4. zenith itself updates on its own from GitHub; leave it.
+5. Sum up in 5 lines: what is proposed, what is pressing.`,
+      ),
+    ),
     "write-skill": skill(
       "write-skill",
       tr("Écrire un nouveau skill quand une démarche se répète ou qu'on te corrige.", "Write a new skill when a job repeats or you are corrected."),

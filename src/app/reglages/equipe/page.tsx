@@ -20,6 +20,7 @@ export function generateMetadata(): Metadata {
 export default async function TeamSettingsPage() {
   const a = config().agent;
   const initial: TeamDraft = {
+    improve: a.improve,
     main: { id: "life", name: a.name, role: "", provider: a.provider, ...agentAvatar() },
     bots: a.bots.map((b): BotDraft => ({ id: b.id, name: b.name, title: b.title, role: b.role, provider: b.provider ?? a.provider, shape: b.shape, color: b.color, accessory: b.accessory, model: b.model, enabled: b.enabled === false ? false : undefined })),
     routines: a.routines.map((r): RoutineDraft => ({ ...r, days: r.days.length === 7 ? undefined : r.days, enabled: r.enabled === false ? false : undefined })),

@@ -9,7 +9,8 @@ import { AgentAvatar } from "@/components/agent/agent-avatar";
 import { freeId, saveConfig, scanFolder, slug, type FoundProject } from "./api";
 import { AgentEditor, ProjectEditor, RoutineEditor, type ProjectDraft } from "./editors";
 import { Button, Field, Segmented, TextInput } from "./fields";
-import { BOT_TEMPLATES, type BotDraft, type RoutineDraft } from "./templates";
+import { AUTONOMY_ROUTINES, BOT_TEMPLATES, type BotDraft, type RoutineDraft } from "./templates";
+import { Switch } from "./fields";
 import { SaveBar, YouFields, youSet, type YouDraft } from "./you";
 
 /** A draft of part of the config: what changed, and saving it (the page then reloads its data). */
@@ -60,6 +61,7 @@ export function YouSettings({ initial }: { initial: YouDraft }) {
 const clean = <T extends object>(o: T): T => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined && v !== "")) as T;
 
 export type TeamDraft = {
+  improve: "propose" | "ship";
   main: BotDraft;
   bots: BotDraft[];
   routines: RoutineDraft[];
@@ -77,6 +79,7 @@ function teamSet(t: TeamDraft): Record<string, unknown> {
       }),
   );
   return {
+    "agent.improve": t.improve,
     "agent.name": t.main.name.trim() || "zenith",
     "agent.provider": t.main.provider,
     "agent.shape": t.main.shape ?? null,
@@ -127,6 +130,54 @@ export function TeamSettings({ initial, skills, taken, available }: { initial: T
             <AgentEditor key={b.id} value={b} onChange={(v) => setBot(i, v)} onRemove={() => removeBot(i)} available={available} />
           ))}
           {!t.bots.length && !adding && <p className="rounded-xl border border-dashed border-line px-4 py-6 text-center text-xs text-ink-3">{tr("Pas encore d'équipe : ton agent fait tout seul.", "No team yet: your agent does everything itself.")}</p>}
+        </div>
+      </section>
+
+      <section className="mt-8">
+        <div className="mb-2 px-1">
+          <h2 className="text-[13px] font-semibold text-ink">{tr("Autonomie", "Autonomy")}</h2>
+          <p className="mt-0.5 text-xs text-ink-3">{tr("Ce que l'équipe fait d'elle-même. Chaque projet peut s'en exclure (Réglages → Projets).", "What the team does on its own. Each project can opt out (Settings → Projects).")}</p>
+        </div>
+        <div className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
+          {AUTONOMY_ROUTINES(new Set(t.bots.map((b) => b.id))).map((a) => {
+            const on = t.routines.some((r) => r.id === a.routine.id && r.enabled !== false);
+            return (
+              <div key={a.key} className="px-4 py-3">
+                <div className="flex items-center gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[13px] text-ink">{a.label}</div>
+                    <div className="mt-0.5 text-xs text-ink-3">{a.pitch}</div>
+                  </div>
+                  <Switch
+                    on={on}
+                    label={a.label}
+                    onChange={(v) => {
+                      const rest = t.routines.filter((r) => r.id !== a.routine.id);
+                      const had = t.routines.find((r) => r.id === a.routine.id);
+                      update({ ...t, routines: v ? [...rest, had ? { ...had, enabled: undefined } : a.routine] : rest });
+                    }}
+                  />
+                </div>
+                {a.key === "ameliorer" && on && (
+                  <div className="mt-2.5 flex flex-wrap items-center gap-3">
+                    <Segmented
+                      value={t.improve}
+                      onChange={(improve) => update({ ...t, improve })}
+                      options={[
+                        { id: "propose", label: tr("Me proposer (PR)", "Propose to me (PR)") },
+                        { id: "ship", label: tr("Livrer tout seul", "Ship on its own") },
+                      ]}
+                    />
+                    <span className="text-2xs text-ink-3">
+                      {t.improve === "ship"
+                        ? tr("Fusionné seulement si tout est vert (types, lint, tests, vie privée), puis installé par la mise à jour automatique.", "Merged only when everything is green (types, lint, tests, privacy), then installed by the automatic update.")
+                        : tr("Une pull request à relire à chaque fois.", "A pull request to review each time.")}
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
 

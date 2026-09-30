@@ -332,6 +332,52 @@ server.registerTool(
     }),
 );
 
+// ——— Knowing everything, learning, reaching the person —————————————————————————
+
+server.registerTool(
+  "zenith_history",
+  {
+    title: "The team's recent conversations",
+    description: "The conversations of the whole team (or one agent) over the last hours, with their messages: what the person asked, corrected, refused, and what the agents answered. The raw material to learn from (see the reflect skill).",
+    inputSchema: {
+      hours: z.number().min(1).max(720).optional().describe("how far back, default 24"),
+      agent: z.string().optional().describe("one teammate's id; default: everyone"),
+    },
+    annotations: { readOnlyHint: true },
+  },
+  ({ hours, agent }) =>
+    attempt(async () => {
+      const list = await act(`/api/agent/history?hours=${hours ?? 24}${agent ? `&agent=${encodeURIComponent(agent)}` : ""}`);
+      if (!list.length) return tr("Aucune conversation sur cette période.", "No conversation in that period.");
+      return list.map((c) => [`# ${c.name} · ${c.title} (${c.at})`, ...c.messages.map((m) => `**${m.role}**: ${m.text}`)].join("\n\n")).join("\n\n---\n\n");
+    }),
+);
+
+server.registerTool(
+  "zenith_recall",
+  {
+    title: "Remember",
+    description: "Search everything the team knows: the person's profile (USER.md), each agent's memory and personality, skills, the reflection journal, improvement ideas, and the last week's conversations.",
+    inputSchema: { query: z.string().min(2).describe("words to look for") },
+    annotations: { readOnlyHint: true },
+  },
+  ({ query }) => attempt(async () => (await act(`/api/agent/recall?q=${encodeURIComponent(query)}`)).text),
+);
+
+server.registerTool(
+  "zenith_notify",
+  {
+    title: "Tell the person now",
+    description: "Tap the person on the shoulder: a Mac notification, and a Telegram message when it is plugged in. Only for what is worth an interruption (a close deadline, a problem, a decision to make) — six a hour at most.",
+    inputSchema: { message: z.string().min(2).max(2000).describe("short and self-contained") },
+  },
+  ({ message }) =>
+    attempt(async () => {
+      const r = await act("/api/agent/notify", { text: message, from: ME });
+      return r.mac || r.telegram ? tr("Prévenu.", "Notified.") : tr("Aucun canal n'a pu le prévenir.", "No channel could reach them.");
+    }),
+);
+
 for (const name of DOCS) {
   server.registerResource(
     name.replace("/", "-"),

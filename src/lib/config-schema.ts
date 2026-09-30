@@ -39,6 +39,13 @@ const Identity = z.object({
 export const ProjectInput = z.object({
   id: z.string().regex(/^[a-z0-9][a-z0-9-]*$/, "lowercase letters, digits and dashes"),
   name: z.string(),
+  /**
+   * What agents may do here on their own (routines, triggers, agents asking agents):
+   * "auto" work (branches, PRs, never production without asking); "propose" only look
+   * and propose, every action waiting for your approval, nothing pushed or deployed;
+   * "off" never start here unless you ask. What you ask yourself is never limited.
+   */
+  autonomy: z.enum(["auto", "propose", "off"]).default("auto"),
   tagline: z.string().default(""),
   color: z.string().optional(),
   glow: z.string().optional(),
@@ -105,10 +112,14 @@ const Routine = z
     at: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "HH:MM, 24-hour").optional(),
     /** ISO weekdays it runs on (1 = Monday … 7 = Sunday). Default: every day. */
     days: z.array(z.number().int().min(1).max(7)).default([1, 2, 3, 4, 5, 6, 7]),
+    /** Instead of a time: every so often ("30m", "3h"), between `from` and `until` (default 08:00–22:00). */
+    every: z.string().regex(/^\d+(m|h)$/, '"30m", "3h"…').optional(),
+    from: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "HH:MM, 24-hour").optional(),
+    until: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "HH:MM, 24-hour").optional(),
     /** Instead of a time: each new Now item of these kinds is handed to the agent, as it appears. */
     on: z.array(z.enum(NOW_KINDS)).min(1).optional(),
     /** A built-in task: "refresh-life" captures Gmail and Google Calendar into My life. */
-    task: z.enum(["refresh-life"]).optional(),
+    task: z.enum(["refresh-life", "improve-zenith"]).optional(),
     /** A skill of the agent's folder to follow (skills/<id>/SKILL.md). */
     skill: z.string().optional(),
     /** What to ask, in your words (or added to the task, the skill or the Now item). */
@@ -119,7 +130,7 @@ const Routine = z
     project: z.string().optional(),
     enabled: z.boolean().default(true),
   })
-  .refine((r) => r.at || r.on, { message: "a routine needs a time (at) or Now kinds (on)" })
+  .refine((r) => r.at || r.on || r.every, { message: "a routine needs a time (at), a period (every) or Now kinds (on)" })
   .refine((r) => r.on || r.task || r.prompt || r.skill, { message: "a routine needs a task, a skill or a prompt" });
 
 const Shape = z.enum(AVATAR_SHAPES);
@@ -210,6 +221,13 @@ export const ConfigSchema = z.object({
       enabled: z.boolean().default(true),
       /** The agent's own folder, where your life conversations live. */
       home: z.string().default("~/.zenith/life"),
+      /**
+       * What the team may do to zenith itself when it improves it (the "improve-zenith" task):
+       * "propose" opens a pull request for you; "ship" merges it on its own once typecheck,
+       * lint and the privacy check pass, and the updater installs it. Your projects always
+       * get pull requests.
+       */
+      improve: z.enum(["propose", "ship"]).default("propose"),
       /** Your agent's name: how it calls itself, and how the interface names it. */
       name: z.string().default("zenith"),
       /** Its avatar: shape, color and accessory. */
@@ -258,7 +276,7 @@ export const ConfigSchema = z.object({
         })
         .default({}),
     })
-    .default({ enabled: true, home: "~/.zenith/life", name: "zenith", provider: "claude", routines: [], bots: [], mcp: {}, gateway: {} }),
+    .default({ enabled: true, home: "~/.zenith/life", name: "zenith", improve: "propose", provider: "claude", routines: [], bots: [], mcp: {}, gateway: {} }),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;

@@ -92,6 +92,7 @@ Each project gets a card on the overview, a page at `/p/<id>`, a document for ag
 | `color`, `glow` | string | CSS colors. Default: taken from the palette in order. |
 | `href` | string | zenith page of the project. Default `/p/<id>`. |
 | `repo` | string | GitHub repository, `"owner/name"`: CI, issues, pull requests, stars, releases. |
+| `autonomy` | `"auto"` \| `"propose"` \| `"off"` | What agents may do here on their own (routines, triggers, agents asking agents): work freely, only propose (every action waits for your approval), or nothing. Default `"auto"`. |
 | `dir` | string | Local folder: a name under `projectsRoot`, or an absolute path (`~` allowed). Commits, branch, uncommitted work, version, agent sessions. |
 | `extraDirs` | string[] | Other folders whose Claude Code / Codex sessions count for this project. |
 | `site` | string | Public URL. |
@@ -264,7 +265,8 @@ The zenith agent and its team (see [agent.md](agent.md)). They run through zenit
 | `provider` | `"claude"` \| `"codex"` | `"claude"` | Who answers by default (switchable in the ask bar). |
 | `model` | string | — | Model id for that provider, e.g. `"claude-opus-5-5"`. Default: zenith code's default model, else the one of your latest thread. |
 | `bots` | array | `[]` | Your team: named agents with a role, each on Claude or Codex. |
-| `routines` | array | `[]` | Agents that run on their own, at a set time or on an event. |
+| `routines` | array | `[]` | Agents that run on their own, at a set time, every so often, or on an event. |
+| `improve` | `"propose"` \| `"ship"` | `"propose"` | What the "improve-zenith" task does with its change: a pull request, or merged to main once every check passes. |
 | `mcp` | object | `{}` | MCP servers for the whole team, by name: `{ "command", "args", "env" }` or `{ "url", "headers" }`. |
 | `gateway` | object | `{}` | Talk to your agent from elsewhere: `{ "telegram": { "chats": [123456789], "target": "life" } }`, with the bot token in `TELEGRAM_BOT_TOKEN`. |
 
@@ -291,8 +293,9 @@ Each routine:
 | `id` | string | Lowercase letters, digits and dashes. |
 | `at` | `"HH:MM"` | Local time. A Mac asleep then catches up within three hours. |
 | `days` | number[] | ISO weekdays, 1 = Monday … 7 = Sunday. Default: every day. |
+| `every`, `from`, `until` | string | Instead of `at`: every `"30m"`, `"3h"`…, between `from` and `until` (default 08:00–22:00). |
 | `on` | string[] | Instead of `at`: Now kinds (`down`, `payment`, `birthday`, `sale`, `reply`, `civic`, `ci`, `refresh`). Each new item of those kinds is handed to the agent once, as it appears. |
-| `task` | `"refresh-life"` | A built-in request: capture Gmail and Google Calendar into My life. |
+| `task` | `"refresh-life"` \| `"improve-zenith"` | A built-in request: capture Gmail and Google Calendar into My life, or improve zenith itself. |
 | `skill` | string | A skill to follow (`skills/<id>/SKILL.md`). |
 | `prompt` | string | Your own request, in your words (or added to the task, the skill or the Now item). |
 | `bot` | string | A bot id to run it. |
@@ -314,6 +317,12 @@ Each routine:
   ]
 }
 ```
+
+## updates
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `auto` | boolean | `true` | The installed app checks GitHub every 6 hours, builds new versions beside the running one, and restarts when no agent is working. Never over local changes. Settings → General → Updates shows it and does it on demand. |
 
 ## A complete example
 

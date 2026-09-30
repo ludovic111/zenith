@@ -13,6 +13,8 @@ export type RoutineView = {
   id: string;
   title: string;
   at: string | null;
+  /** "3 h · 08:00–22:00" for a routine that runs every so often. */
+  every?: string | null;
   /** The Now kinds it acts on, named, when it runs on an event. */
   on: string[] | null;
   days: number[];
@@ -33,6 +35,7 @@ function when(r: RoutineView) {
       : r.days.join() === "1,2,3,4,5"
         ? tr("en semaine", "on weekdays")
         : r.days.map((d) => DAY()[d - 1]).join(", ");
+  if (r.every) return tr(`${days}, toutes les ${r.every}`, `${days}, every ${r.every}`);
   return tr(`${days} à ${r.at}`, `${days} at ${r.at}`);
 }
 

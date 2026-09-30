@@ -180,6 +180,23 @@ export async function ask(input: AskInput): Promise<AskResult> {
     text = text.slice(forced.raw.length).trim();
   }
 
+  // Your projects' autonomy: what agents may start there without you.
+  const project = PROJECTS.find((p) => p.id === target);
+  const autonomous = input.source === "routine" || input.source === "watch" || input.source === "mcp" || input.source === "team";
+  if (project && autonomous && project.autonomy === "off")
+    throw new Error(
+      tr(
+        `${project.name} est exclu du travail autonome des agents : seule la personne peut y lancer un agent. Propose-lui plutôt ce que tu ferais.`,
+        `${project.name} is excluded from agents' autonomous work: only the person can start an agent there. Propose what you would do instead.`,
+      ),
+    );
+  const proposeOnly = !!project && autonomous && project.autonomy === "propose";
+  if (proposeOnly)
+    text = `${tr(
+      `**Mode proposition pour ${project.name}.** Ce projet n'accepte pas de travail autonome : lis, analyse, et propose (un plan, le diff en texte, les commandes). Chaque action attend l'accord de la personne dans zenith. Ne pousse rien, n'ouvre pas de PR, ne déploie rien.`,
+      `**Proposal mode for ${project.name}.** This project takes no autonomous work: read, analyse, and propose (a plan, the diff as text, the commands). Every action waits for the person's approval in zenith. Push nothing, open no PR, deploy nothing.`,
+    )}\n\n${text}`;
+
   const bot = botById(target);
   const folder =
     target === LIFE
@@ -192,10 +209,13 @@ export async function ask(input: AskInput): Promise<AskResult> {
   const { selection } = await modelFor(input.provider ?? bot?.provider ?? c.agent.provider, s, bot);
   const settings = await codeSettings();
   // Your life and your team read your mail and the web: outside words, always.
-  const runtimeMode = runtimeFor(
-    settings.projectSettingsOverrides?.[projectId]?.defaultRuntimeMode ?? settings.defaultRuntimeMode ?? "full-access",
-    target === LIFE || !!bot || (input.source !== undefined && input.source !== "bar" && input.source !== "command"),
-  );
+  // A project that only takes proposals: zenith code asks the person before every action.
+  const runtimeMode = proposeOnly
+    ? "approval-required"
+    : runtimeFor(
+        settings.projectSettingsOverrides?.[projectId]?.defaultRuntimeMode ?? settings.defaultRuntimeMode ?? "full-access",
+        target === LIFE || !!bot || (input.source !== undefined && input.source !== "bar" && input.source !== "command"),
+      );
   const title = input.title?.trim() || titleOf(text);
   const threadId = randomUUID();
   const createdAt = new Date().toISOString();

@@ -35,6 +35,7 @@ export async function routineViews(): Promise<RoutineView[]> {
     id: r.id,
     title: r.title,
     at: r.at ?? null,
+    every: r.every ? `${r.every.replace(/h$/, " h").replace(/m$/, " min")} · ${r.from ?? "08:00"}–${r.until ?? "22:00"}` : null,
     on: r.on ? r.on.map((k) => KIND_NAMES()[k]) : null,
     days: r.days,
     enabled: r.enabled,

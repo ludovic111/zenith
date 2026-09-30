@@ -100,6 +100,29 @@ En plus des outils de zenith, chaque agent sait agir sur le Mac (`open`, AppleSc
 
 zenith les écrit dans le dossier de chaque agent, pour Claude Code comme pour Codex.
 
+## Autonomie : apprendre, prendre les devants, se mettre à jour
+
+Dans **Réglages → Équipe → Autonomie**, quatre interrupteurs :
+
+| | |
+| --- | --- |
+| **Apprendre de toi** | Chaque nuit (skill `reflect`) : relit les conversations de toute l'équipe (`zenith_history`), repère tes corrections et tes préférences, juge les leçons des nuits précédentes, met à jour USER.md, les MEMORY.md, les skills et les SOUL.md, tient un journal (`journal/`), et commite chaque dossier d'agent — tout reste réversible. **La réflexion améliore aussi son propre skill** : la façon d'apprendre apprend. |
+| **Être proactifs** | Toutes les 3 h en journée (skill `heartbeat`) : regarde ce qui approche, prépare ce qui est réversible (brouillons, recherches, PR), ne te dérange (`zenith_notify`) que pour ce qui le vaut. |
+| **Tout garder à jour** | Le lundi (skill `upkeep`) : dépendances et failles de chaque projet, en PR à relire. |
+| **Améliorer zenith** | Chaque nuit : une petite amélioration de l'app, tirée de ce qui te gêne (IMPROVE.md, erreurs, demandes répétées), faite dans un worktree à part et vérifiée (types, lint, tests, vie privée). Mode **Me proposer** : une PR ; mode **Livrer tout seul** (`agent.improve: "ship"`) : poussée sur main, puis installée par la mise à jour automatique. |
+
+Avant de te poser une question, les agents cherchent (`zenith_recall`) dans tout ce que l'équipe sait et s'est dit.
+
+**Chaque projet choisit ce qu'ils peuvent y faire d'eux-mêmes** (Réglages → Projets → « Les agents, d'eux-mêmes », `autonomy` dans la config) :
+
+| | |
+| --- | --- |
+| **Libre** (`auto`) | Ils y travaillent seuls : branches, PR ; jamais la production sans demander. |
+| **Sur proposition** (`propose`) | Ils regardent et proposent. Tout ce qui y est lancé sans toi (routine, déclencheur, demande d'un agent) tourne en mode *approbation requise* : zenith code te demande avant chaque action. Rien n'est poussé ni déployé. |
+| **Exclu** (`off`) | Ils n'y lancent rien sans toi ; les déclencheurs l'ignorent. |
+
+Ce que tu leur demandes toi-même n'est jamais limité.
+
 ## Skills
 
 Des savoir-faire écrits, dans `~/.zenith/life/skills/<id>/SKILL.md` (le format agentskills.io que Claude Code et Codex lisent tous deux ; zenith les relie dans `.claude/skills` et `.agents/skills` de chaque dossier). zenith en pose cinq au départ — `plan-day`, `reply-email`, `weekly-review`, `watch`, `write-skill` — puis l'équipe en écrit d'autres au fil du travail. Tu peux les modifier ou les supprimer : zenith ne réécrit jamais un skill qu'il a déjà posé. Ils sont listés dans **Agents IA → Skills**, et une routine peut en suivre un (`"skill": "weekly-review"`).

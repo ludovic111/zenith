@@ -12,6 +12,7 @@ It runs on your machine, answers only on `127.0.0.1`, and never sends your data 
 | --- | --- |
 | **Ask zenith** | One box, everywhere (home, project pages, ⌘J, ⌘K): say what you want, an agent does it and opens as a thread. Routes to the project you name, else to your life agent. Most pages also offer one-click agent actions on what they show (draft a reply, fix a CI, review subscriptions…) |
 | **Now** | What is waiting for you, most pressing first, each with a one-tap *Hand off* to an agent, *done* and *later*. Plus routines: agents that run on their own at a set time, or as soon as something new is waiting |
+| **Autonomy** | Agents learn from you every night (and improve how they learn), look around every few hours to prepare what's coming, keep your projects' dependencies up to date, and improve zenith itself — each project decides how much they may do there. zenith updates itself from GitHub |
 | **Three spaces** | One switcher at the top of the sidebar (⌘1 ⌘2 ⌘3): **Overview** (your day, projects, money), **Team** (talk to your agents), **Code** (zenith code, sessions) |
 | **Team** | Your agent and its bots: first names, faces, a role, their own personality (SOUL.md), memory and shared skills, each on your Claude or ChatGPT (Codex) subscription. `@name` to talk to one; they talk to each other and act on the Mac, the web and any MCP server. Reachable from Telegram |
 | Home | Today in one line, Ask zenith, Now, every project in one table (status, latency, key numbers, commits), money, agents at work, six months of commits, a live feed |

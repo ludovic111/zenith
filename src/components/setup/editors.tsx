@@ -112,7 +112,9 @@ export function AgentEditor({
   );
 }
 
-export type ProjectDraft = { id: string; name: string; tagline?: string; dir?: string; repo?: string; site?: string; [k: string]: unknown };
+export type ProjectDraft = { id: string; name: string; tagline?: string; dir?: string; repo?: string; site?: string; autonomy?: "auto" | "propose" | "off"; [k: string]: unknown };
+
+export const AUTONOMY_NAMES = (): Record<"auto" | "propose" | "off", string> => ({ auto: tr("Libre", "Free"), propose: tr("Sur proposition", "On proposal"), off: tr("Exclu", "Excluded") });
 
 /** One project: name, tagline, folder, repository and site. Other fields it had are kept. */
 export function ProjectEditor({ value, onChange, onRemove, defaultOpen = false }: { value: ProjectDraft; onChange: (v: ProjectDraft) => void; onRemove: () => void; defaultOpen?: boolean }) {
@@ -122,7 +124,10 @@ export function ProjectEditor({ value, onChange, onRemove, defaultOpen = false }
     <div className="rounded-xl border border-line bg-surface">
       <div className="flex items-center gap-3 px-3 py-2.5">
         <button type="button" onClick={() => setOpen((o) => !o)} className="min-w-0 flex-1 text-left">
-          <div className="truncate text-[13px] font-medium text-ink">{value.name || tr("Sans nom", "Unnamed")}</div>
+          <div className="flex items-center gap-2 text-[13px] font-medium text-ink">
+            <span className="truncate">{value.name || tr("Sans nom", "Unnamed")}</span>
+            {value.autonomy && value.autonomy !== "auto" && <span className="shrink-0 rounded border border-line px-1 text-2xs font-normal text-ink-3">{AUTONOMY_NAMES()[value.autonomy]}</span>}
+          </div>
           <div className="truncate text-2xs text-ink-3">{[value.tagline, value.repo, value.dir].filter(Boolean).join(" · ") || tr("Rien de plus pour l'instant", "Nothing more yet")}</div>
         </button>
         <button type="button" onClick={onRemove} title={tr("Retirer", "Remove")} className="grid size-7 place-items-center rounded-md text-ink-3 transition hover:bg-hover hover:text-bad">
@@ -149,6 +154,24 @@ export function ProjectEditor({ value, onChange, onRemove, defaultOpen = false }
           <Field label={tr("Site", "Site")} className="sm:col-span-2">
             <TextInput value={value.site ?? ""} onChange={(e) => set("site", e.target.value)} placeholder="https://" className="font-mono text-xs" />
           </Field>
+          <Field
+            label={tr("Les agents, d'eux-mêmes", "Agents, on their own")}
+            className="sm:col-span-2"
+            hint={
+              (value.autonomy ?? "auto") === "auto"
+                ? tr("Ils peuvent y travailler seuls (branches, PR), jamais la production sans te demander.", "They may work here on their own (branches, PRs), never production without asking you.")
+                : value.autonomy === "propose"
+                  ? tr("Ils regardent et proposent ; chaque action attend ton accord. Rien n'est poussé ni déployé.", "They look and propose; every action waits for your approval. Nothing is pushed or deployed.")
+                  : tr("Ils n'y vont jamais sans que tu le demandes.", "They never go there unless you ask.")
+            }
+          >
+            <Segmented
+              value={value.autonomy ?? "auto"}
+              onChange={(a) => onChange({ ...value, autonomy: a === "auto" ? undefined : a })}
+              options={(["auto", "propose", "off"] as const).map((id) => ({ id, label: AUTONOMY_NAMES()[id] }))}
+            />
+          </Field>
+          <p className="text-2xs text-ink-3 sm:col-span-2">{tr("Ce que tu leur demandes toi-même n'est jamais limité.", "What you ask them yourself is never limited.")}</p>
         </div>
       )}
     </div>
@@ -184,10 +207,13 @@ export function RoutineEditor({
 }) {
   const [open, setOpen] = useState(false);
   const event = !!value.on;
+  const periodic = !event && !!value.every;
   const enabled = value.enabled !== false;
   const who = agents.find((a) => a.id === (value.bot ?? "life"))?.name ?? value.bot ?? "";
-  const what = value.task === "refresh-life" ? tr("relevé mails et agenda", "mail and calendar capture") : value.skill ? `skill ${value.skill}` : value.prompt ? value.prompt.slice(0, 40) : event ? tr("la demande de l'élément", "the item's request") : "";
-  const when = event
+  const what = value.task === "refresh-life" ? tr("relevé mails et agenda", "mail and calendar capture") : value.task === "improve-zenith" ? tr("amélioration de zenith", "improving zenith") : value.skill ? `skill ${value.skill}` : value.prompt ? value.prompt.slice(0, 40) : event ? tr("la demande de l'élément", "the item's request") : "";
+  const when = periodic
+    ? tr(`toutes les ${value.every} · ${value.from ?? "08:00"}–${value.until ?? "22:00"}`, `every ${value.every} · ${value.from ?? "08:00"}–${value.until ?? "22:00"}`)
+    : event
     ? tr(`à chaque ${(value.on ?? []).map((k) => NOW_KIND_NAMES()[k]?.toLowerCase() ?? k).join(", ")}`, `on each ${(value.on ?? []).map((k) => NOW_KIND_NAMES()[k]?.toLowerCase() ?? k).join(", ")}`)
     : `${(value.days?.length ?? 7) === 7 ? tr("tous les jours", "every day") : (value.days ?? []).map((d) => DAYS()[d - 1]).join(" ")} · ${value.at ?? "—"}`;
   return (
@@ -226,15 +252,40 @@ export function RoutineEditor({
           </div>
           <Field label={tr("Quand", "When")}>
             <Segmented
-              value={event ? "event" : "time"}
-              onChange={(k) => onChange(k === "event" ? { ...value, at: undefined, days: undefined, on: value.on ?? ["reply"] } : { ...value, on: undefined, at: value.at ?? "08:00" })}
+              value={event ? "event" : periodic ? "every" : "time"}
+              onChange={(k) =>
+                onChange(
+                  k === "event"
+                    ? { ...value, at: undefined, every: undefined, from: undefined, until: undefined, days: undefined, on: value.on ?? ["reply"] }
+                    : k === "every"
+                      ? { ...value, on: undefined, at: undefined, every: value.every ?? "3h" }
+                      : { ...value, on: undefined, every: undefined, from: undefined, until: undefined, at: value.at ?? "08:00" },
+                )
+              }
               options={[
                 { id: "time", label: tr("À heure fixe", "At a set time") },
+                { id: "every", label: tr("Régulièrement", "Regularly") },
                 { id: "event", label: tr("Quand quelque chose arrive", "When something happens") },
               ]}
             />
           </Field>
-          {event ? (
+          {periodic && (
+            <div className="flex flex-wrap items-center gap-2 text-xs text-ink-2">
+              {tr("Toutes les", "Every")}
+              <Select value={value.every} onChange={(e) => onChange({ ...value, every: e.target.value })} className="w-24">
+                {["30m", "1h", "2h", "3h", "4h", "6h"].map((v) => (
+                  <option key={v} value={v}>
+                    {v.replace("m", " min").replace("h", " h")}
+                  </option>
+                ))}
+              </Select>
+              {tr("de", "from")}
+              <TextInput type="time" value={value.from ?? "08:00"} onChange={(e) => onChange({ ...value, from: e.target.value })} className="w-28" />
+              {tr("à", "to")}
+              <TextInput type="time" value={value.until ?? "22:00"} onChange={(e) => onChange({ ...value, until: e.target.value })} className="w-28" />
+            </div>
+          )}
+          {periodic ? null : event ? (
             <div className="flex flex-wrap gap-1.5">
               {Object.entries(NOW_KIND_NAMES()).map(([k, label]) => {
                 const on = value.on?.includes(k);
@@ -280,9 +331,16 @@ export function RoutineEditor({
           )}
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label={tr("Suivre un skill", "Follow a skill")}>
-              <Select value={value.task ? "__task" : value.skill ?? ""} onChange={(e) => onChange({ ...value, task: e.target.value === "__task" ? "refresh-life" : undefined, skill: e.target.value && e.target.value !== "__task" ? e.target.value : undefined })}>
+              <Select
+                value={value.task === "improve-zenith" ? "__improve" : value.task ? "__task" : (value.skill ?? "")}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  onChange({ ...value, task: v === "__task" ? "refresh-life" : v === "__improve" ? "improve-zenith" : undefined, skill: v && !v.startsWith("__") ? v : undefined });
+                }}
+              >
                 <option value="">{tr("Aucun", "None")}</option>
                 <option value="__task">{tr("Relevé mails et agenda (intégré)", "Mail and calendar capture (built in)")}</option>
+                <option value="__improve">{tr("Améliorer zenith (intégré)", "Improve zenith (built in)")}</option>
                 {skills.map((s) => (
                   <option key={s} value={s}>
                     {s}

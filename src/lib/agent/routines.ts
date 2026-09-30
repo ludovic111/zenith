@@ -91,9 +91,26 @@ function dueSlot(r: RoutineConfig & { at: string }): string | null {
   return null;
 }
 
+const minutesOf = (hhmm: string) => {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+};
+
+/** For a routine that runs every so often: the current period's slot ("<day>-every-<n>"), within its hours. */
+function periodSlot(r: RoutineConfig & { every: string }): string | null {
+  const n = Number(r.every.slice(0, -1));
+  const period = r.every.endsWith("h") ? n * 60 : n;
+  if (!period) return null;
+  const now = local(Date.now());
+  const from = minutesOf(r.from ?? "08:00");
+  const until = minutesOf(r.until ?? "22:00");
+  if (!r.days.includes(now.weekday) || now.minutes < from || now.minutes >= until) return null;
+  return `${now.day}-every-${Math.floor((now.minutes - from) / Math.max(period, 5))}`;
+}
+
 async function runIfDue(r: RoutineConfig) {
-  if (!r.enabled || !r.at) return;
-  const day = dueSlot({ ...r, at: r.at });
+  if (!r.enabled || (!r.at && !r.every)) return;
+  const day = r.at ? dueSlot({ ...r, at: r.at }) : periodSlot({ ...r, every: r.every! });
   if (!day) return;
   const key = `${r.id}:${day}`;
   if ((attempts.get(key) ?? 0) >= MAX_ATTEMPTS) return;
@@ -161,7 +178,9 @@ async function handOff(r: RoutineConfig, item: NowItem, manual = false): Promise
 }
 
 /** New items of the kinds a routine watches, not handled, snoozed or already given to an agent. */
-const fresh = (r: RoutineConfig, items: NowItem[], seen: Set<string>) => items.filter((i) => r.on!.includes(i.kind) && !i.delegated && !seen.has(i.id));
+const excluded = (id: string | null) => !!id && config().projects.some((p) => p.id === id && p.autonomy === "off");
+const fresh = (r: RoutineConfig, items: NowItem[], seen: Set<string>) =>
+  items.filter((i) => r.on!.includes(i.kind) && !i.delegated && !seen.has(i.id) && !excluded(i.project) && !excluded(i.target));
 
 async function watch(r: RoutineConfig, items: NowItem[]) {
   const state = await watchState(r.id);

@@ -42,7 +42,7 @@ export const selfOrigin = () => `http://127.0.0.1:${process.env.PORT || 4747}`;
 export function projectFolders() {
   return PROJECTS.flatMap((p) => {
     const dir = projectDir(p);
-    return dir ? [{ id: p.id, name: p.name, dir, repo: p.repo ?? null, site: p.site ?? null, tagline: p.tagline }] : [];
+    return dir ? [{ id: p.id, name: p.name, dir, repo: p.repo ?? null, site: p.site ?? null, tagline: p.tagline, autonomy: p.autonomy }] : [];
   });
 }
 
@@ -66,6 +66,8 @@ const body = (md: string) => md.replace(/^#[^\n]*\n+/, "").replace(/^(>[^\n]*\n)
 const vowel = (name: string) => /^[aeiouyhàâäéèêëîïôöùûü]/i.test(name);
 const de = (name: string) => (vowel(name) ? `d'${name}` : `de ${name}`);
 const que = (name: string) => (vowel(name) ? `qu'${name}` : `que ${name}`);
+
+const AUTONOMY = () => ({ auto: tr("libre", "free"), propose: tr("sur proposition", "on proposal"), off: tr("exclu", "excluded") });
 
 const who = () => OWNER.firstName || OWNER.name || tr("la personne qui t'utilise", "the person using you");
 
@@ -126,8 +128,8 @@ async function instructions(bot: Bot | null, team: Bot[], skillList: Skill[]): P
   ]);
 
   const rows = [
-    ...projectFolders().map((p) => `| ${p.id} | ${p.name}${p.tagline ? ` — ${p.tagline}` : ""} | ${tilde(p.dir)} | ${p.repo ?? "—"} | ${p.site ?? "—"} |`),
-    `| zenith | ${tr("ce tableau de bord (dépôt public)", "this dashboard (public repository)")} | ${tilde(ROOT)} | — | ${selfOrigin()} |`,
+    ...projectFolders().map((p) => `| ${p.id} | ${p.name}${p.tagline ? ` — ${p.tagline}` : ""} | ${tilde(p.dir)} | ${p.repo ?? "—"} | ${p.site ?? "—"} | ${AUTONOMY()[p.autonomy]} |`),
+    `| zenith | ${tr("ce tableau de bord (dépôt public)", "this dashboard (public repository)")} | ${tilde(ROOT)} | — | ${selfOrigin()} | ${AUTONOMY().auto} |`,
   ];
   const mates = [
     ...(bot ? [`| life | ${main} | ${c.agent.provider === "codex" ? "Codex" : "Claude"} | ${tr("l'agent principal : tout ce qui n'a pas d'autre place", "the main agent: everything without another place")} |`] : []),
@@ -174,7 +176,10 @@ async function instructions(bot: Bot | null, team: Bot[], skillList: Skill[]): P
 - **Now**: \`zenith_now\` lists what is waiting for them (failing payments, replies due, broken CI, birthdays…), each item with its id.
 - **Their Obsidian notes**: \`zenith_search_notes\`, \`zenith_read_note\`.`,
     ),
-    `## ${tr("Ses projets", "Their projects")}\n\n| id | ${tr("Projet", "Project")} | ${tr("Dossier", "Folder")} | GitHub | Site |\n| --- | --- | --- | --- | --- |\n${rows.join("\n")}`,
+    `## ${tr("Ses projets", "Their projects")}\n\n| id | ${tr("Projet", "Project")} | ${tr("Dossier", "Folder")} | GitHub | Site | ${tr("Autonomie", "Autonomy")} |\n| --- | --- | --- | --- | --- | --- |\n${rows.join("\n")}\n\n${tr(
+      "**Autonomie** — ce que tu peux y faire de toi-même (routine, tour, demande d'un coéquipier) : *libre* : travailler sur une branche et ouvrir une PR, jamais la production sans demander ; *sur proposition* : lire et proposer seulement — tu n'y modifies rien, ne pousses rien, ne déploies rien, tu écris ta proposition à la personne ; *exclu* : n'y va pas sans qu'elle le demande. Quand la personne te le demande elle-même, fais-le.",
+      "**Autonomy** — what you may do there on your own (routine, look-around, a teammate's request): *free*: work on a branch and open a PR, never production without asking; *on proposal*: read and propose only — change nothing, push nothing, deploy nothing, write your proposal to the person; *excluded*: don't go there unless they ask. When the person asks you themselves, do it.",
+    )}`,
   ];
 
   if (mates.length)
@@ -244,7 +249,20 @@ Tu t'améliores à chaque conversation, sans qu'on te le demande :
 - On te corrige, ou tu découvres une préférence de ${who()} → une ligne dans ${tilde(userFile())}.
 - Une décision, une leçon, où en est une affaire → une ligne datée dans ${tilde(path.join(home, "MEMORY.md"))}.
 - Tu viens de finir une démarche en plusieurs étapes que tu referas → un skill (voir **write-skill**).
-- Garde ces fichiers courts : consolide et efface ce qui n'est plus vrai plutôt que d'empiler. Jamais de secrets.`,
+- Une gêne dans zenith lui-même (lenteur, manque, bug) → une ligne dans ${tilde(path.join(agentHome(), "IMPROVE.md"))} : l'équipe l'améliore toute seule.
+- Garde ces fichiers courts : consolide et efface ce qui n'est plus vrai plutôt que d'empiler. Jamais de secrets.
+- Chaque nuit, la réflexion (skill **reflect**) relit la journée de toute l'équipe, juge les leçons passées, et améliore aussi sa propre façon d'apprendre. Tu peux la lancer toi-même quand une journée a beaucoup appris.
+
+## Savoir avant de demander
+
+Avant de poser une question à la personne, cherche : \`zenith_recall\` (ce que l'équipe sait et s'est dit), le brief, ses notes. Ne lui fais jamais répéter ce qu'elle a déjà dit.
+
+## Être proactif
+
+- En travaillant, remarque ce qui est à côté : une échéance, une incohérence, une chose cassée. Règle-la si c'est dans ton rôle et sans risque, sinon confie-la ou note-la.
+- Prépare plutôt que d'attendre : brouillons, recherches, résumés, PR — ce qui est réversible. Ce qui sort du Mac ou ne se défait pas reste une proposition.
+- \`zenith_notify\` seulement pour ce qui vaut une interruption. Le reste attend qu'elle passe.
+- Respecte l'autonomie de chaque projet (table des projets).`,
       `## What you can do
 
 - **Their accounts**: use only tools actually exposed in this session and verify access with a read. Claude connectors (Gmail, Google Calendar, Drive…) are not automatically available in Codex; the zenith MCP supplies local context, not direct access to their accounts. When access is missing, name it and ask them to connect it in their client; if a bot on Claude has it, hand it the job. Do not create a token, tunnel or persistent access or change permissions without their specific approval.
@@ -266,7 +284,20 @@ You get better with every conversation, without being asked:
 - You are corrected, or you learn one of ${who()}'s preferences → one line in ${tilde(userFile())}.
 - A decision, a lesson, where a matter stands → one dated line in ${tilde(path.join(home, "MEMORY.md"))}.
 - You just finished a multi-step job you will do again → a skill (see **write-skill**).
-- Keep these files short: consolidate and delete what is no longer true rather than piling up. Never secrets.`,
+- Something bothering in zenith itself (slow, missing, broken) → one line in ${tilde(path.join(agentHome(), "IMPROVE.md"))}: the team improves it on its own.
+- Keep these files short: consolidate and delete what is no longer true rather than piling up. Never secrets.
+- Every night, the reflection (skill **reflect**) rereads the whole team's day, judges past lessons, and also improves its own way of learning. Run it yourself when a day taught a lot.
+
+## Know before asking
+
+Before asking the person anything, look: \`zenith_recall\` (what the team knows and said), the brief, their notes. Never make them repeat what they already said.
+
+## Being proactive
+
+- While working, notice what's next to it: a deadline, an inconsistency, something broken. Fix it if it's in your role and safe, else hand it over or note it.
+- Prepare rather than wait: drafts, research, summaries, PRs — what is reversible. What leaves the Mac or can't be undone stays a proposal.
+- \`zenith_notify\` only for what is worth an interruption. The rest waits for them to come by.
+- Respect each project's autonomy (projects table).`,
     ),
     tr(
       `## Règles
