@@ -56,7 +56,7 @@ Un agent principal (celui de « Ma vie ») et, si tu veux, des **bots** : des ag
 ```
 
 - **Leur parler** : `@margot …` dans la barre, ⌘J ou ⌘K ; ou le menu de destination ; ou leur carte dans **Agents IA → Équipe**. La puce Claude/Codex suit l'abonnement du bot.
-- **Se passer le travail** : l'agent principal les connaît (rôle, abonnement) et leur confie ce qui est dans leur rôle avec `zenith_delegate`, puis rend compte. Un bot sur Codex qui a besoin de Gmail passe la main à un bot sur Claude.
+- **Ils se parlent** : `zenith_message` permet à un agent d'écrire à un coéquipier et de recevoir sa réponse (Iris sur Codex demande à Margot sur Claude ce qu'il y a dans ta boîte) ; chaque paire garde sa conversation. `zenith_delegate` confie une tâche longue, `zenith_team` dit qui fait quoi et qui est occupé. Une chaîne d'agents qui se relancent s'arrête à trois.
 - Leurs conversations sont dans la barre latérale, sous **Conversations**.
 
 ## Ce qu'il sait, ce qu'il apprend
@@ -80,6 +80,21 @@ Les consignes lui disent qui tu es, où sont ton brief et tes documents, tes pro
 Et d'**apprendre sans qu'on le lui demande** : une correction ou une préférence va dans `USER.md`, une décision dans `MEMORY.md`, une démarche qu'il refera devient un skill. Ces fichiers restent courts (au-delà d'une limite, zenith tronque et lui demande de consolider).
 
 Ce qu'il atteint : le brief et les documents de zenith, tes notes Obsidian, le shell (`git`, `gh`…), le web, et les outils de sa session — **tes connecteurs Claude** (Gmail, Google Agenda, Drive…) sur Claude, les plugins de Codex sur Codex. Quand il en manque un, il dit lequel. Le dossier branche aussi le serveur MCP de zenith pour Claude Code (`.mcp.json`) et Codex (`.codex/config.toml`).
+
+## Agir sur tout
+
+En plus des outils de zenith, chaque agent sait agir sur le Mac (`open`, AppleScript pour Mail, Calendrier, Notes, Rappels, Messages…, `shortcuts run` pour tes Raccourcis), sur le web (les outils de navigateur de sa session : navigateur et *computer use* de Codex, connecteurs de Claude et Claude in Chrome) et sur tes services (`gh`, `railway`…). Tout ce qui a un serveur MCP peut être donné à toute l'équipe d'un coup :
+
+```json
+"agent": {
+  "mcp": {
+    "linear": { "url": "https://mcp.linear.app/mcp" },
+    "playwright": { "command": "npx", "args": ["@playwright/mcp@latest"] }
+  }
+}
+```
+
+zenith les écrit dans le dossier de chaque agent, pour Claude Code comme pour Codex.
 
 ## Skills
 

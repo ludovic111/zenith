@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { PROJECTS } from "@/lib/projects";
 import { source } from "@/lib/source";
 import { date, nf, today, usd } from "@/lib/format";
@@ -17,15 +16,11 @@ import { PlanCard } from "@/components/plans/plan-card";
 import { claudePlan, codexPlan } from "@/lib/sources/plans";
 import { SUBSCRIPTIONS } from "@/lib/subscriptions";
 import { agentUi } from "@/lib/agent/ui";
-import { RoutinesList } from "@/components/agent/routines-panel";
-import { routineViews } from "@/components/agent/routine-view";
 import { AskButton } from "@/components/agent/ask-button";
-import { ActivityList, SkillList, TeamGrid } from "@/components/agent/team";
-import { activityViews, gatewayStatus, skillViews, teamView } from "@/components/agent/team-view";
 
 export const dynamic = "force-dynamic";
 export function generateMetadata(): Metadata {
-  return { title: tr("Agents IA", "AI agents") };
+  return { title: tr("Sessions", "Sessions") };
 }
 
 /** Monthly plan of a vendor listed in `subscriptions`, if any (the most expensive active one). */
@@ -61,7 +56,7 @@ export default async function AgentsPage() {
   return (
     <>
       <PageHeader
-        title={tr("Agents IA", "AI agents")}
+        title={tr("Sessions", "Sessions")}
         description={summary}
         action={
           ui.enabled && all.ok && list.length > 0 ? (
@@ -105,8 +100,6 @@ export default async function AgentsPage() {
         )}
       </Gate>
 
-      {ui.enabled && <Team />}
-
       {live.length > 0 && (
         <Panel
           className="mt-4"
@@ -146,9 +139,6 @@ export default async function AgentsPage() {
         <PlanCard title="ChatGPT & Codex" color={AGENTS.codex.color} price={planOf("OpenAI")} src={codex} hint={tr("Lues dans ~/.codex dès ta première session Codex.", "Read from ~/.codex after your first Codex session.")} />
       </div>
 
-      {ui.enabled && <Routines />}
-
-      {ui.enabled && <SkillsAndActivity />}
 
       <Gate src={all}>
         {(list) => {
@@ -206,95 +196,5 @@ export default async function AgentsPage() {
         }}
       </Gate>
     </>
-  );
-}
-
-/** zenith's routines (`agent.routines`), or how to add one. */
-async function Routines() {
-  const list = await routineViews();
-  return (
-    <Panel
-      className="mt-4"
-      title={
-        <span>
-          {tr("Routines", "Routines")}
-          {list.length > 0 && <span className="ml-2 font-normal text-ink-3 tabular">{list.filter((r) => r.enabled).length}/{list.length}</span>}
-        </span>
-      }
-      action={
-        <Link href="/reglages" className="hover:text-ink">
-          {tr("Réglages", "Settings")}
-        </Link>
-      }
-      bodyClassName={list.length ? "p-0 pb-1" : undefined}
-    >
-      {list.length ? (
-        <RoutinesList routines={list} />
-      ) : (
-        <Empty>
-          <span>
-            {tr("Des agents qui travaillent seuls, chaque jour à heure fixe. Ajoute-en dans zenith.config.json : ", "Agents that work on their own, every day at a set time. Add some in zenith.config.json: ")}
-            <code className="font-mono text-xs text-ink-2">{`"agent": { "routines": [{ "id": "matin", "at": "07:30", "task": "refresh-life" }] }`}</code>
-          </span>
-        </Empty>
-      )}
-    </Panel>
-  );
-}
-
-/** The team (the main agent and its bots), on your Claude and ChatGPT subscriptions. */
-async function Team() {
-  const [members, gw] = [await teamView(), gatewayStatus()];
-  const bots = members.length - 1;
-  return (
-    <Panel
-      className="mt-4"
-      title={
-        <span>
-          {tr("Équipe", "Team")}
-          <span className="ml-2 font-normal text-ink-3 tabular">{members.length}</span>
-        </span>
-      }
-      action={
-        <span title={tr("Parle à ton agent depuis Telegram (agent.gateway.telegram)", "Talk to your agent from Telegram (agent.gateway.telegram)")}>
-          Telegram ·{" "}
-          {gw.running ? tr(`branché, ${gw.chats} chat${gw.chats > 1 ? "s" : ""}`, `on, ${gw.chats} chat${gw.chats === 1 ? "" : "s"}`) : gw.configured && !gw.token ? tr("jeton manquant", "token missing") : tr("non branché", "off")}
-        </span>
-      }
-      bodyClassName="px-4 pb-4 pt-2"
-    >
-      <TeamGrid members={members} />
-      {bots === 0 && (
-        <p className="mt-3 text-xs text-ink-3">
-          {tr("Ajoute des agents nommés, chacun sur ton abonnement Claude ou Codex, dans zenith.config.json : ", "Add named agents, each on your Claude or Codex subscription, in zenith.config.json: ")}
-          <code className="font-mono text-ink-2">{`"agent": { "bots": [{ "id": "veille", "name": "Veille", "provider": "codex", "role": "…" }] }`}</code>
-        </p>
-      )}
-    </Panel>
-  );
-}
-
-/** What the team knows how to do, and what it did lately. */
-async function SkillsAndActivity() {
-  const [skills, activity] = await Promise.all([skillViews(), activityViews()]);
-  return (
-    <div className="mt-4 grid gap-4 lg:grid-cols-5">
-      <Panel
-        className="lg:col-span-2"
-        title={
-          <span>
-            Skills
-            <span className="ml-2 font-normal text-ink-3 tabular">{skills.length}</span>
-          </span>
-        }
-        action={<span className="font-mono">skills/</span>}
-        bodyClassName={skills.length ? "p-0 pb-1" : undefined}
-      >
-        {skills.length ? <SkillList skills={skills} /> : <Empty>{tr("Les skills apparaissent à la première demande.", "Skills appear with the first request.")}</Empty>}
-      </Panel>
-      <Panel className="lg:col-span-3" title={tr("Activité", "Activity")} bodyClassName={activity.length ? "p-0 pb-1" : undefined}>
-        {activity.length ? <ActivityList items={activity} /> : <Empty>{tr("Rien encore : demande quelque chose à zenith.", "Nothing yet: ask zenith something.")}</Empty>}
-      </Panel>
-    </div>
   );
 }

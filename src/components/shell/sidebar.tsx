@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight, FolderPlus, GitPullRequest, PanelLeft, Plus,
 import { cn } from "@/lib/utils";
 import { tr } from "@/lib/i18n";
 import { BRAND } from "@/lib/code/brand";
-import { PAGES, SETTINGS, isSettingsPath } from "@/lib/nav";
+import { PAGES, SETTINGS, SPACES, isSettingsPath, spaceOf, type Space } from "@/lib/nav";
 import {
   appPathOf,
   codeHref,
@@ -36,6 +36,7 @@ export type NavProject = { id: string; name: string; href: string; color: string
 const FOLDED_KEY = "zenith:sidebar:folded";
 const FULL_KEY = "zenith:sidebar:full";
 const BACK_KEY = "zenith:settings:back";
+const SPACE_KEY = "zenith:space:";
 // Threads shown under a project before "more": the rest, unless they need you.
 const THREADS_SHOWN = 4;
 
@@ -67,7 +68,14 @@ function useStoredSet(key: string) {
  * lg it is a drawer.
  */
 /** The main agent's folder and its bots', whose threads are your conversations. */
-export type SidebarAgent = { home: string; bots: { id: string; name: string; title?: string; home: string; color: string; avatar: Avatar }[] };
+export type SidebarAgent = {
+  home: string;
+  /** The main agent. */
+  name: string;
+  title?: string;
+  avatar: Avatar;
+  bots: { id: string; name: string; title?: string; home: string; color: string; avatar: Avatar }[];
+};
 
 export function Sidebar({ projects, code = true, home, agent = null }: { projects: NavProject[]; code?: boolean; home: string; agent?: SidebarAgent | null }) {
   const path = usePathname();
@@ -113,7 +121,7 @@ function MainNav({ path, projects, code, home, agent }: { path: string; projects
   const [full, toggleFull] = useStoredSet(FULL_KEY);
   const onCode = appPathOf(path) !== null;
 
-  // zenith code's projects and threads, matched to zenith's projects by folder.
+  // zenith code's projects and threads: your agents' folders, your projects', and the others.
   const { byZenithProject, others, life, team, all } = useMemo(() => {
     const threadsOf = new Map<string, CodeThread[]>();
     for (const t of snapshot?.threads ?? []) {
@@ -151,121 +159,166 @@ function MainNav({ path, projects, code, home, agent }: { path: string; projects
   );
 
   const activeThread = onCode ? snapshot?.activeThread ?? null : null;
+  const agentProjects = useMemo(() => new Set([life?.project.id, ...[...team.values()].map((e) => e.project.id)].filter(Boolean)), [life, team]);
+  const agentThread = !!activeThread && all.some((t) => threadKey(t) === activeThread && agentProjects.has(t.projectId));
+  const space = spaceOf(path, agentThread);
   const codeReady = code && !!status?.running && !!snapshot;
   const isActive = (href: string) => (href === "/" ? path === "/" : path === href || path.startsWith(`${href}/`));
   const codeLink = codeHref(snapshot?.pathname && !snapshot.pathname.startsWith("/pair") && !snapshot.pathname.startsWith("/settings") ? snapshot.pathname : "/");
+  const codeThreads = all.filter((t) => !agentProjects.has(t.projectId));
+
+  // Each space reopens where you left it.
+  useEffect(() => {
+    sessionStorage.setItem(`${SPACE_KEY}${space}`, path);
+  }, [space, path]);
+  const go = useCallback(
+    (s: Space) => {
+      const last = sessionStorage.getItem(`${SPACE_KEY}${s}`);
+      router.push(last && spaceOf(last) === s ? last : s === "code" ? codeLink : SPACES().find((x) => x.id === s)!.href);
+    },
+    [router, codeLink],
+  );
+  // ⌘1 ⌘2 ⌘3 switch spaces.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey) return;
+      const s = SPACES()[Number(e.key) - 1];
+      if (!s || (s.id === "team" && !agent) || (s.id === "code" && !code)) return;
+      e.preventDefault();
+      go(s.id);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [go, agent, code]);
+
+  const pages = PAGES().filter((p) => p.space === space);
+  const member = (id: string, name: string, title: string | undefined, avatar: Avatar, entry: { threads: CodeThread[] } | null | undefined, mention: string) => {
+    const key = `zenith:agent:${id}`;
+    return (
+      <ProjectBlock
+        key={key}
+        id={key}
+        name={name}
+        title={title ? `${name} · ${title}` : name}
+        icon={<AgentAvatar avatar={avatar} id={`side-${id}`} size={16} />}
+        color={avatar.color}
+        threads={codeReady ? entry?.threads ?? [] : []}
+        activeThread={activeThread}
+        folded={folded.has(key)}
+        full={full.has(key)}
+        onFold={() => toggleFolded(key)}
+        onFull={() => toggleFull(key)}
+        onOpen={entry?.threads.length ? undefined : () => openAsk(mention)}
+        onNewThread={() => openAsk(mention)}
+        newLabel={tr(`Parler à ${name}`, `Talk to ${name}`)}
+      />
+    );
+  };
 
   return (
     <>
+      <SpaceSwitch space={space} team={!!agent} code={code} onGo={go} status={space !== "code" ? topStatus(codeThreads) : null} />
+
       <div className="flex flex-col gap-px px-2 pb-2">
-        {agent && <Row icon={<SquarePen className="size-4" />} label={tr("Demander à zenith", "Ask zenith")} kbd="⌘J" onClick={() => openAsk()} />}
+        {space === "team" && <Row icon={<SquarePen className="size-4" />} label={tr("Nouvelle conversation", "New conversation")} kbd="⌘J" onClick={() => openAsk()} />}
+        {space === "code" && ready && <Row icon={<SquarePen className="size-4" />} label={tr("Nouveau thread", "New thread")} onClick={() => navigate({ to: "palette", open: "new-thread-in" })} />}
         <Row icon={<Search className="size-4" />} label={tr("Rechercher", "Search")} kbd="⌘K" onClick={() => window.dispatchEvent(new Event("zenith:command"))} />
       </div>
 
       <nav className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden px-2 pb-3">
-        <div className="flex flex-col gap-px">
-          {PAGES().map((p) => (
-            <Row key={p.href} href={p.href} icon={<p.icon className="size-4" />} label={p.name} active={isActive(p.href)} />
-          ))}
-        </div>
-
-        {agent && codeReady && ((life && life.threads.length > 0) || [...team.values()].some((b) => b.threads.length > 0)) && (
-          <Group label={tr("Conversations", "Conversations")} actions={<IconButton label={tr("Demander à zenith", "Ask zenith")} onClick={() => openAsk()}><Plus className="size-3.5" /></IconButton>}>
-            {life && life.threads.length > 0 && <Threads id="zenith:life" threads={life.threads} activeThread={activeThread} full={full.has("zenith:life")} onFull={() => toggleFull("zenith:life")} />}
-            {agent.bots.map((b) => {
-              const c = team.get(b.id);
-              if (!c?.threads.length) return null;
-              const id = `zenith:bot:${b.id}`;
-              return (
-                <ProjectBlock
-                  key={id}
-                  id={id}
-                  name={b.name}
-                  title={b.title ? `${b.name} · ${b.title}` : b.name}
-                  icon={<AgentAvatar avatar={b.avatar} id={`side-${b.id}`} size={16} />}
-                  color={b.color}
-                  threads={c.threads}
-                  activeThread={activeThread}
-                  folded={folded.has(id)}
-                  full={full.has(id)}
-                  onFold={() => toggleFolded(id)}
-                  onFull={() => toggleFull(id)}
-                  onNewThread={() => openAsk(`@${b.id} `)}
-                />
-              );
-            })}
-          </Group>
+        {pages.length > 0 && (
+          <div className="flex flex-col gap-px">
+            {pages.map((p) => (
+              <Row key={p.href} href={p.href} icon={<p.icon className="size-4" />} label={p.short ?? p.name} active={isActive(p.href)} />
+            ))}
+          </div>
         )}
 
-        {projects.length > 0 && (
+        {space === "home" && projects.length > 0 && (
           <Group label={tr("Projets", "Projects")}>
-            {projects.map((p) => {
-              const c = byZenithProject.get(p.id);
-              return (
-                <ProjectBlock
-                  key={p.id}
-                  id={p.id}
-                  href={p.href}
-                  name={p.name}
-                  color={p.color}
-                  active={isActive(p.href)}
-                  threads={codeReady ? c?.threads ?? [] : []}
-                  activeThread={activeThread}
-                  folded={folded.has(p.id)}
-                  full={full.has(p.id)}
-                  onFold={() => toggleFolded(p.id)}
-                  onFull={() => toggleFull(p.id)}
-                  onNewThread={c && ready ? () => navigate({ to: "new-thread", environmentId: c.project.environmentId, projectId: c.project.id }) : undefined}
-                />
-              );
-            })}
+            {projects.map((p) => (
+              <Row key={p.id} href={p.href} icon={<span className="size-2 rounded-full" style={{ background: p.color }} />} label={p.name} active={isActive(p.href)} />
+            ))}
           </Group>
         )}
 
-        {code && (
-          <Group
-            label="Code"
-            href={codeLink}
-            status={topStatus(all)}
-            health={status?.running ? "up" : status?.starting ? "busy" : status ? "down" : null}
-            actions={
-              <>
-                {ready && (
-                  <IconButton label={tr("Ajouter un projet", "Add a project")} onClick={() => navigate({ to: "palette", open: "add-project" })}>
-                    <FolderPlus className="size-3.5" />
-                  </IconButton>
-                )}
-                {status?.enabled && status.built && (
-                  <IconButton label={tr(`Redémarrer ${BRAND} code`, `Restart ${BRAND} code`)} onClick={() => window.dispatchEvent(new Event("zenith:code-restart"))}>
-                    <RotateCw className="size-3.5" />
-                  </IconButton>
-                )}
-              </>
-            }
-          >
-            {codeReady &&
-              others.map(({ project, threads }) => {
-                const id = `code:${project.environmentId}:${project.id}`;
-                const isHome = sameDir(project.workspaceRoot, home);
-                return (
-                  <ProjectBlock
-                    key={id}
-                    id={id}
-                    name={isHome ? "zenith" : project.title}
-                    title={project.workspaceRoot}
-                    color={isHome ? "var(--foreground)" : "var(--ink-3)"}
-                    threads={threads}
-                    activeThread={activeThread}
-                    folded={folded.has(id)}
-                    full={full.has(id)}
-                    onFold={() => toggleFolded(id)}
-                    onFull={() => toggleFull(id)}
-                    onNewThread={ready ? () => navigate({ to: "new-thread", environmentId: project.environmentId, projectId: project.id }) : undefined}
-                  />
-                );
-              })}
-            {ready && <Row icon={<GitPullRequest className="size-4" />} label="Pull requests" href={codeHref("/pull-requests")} active={path === "/code/pull-requests"} quiet />}
+        {space === "team" && agent && (
+          <Group label={tr("Tes agents", "Your agents")}>
+            {member("life", agent.name, agent.title, agent.avatar, life, "")}
+            {agent.bots.map((b) => member(b.id, b.name, b.title, b.avatar, team.get(b.id), `@${b.name.toLowerCase()} `))}
           </Group>
+        )}
+
+        {space === "code" && code && (
+          <>
+            {projects.some((p) => byZenithProject.has(p.id)) && (
+              <Group label={tr("Projets", "Projects")}>
+                {projects.map((p) => {
+                  const c = byZenithProject.get(p.id);
+                  if (!c) return null;
+                  return (
+                    <ProjectBlock
+                      key={p.id}
+                      id={p.id}
+                      name={p.name}
+                      color={p.color}
+                      threads={codeReady ? c.threads : []}
+                      activeThread={activeThread}
+                      folded={folded.has(p.id)}
+                      full={full.has(p.id)}
+                      onFold={() => toggleFolded(p.id)}
+                      onFull={() => toggleFull(p.id)}
+                      onNewThread={ready ? () => navigate({ to: "new-thread", environmentId: c.project.environmentId, projectId: c.project.id }) : undefined}
+                    />
+                  );
+                })}
+              </Group>
+            )}
+            <Group
+              label={projects.some((p) => byZenithProject.has(p.id)) ? tr("Autres dossiers", "Other folders") : tr("Dossiers", "Folders")}
+              href={codeLink}
+              status={topStatus(codeThreads)}
+              health={status?.running ? "up" : status?.starting ? "busy" : status ? "down" : null}
+              actions={
+                <>
+                  {ready && (
+                    <IconButton label={tr("Ajouter un projet", "Add a project")} onClick={() => navigate({ to: "palette", open: "add-project" })}>
+                      <FolderPlus className="size-3.5" />
+                    </IconButton>
+                  )}
+                  {status?.enabled && status.built && (
+                    <IconButton label={tr(`Redémarrer ${BRAND} code`, `Restart ${BRAND} code`)} onClick={() => window.dispatchEvent(new Event("zenith:code-restart"))}>
+                      <RotateCw className="size-3.5" />
+                    </IconButton>
+                  )}
+                </>
+              }
+            >
+              {codeReady &&
+                others.map(({ project, threads }) => {
+                  const id = `code:${project.environmentId}:${project.id}`;
+                  const isHome = sameDir(project.workspaceRoot, home);
+                  return (
+                    <ProjectBlock
+                      key={id}
+                      id={id}
+                      name={isHome ? "zenith" : project.title}
+                      title={project.workspaceRoot}
+                      color={isHome ? "var(--foreground)" : "var(--ink-3)"}
+                      threads={threads}
+                      activeThread={activeThread}
+                      folded={folded.has(id)}
+                      full={full.has(id)}
+                      onFold={() => toggleFolded(id)}
+                      onFull={() => toggleFull(id)}
+                      onNewThread={ready ? () => navigate({ to: "new-thread", environmentId: project.environmentId, projectId: project.id }) : undefined}
+                    />
+                  );
+                })}
+              {ready && <Row icon={<GitPullRequest className="size-4" />} label="Pull requests" href={codeHref("/pull-requests")} active={path === "/code/pull-requests"} quiet />}
+              {!status?.running && <p className="px-2 py-1 text-xs text-ink-3">{status?.starting ? tr(`${BRAND} code démarre…`, `${BRAND} code is starting…`) : tr(`${BRAND} code ne tourne pas.`, `${BRAND} code isn't running.`)}</p>}
+            </Group>
+          </>
         )}
       </nav>
 
@@ -273,6 +326,39 @@ function MainNav({ path, projects, code, home, agent }: { path: string; projects
         <Row icon={<Settings className="size-4" />} label={tr("Réglages", "Settings")} kbd="⌘," href="/reglages" />
       </div>
     </>
+  );
+}
+
+/** Aperçu · Équipe · Code: which of zenith's three spaces you are in, and the way to the others. */
+function SpaceSwitch({ space, team, code, onGo, status }: { space: Space; team: boolean; code: boolean; onGo: (s: Space) => void; status: CodeThreadStatus | null }) {
+  const list = SPACES().filter((s) => (s.id === "team" ? team : s.id === "code" ? code : true));
+  if (list.length < 2) return null;
+  return (
+    <div className="px-2 pb-2">
+      <div role="tablist" aria-label={tr("Espaces", "Spaces")} className="grid gap-0.5 rounded-lg bg-muted p-0.5 mac:bg-black/5 dark:mac:bg-white/5" style={{ gridTemplateColumns: `repeat(${list.length}, minmax(0, 1fr))` }}>
+        {list.map((s) => {
+          const on = s.id === space;
+          return (
+            <button
+              key={s.id}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              onClick={() => onGo(s.id)}
+              title={`${s.name} (${s.kbd})`}
+              className={cn(
+                "relative flex h-7 items-center justify-center gap-1.5 rounded-md text-xs transition-colors",
+                on ? "bg-surface font-medium text-ink shadow-xs dark:bg-selected" : "text-ink-3 hover:text-ink-2",
+              )}
+            >
+              <s.icon className="size-3.5" />
+              {s.name}
+              {s.id === "code" && status && NEEDS_YOU.has(status) && <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full" style={{ background: STATUS_STYLE[status].dot }} />}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -395,6 +481,8 @@ function ProjectBlock({
   onFold,
   onFull,
   onNewThread,
+  onOpen,
+  newLabel,
   icon,
 }: {
   id: string;
@@ -412,6 +500,9 @@ function ProjectBlock({
   onFold: () => void;
   onFull: () => void;
   onNewThread?: () => void;
+  /** What a click on the name does when it has no page and no thread to open. */
+  onOpen?: () => void;
+  newLabel?: string;
 }) {
   const live = threads.filter((t) => t.section === "pinned" || t.section === "active");
   const top = topStatus(threads);
@@ -433,14 +524,14 @@ function ProjectBlock({
             {label}
           </Link>
         ) : (
-          <button type="button" onClick={onFold} title={title ?? name} className={rowClass}>
+          <button type="button" onClick={onOpen ?? onFold} title={title ?? name} className={rowClass}>
             {label}
           </button>
         )}
         <div className="flex shrink-0 items-center pr-1">
           {top && (folded || !hasThreads) && <StatusDot status={top} className="mr-1.5 group-hover/project:hidden" />}
           {onNewThread && (
-            <IconButton label={tr(`Nouveau thread dans ${name}`, `New thread in ${name}`)} onClick={onNewThread} className="hidden group-hover/project:grid">
+            <IconButton label={newLabel ?? tr(`Nouveau thread dans ${name}`, `New thread in ${name}`)} onClick={onNewThread} className="hidden group-hover/project:grid">
               <Plus className="size-3.5" />
             </IconButton>
           )}

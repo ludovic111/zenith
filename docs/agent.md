@@ -56,7 +56,7 @@ One main agent (the one for "My life") and, if you like, **bots**: agents with a
 ```
 
 - **Talk to them**: `@margot …` in the bar, ⌘J or ⌘K; or the destination menu; or their card in **AI agents → Team**. The Claude/Codex chip follows the bot's subscription.
-- **Passing work around**: the main agent knows them (role, subscription) and hands them what fits their role with `zenith_delegate`, then reports back. A bot on Codex that needs Gmail hands the job to a bot on Claude.
+- **They talk to each other**: `zenith_message` lets an agent write to a teammate and get the answer (Iris on Codex asks Margot on Claude what's in your inbox); each pair keeps one conversation. `zenith_delegate` hands over a long task, `zenith_team` says who does what and who is busy. A chain of agents asking agents stops at three.
 - Their conversations are in the sidebar, under **Conversations**.
 
 ## What it knows, what it learns
@@ -80,6 +80,21 @@ The instructions tell it who you are, where your brief and documents are, your p
 And to **learn without being asked**: a correction or a preference goes in `USER.md`, a decision in `MEMORY.md`, a job it will do again becomes a skill. These files stay short (past a limit, zenith truncates them and asks it to consolidate).
 
 What it can reach: zenith's brief and documents, your Obsidian notes, the shell (`git`, `gh`…), the web, and its session's tools — **your Claude connectors** (Gmail, Google Calendar, Drive…) on Claude, Codex's plugins on Codex. When one is missing, it says which. The folder also plugs in zenith's MCP server for both Claude Code (`.mcp.json`) and Codex (`.codex/config.toml`).
+
+## Acting on anything
+
+Besides zenith's own tools, each agent is told how to act on the Mac (`open`, AppleScript for Mail, Calendar, Notes, Reminders, Messages…, `shortcuts run` for your Shortcuts), on the web (its session's browser tools: Codex's browser and computer use, Claude's connectors and Claude in Chrome) and on your services (`gh`, `railway`…). Anything else with an MCP server can be given to the whole team at once:
+
+```json
+"agent": {
+  "mcp": {
+    "linear": { "url": "https://mcp.linear.app/mcp" },
+    "playwright": { "command": "npx", "args": ["@playwright/mcp@latest"] }
+  }
+}
+```
+
+zenith writes them into every agent's folder, for Claude Code and Codex alike.
 
 ## Skills
 

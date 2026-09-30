@@ -49,7 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="h-full overflow-hidden">
         <L10nProvider value={loc}>
           <div className="flex h-dvh">
-            <Sidebar projects={nav} code={c.code.enabled} home={process.cwd()} agent={agent ? { home: ui.home, bots: ui.bots } : null} />
+            <Sidebar projects={nav} code={c.code.enabled} home={process.cwd()} agent={agent ? { home: ui.home, name: ui.name, avatar: ui.avatar, bots: ui.bots } : null} />
             <div className="flex min-w-0 flex-1 flex-col bg-background">
               <main className="relative min-h-0 flex-1 overflow-y-auto">
                 <TitleBar titles={titles} />

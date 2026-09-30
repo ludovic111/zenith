@@ -265,6 +265,7 @@ The zenith agent and its team (see [agent.md](agent.md)). They run through zenit
 | `model` | string | — | Model id for that provider, e.g. `"claude-opus-5-5"`. Default: zenith code's default model, else the one of your latest thread. |
 | `bots` | array | `[]` | Your team: named agents with a role, each on Claude or Codex. |
 | `routines` | array | `[]` | Agents that run on their own, at a set time or on an event. |
+| `mcp` | object | `{}` | MCP servers for the whole team, by name: `{ "command", "args", "env" }` or `{ "url", "headers" }`. |
 | `gateway` | object | `{}` | Talk to your agent from elsewhere: `{ "telegram": { "chats": [123456789], "target": "life" } }`, with the bot token in `TELEGRAM_BOT_TOKEN`. |
 
 Each bot:

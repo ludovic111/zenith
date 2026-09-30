@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarClock, Hand, MessageSquare, Radar, Smartphone, Sparkles, SquareTerminal, Workflow } from "lucide-react";
+import { CalendarClock, Hand, MessageSquare, MessagesSquare, Radar, Smartphone, Sparkles, SquareTerminal, Workflow } from "lucide-react";
 import { ago } from "@/lib/format";
 import { plural, tr } from "@/lib/i18n";
 import { threadHref } from "@/components/code/store";
@@ -23,11 +23,13 @@ export type MemberView = {
   /** Lines in its MEMORY.md. */
   memory: number;
   main: boolean;
+  /** A turn running in its folder right now. */
+  busy: boolean;
 };
 
 export type SkillView = { id: string; description: string; file: string };
 
-export type ActivityView = { at: string; source: string; target: string; targetId: string; avatar: Avatar | null; title: string; threadId: string; environmentId: string };
+export type ActivityView = { at: string; source: string; target: string; targetId: string; from: string | null; avatar: Avatar | null; title: string; threadId: string; environmentId: string };
 
 /** Your team: who they are, which subscription they run on, and a way to talk to each. */
 export function TeamGrid({ members }: { members: MemberView[] }) {
@@ -59,7 +61,14 @@ export function TeamGrid({ members }: { members: MemberView[] }) {
                 </span>
               </div>
             </div>
-            <MessageSquare className="size-3.5 shrink-0 text-ink-3 opacity-0 transition-opacity group-hover:opacity-100" />
+            {m.busy ? (
+              <span className="inline-flex shrink-0 items-center gap-1 text-2xs text-ink-3">
+                <span className="size-1.5 animate-pulse rounded-full bg-sky-500" />
+                {tr("au travail", "working")}
+              </span>
+            ) : (
+              <MessageSquare className="size-3.5 shrink-0 text-ink-3 opacity-0 transition-opacity group-hover:opacity-100" />
+            )}
           </div>
           <p className="line-clamp-2 text-xs text-ink-2">{m.role}</p>
           <div className="mt-auto flex items-center gap-2 text-2xs text-ink-3">
@@ -99,6 +108,7 @@ const SOURCES: Record<string, { icon: typeof Hand; label: () => string }> = {
   watch: { icon: Radar, label: () => tr("déclencheur", "trigger") },
   mcp: { icon: Workflow, label: () => tr("un agent", "an agent") },
   gateway: { icon: Smartphone, label: () => "Telegram" },
+  team: { icon: MessagesSquare, label: () => tr("l'équipe", "the team") },
 };
 
 /** What zenith asked its agents lately, and why. */
@@ -113,7 +123,7 @@ export function ActivityList({ items }: { items: ActivityView[] }) {
               {a.avatar ? <AgentAvatar avatar={a.avatar} id={`act-${a.targetId}`} size={16} /> : <s.icon className="size-3.5 shrink-0 text-ink-3" />}
               <span className="min-w-0 flex-1 truncate text-[13px] text-ink">{a.title}</span>
               <span className="hidden shrink-0 items-center gap-1 text-xs text-ink-3 sm:inline-flex">
-                <s.icon className="size-3" /> {s.label()} → {a.target}
+                <s.icon className="size-3" /> {a.from ?? s.label()} → {a.target}
               </span>
               <span className="w-16 shrink-0 text-right text-xs text-ink-3 tabular" suppressHydrationWarning>
                 {ago(a.at)}

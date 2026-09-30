@@ -8,6 +8,7 @@ import { gatewayStatus } from "@/lib/agent/gateway";
 import { skills } from "@/lib/agent/skills";
 import { agentAvatar, agentHome, agentName, bots, configuredModel } from "@/lib/agent/team";
 import { agentUi } from "@/lib/agent/ui";
+import { busy } from "@/lib/agent/talk";
 import type { ActivityView, MemberView, SkillView } from "./team";
 
 const tilde = (p: string) => (process.env.HOME && p.startsWith(process.env.HOME) ? `~${p.slice(process.env.HOME.length)}` : p);
@@ -21,6 +22,7 @@ async function memoryLines(file: string) {
 /** The team as the AI agents page shows it: the main agent first, then the bots. */
 export async function teamView(): Promise<MemberView[]> {
   const c = config().agent;
+  const working = await busy();
   const main: MemberView = {
     id: "life",
     name: agentName(),
@@ -32,6 +34,7 @@ export async function teamView(): Promise<MemberView[]> {
     home: tilde(agentHome()),
     memory: await memoryLines(path.join(agentHome(), "MEMORY.md")),
     main: true,
+    busy: working.has("life"),
   };
   const team = await Promise.all(
     bots().map(async (b): Promise<MemberView> => ({
@@ -45,6 +48,7 @@ export async function teamView(): Promise<MemberView[]> {
       home: tilde(b.home),
       memory: await memoryLines(path.join(b.home, "MEMORY.md")),
       main: false,
+      busy: working.has(b.id),
     })),
   );
   return [main, ...team];
@@ -64,6 +68,7 @@ export async function activityViews(limit = 12): Promise<ActivityView[]> {
     source: e.source,
     target: names[e.target] ?? e.target,
     targetId: e.target,
+    from: e.from ? names[e.from] ?? e.from : null,
     avatar: faces[e.target] ?? null,
     title: e.title,
     threadId: e.threadId,

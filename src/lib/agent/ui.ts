@@ -3,7 +3,7 @@ import { config } from "../config";
 import { tr } from "../i18n";
 import { targets } from "./ask";
 import { agentHome } from "./workspace";
-import { bots } from "./team";
+import { agentAvatar, agentName, bots } from "./team";
 import type { NowItem } from "./now";
 import type { AgentTarget, Provider } from "./target";
 import type { Avatar } from "./avatar";
@@ -15,6 +15,9 @@ export type AgentUi = {
   targets: AgentTarget[];
   provider: Provider;
   home: string;
+  /** The main agent's name and face. */
+  name: string;
+  avatar: Avatar;
   bots: { id: string; name: string; title?: string; home: string; color: string; avatar: Avatar }[];
 };
 
@@ -25,6 +28,8 @@ export function agentUi(): AgentUi {
     targets: targets(),
     provider: c.agent.provider,
     home: agentHome(),
+    name: agentName(),
+    avatar: agentAvatar(),
     bots: bots().map(({ id, name, title, home, color, avatar }) => ({ id, name, title, home, color, avatar })),
   };
 }

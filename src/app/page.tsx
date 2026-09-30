@@ -46,19 +46,14 @@ import { fx } from "@/lib/sources/plans";
 import { SUBSCRIPTIONS, monthly, urgent } from "@/lib/subscriptions";
 import { describe, weather } from "@/lib/sources/weather";
 import { life } from "@/lib/sources/life";
-import { isLive, sessions } from "@/lib/sources/agents";
-import { SessionList } from "@/components/agents/session-list";
 import { ProjectThreads } from "@/components/agents/project-threads";
-import { toRows } from "@/components/agents/rows";
-import { Gate } from "@/components/z/gate";
 import { Empty, PageHeader, Panel, Skeleton } from "@/components/z/panel";
 import { Stat } from "@/components/z/stat";
 import { LiveDot, Status } from "@/components/z/status";
 import { Heatmap } from "@/components/charts/heatmap";
 import { Bars } from "@/components/charts/bars";
 import { now } from "@/lib/agent/now";
-import { SUGGESTIONS, agentUi, examplesFrom } from "@/lib/agent/ui";
-import { AskBar } from "@/components/agent/ask-bar";
+import { agentUi } from "@/lib/agent/ui";
 import { NowList } from "@/components/agent/now-list";
 import { AskButton } from "@/components/agent/ask-button";
 import { setupPrompt } from "@/lib/agent/tasks";
@@ -70,7 +65,7 @@ const DAY = 864e5;
 /** Name and color of an event's project, with a neutral fallback. */
 const who = (id: string) => findProject(id) ?? { name: id, color: "var(--ink-3)" };
 
-/** What is waiting, once per request (the ask bar and the Now list both use it). */
+/** What is waiting, once per request. */
 const waiting = cache(now);
 
 /** A quiet "see all" link for a card's header. */
@@ -98,19 +93,13 @@ export default function Home() {
       </Suspense>
 
       {agent ? (
-        <Suspense fallback={<AskSkeleton />}>
-          <Ask />
-        </Suspense>
-      ) : (
-        <Urgent />
-      )}
-
-      {agent && (
-        <Suspense fallback={<Skeleton className="mt-6 h-64" />}>
-          <div className="mt-6">
+        <Suspense fallback={<Skeleton className="mt-2 h-64" />}>
+          <div className="mt-2">
             <Now />
           </div>
         </Suspense>
+      ) : (
+        <Urgent />
       )}
 
       <Suspense fallback={<Skeleton className="mt-8 h-[88px]" />}>
@@ -119,22 +108,18 @@ export default function Home() {
 
       <Projects agent={agent} />
 
-      <div className="mt-8 grid gap-4 lg:grid-cols-2">
-        <Suspense fallback={<Skeleton className="h-72" />}>
-          <Money />
-        </Suspense>
-        <Suspense fallback={<Skeleton className="h-72" />}>
-          <LiveAgents />
-        </Suspense>
-      </div>
-
       <div className="mt-8 grid gap-4 xl:grid-cols-[1.45fr_1fr]">
         <Suspense fallback={<Skeleton className="h-[480px]" />}>
           <Activity />
         </Suspense>
-        <Suspense fallback={<Skeleton className="h-[480px]" />}>
-          <Feed />
-        </Suspense>
+        <div className="flex min-w-0 flex-col gap-4">
+          <Suspense fallback={<Skeleton className="h-72" />}>
+            <Money />
+          </Suspense>
+          <Suspense fallback={<Skeleton className="h-72" />}>
+            <Feed />
+          </Suspense>
+        </div>
       </div>
     </>
   );
@@ -268,19 +253,9 @@ async function Header() {
   return <HeaderShell context={context} action={action} />;
 }
 
-/* ——— Ask zenith, and what is waiting ——— */
+/* ——— What is waiting ——— */
 
 const projectNames = () => Object.fromEntries(agentUi().targets.map((t) => [t.id, t.name]));
-
-function AskSkeleton() {
-  return <div className="h-[92px] rounded-2xl border border-line bg-surface" />;
-}
-
-async function Ask() {
-  const ui = agentUi();
-  const items = await waiting().catch(() => []);
-  return <AskBar targets={ui.targets} provider={ui.provider} examples={examplesFrom(items, projectNames())} suggestions={SUGGESTIONS()} />;
-}
 
 async function Now() {
   const items = await waiting().catch(() => []);
@@ -593,44 +568,6 @@ async function Money() {
 
 /* ——— Agents at work ——— */
 
-async function LiveAgents() {
-  const all = await source(sessions);
-  const live = all.ok ? all.data.filter(isLive) : [];
-  return (
-    <Panel
-      title={
-        <>
-          {tr("Agents au travail", "Agents at work")}
-          {live.length > 0 && <Count n={live.length} />}
-        </>
-      }
-      action={<More href="/agents">{tr("Tout voir", "See all")}</More>}
-      bodyClassName="px-4 pb-2 pt-1"
-    >
-      <Gate src={all}>
-        {(list) => {
-          const shown = live.length ? live : list.slice(0, 4);
-          return (
-            <>
-              <p className="flex items-center gap-2 pb-1 text-xs text-ink-3">
-                {live.length ? (
-                  <>
-                    <LiveDot />
-                    {tr(`${live.length} session${live.length > 1 ? "s" : ""} active${live.length > 1 ? "s" : ""}`, `${live.length} active ${plural(live.length, ["session", "sessions"], ["session", "sessions"])}`)}
-                  </>
-                ) : (
-                  tr("Aucune session active · les dernières", "No active session · the latest")
-                )}
-              </p>
-              <SessionList rows={toRows(shown.slice(0, 5))} />
-            </>
-          );
-        }}
-      </Gate>
-    </Panel>
-  );
-}
-
 /* ——— Activity & feed ——— */
 
 async function Activity() {
@@ -805,11 +742,6 @@ function Welcome() {
         </Panel>
       </div>
 
-      <div className="mt-8">
-        <Suspense fallback={<Skeleton className="h-72" />}>
-          <LiveAgents />
-        </Suspense>
-      </div>
     </>
   );
 }

@@ -12,13 +12,15 @@ It runs on your machine, answers only on `127.0.0.1`, and never sends your data 
 | --- | --- |
 | **Ask zenith** | One box, everywhere (home, project pages, ⌘J, ⌘K): say what you want, an agent does it and opens as a thread. Routes to the project you name, else to your life agent. Most pages also offer one-click agent actions on what they show (draft a reply, fix a CI, review subscriptions…) |
 | **Now** | What is waiting for you, most pressing first, each with a one-tap *Hand off* to an agent, *done* and *later*. Plus routines: agents that run on their own at a set time, or as soon as something new is waiting |
-| **Team** | Your agent and its bots: named agents with a role, their own personality (SOUL.md), memory and shared skills, each on your Claude or ChatGPT (Codex) subscription. `@name` to talk to one; they hand work to each other. Reachable from Telegram |
+| **Three spaces** | One switcher at the top of the sidebar (⌘1 ⌘2 ⌘3): **Overview** (your day, projects, money), **Team** (talk to your agents), **Code** (zenith code, sessions) |
+| **Team** | Your agent and its bots: first names, faces, a role, their own personality (SOUL.md), memory and shared skills, each on your Claude or ChatGPT (Codex) subscription. `@name` to talk to one; they talk to each other and act on the Mac, the web and any MCP server. Reachable from Telegram |
 | Home | Today in one line, Ask zenith, Now, every project in one table (status, latency, key numbers, commits), money, agents at work, six months of commits, a live feed |
 | My day | Weather, air quality, UV and pollen, calendar (14 days, holidays, birthdays), what's waiting for you, now playing, screen time, spending, work rhythm |
 | Projects | One page per project: uptime, latency, HTTP traffic and deploys (Railway), CI, issues and PRs (GitHub), releases and downloads, App Store rating and reviews, RevenueCat MRR, agent sessions, Obsidian notes, identity card |
 | **Code** | **zenith code**: chat with Claude Code, Codex and other agents inside any of your projects — diffs, terminals, worktrees, approvals. Its threads live in zenith's sidebar, under their project |
 | Watch | Who talks about your projects (Hacker News, GitHub), notifications, new stars, contributions, news, markets, the state of your Mac |
-| Agents | Your team, routines, skills and recent activity; every Claude Code and Codex session: live, cost, lines written, PRs, the command to resume it; plan limits |
+| Sessions (Code) | Every Claude Code and Codex session: live, cost, lines written, PRs, the command to resume it; plan limits |
+| Team | Your agents, recent conversations (theirs with each other too), routines and skills |
 | Subscriptions | Everything you pay for, monthly total in your currency, next charges, failing payments, Claude / ChatGPT plan gauges |
 | Directory | Every project's names, handles, domains (registrar, renewal, certificate, email), stores and services |
 | Settings | One place for zenith (configuration, zenith code, the agent, connecting your AI tools, the Mac app, data sources and keys) and zenith code (providers, projects, source control, keybindings…) |
