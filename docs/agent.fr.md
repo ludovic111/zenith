@@ -43,19 +43,19 @@ Chaque élément a un seul geste : **Confier**. zenith lance un agent avec une c
 
 ## Son équipe
 
-Un agent principal (celui de « Ma vie ») et, si tu veux, des **bots** : des agents nommés, chacun avec un rôle, son dossier, sa personnalité et sa mémoire, qui tournent sur **ton abonnement Claude** (par Claude Code) ou **ton abonnement ChatGPT** (par Codex). C'est l'équipe des ChatGPT Dots et des Grok Bots, sur tes propres abonnements, sur ton Mac.
+Un agent principal (celui de « Ma vie ») et, si tu veux, des **bots** : des agents avec un prénom, un métier et une tête (une forme vive avec deux yeux et un accessoire, comme les Dots et les Grok Bots), chacun avec son dossier, sa personnalité et sa mémoire, qui tournent sur **ton abonnement Claude** (par Claude Code) ou **ton abonnement ChatGPT** (par Codex). C'est l'équipe des ChatGPT Dots et des Grok Bots, sur tes propres abonnements, sur ton Mac.
 
 ```json
 "agent": {
-  "name": "zenith",
+  "name": "Céleste", "shape": "circle", "color": "#F5A524", "accessory": "star",
   "bots": [
-    { "id": "courrier", "name": "Courrier", "emoji": "✉️", "provider": "claude", "role": "Tient ma boîte mail et mon agenda : trie, prépare les réponses en brouillon, n'envoie jamais rien." },
-    { "id": "atelier", "name": "Atelier", "emoji": "🛠️", "provider": "codex", "role": "Veille à la santé technique de mes projets : CI, dépendances, PR. Répare dans une branche, jamais sur main." }
+    { "id": "courrier", "name": "Margot", "title": "Courrier", "shape": "pill", "color": "#EC4899", "accessory": "bow", "provider": "claude", "role": "Tient ma boîte mail et mon agenda : trie, prépare les réponses en brouillon, n'envoie jamais rien." },
+    { "id": "atelier", "name": "Hugo", "title": "Atelier", "shape": "square", "color": "#F97316", "accessory": "antenna", "provider": "codex", "role": "Veille à la santé technique de mes projets : CI, dépendances, PR. Répare dans une branche, jamais sur main." }
   ]
 }
 ```
 
-- **Leur parler** : `@courrier …` dans la barre, ⌘J ou ⌘K ; ou le menu de destination ; ou leur carte dans **Agents IA → Équipe**. La puce Claude/Codex suit l'abonnement du bot.
+- **Leur parler** : `@margot …` dans la barre, ⌘J ou ⌘K ; ou le menu de destination ; ou leur carte dans **Agents IA → Équipe**. La puce Claude/Codex suit l'abonnement du bot.
 - **Se passer le travail** : l'agent principal les connaît (rôle, abonnement) et leur confie ce qui est dans leur rôle avec `zenith_delegate`, puis rend compte. Un bot sur Codex qui a besoin de Gmail passe la main à un bot sur Claude.
 - Leurs conversations sont dans la barre latérale, sous **Conversations**.
 

@@ -5,14 +5,17 @@ import { CalendarClock, Hand, MessageSquare, Radar, Smartphone, Sparkles, Square
 import { ago } from "@/lib/format";
 import { plural, tr } from "@/lib/i18n";
 import { threadHref } from "@/components/code/store";
+import type { Avatar } from "@/lib/agent/avatar";
+import { AgentAvatar } from "./agent-avatar";
 import { ProviderIcon } from "./provider-icon";
 import { openAsk } from "./client";
 
 export type MemberView = {
   id: string;
   name: string;
-  emoji: string | null;
-  color: string;
+  /** Its job ("Mail"), next to its first name. */
+  title: string | null;
+  avatar: Avatar;
   provider: "claude" | "codex";
   model: string | null;
   role: string;
@@ -24,7 +27,7 @@ export type MemberView = {
 
 export type SkillView = { id: string; description: string; file: string };
 
-export type ActivityView = { at: string; source: string; target: string; title: string; threadId: string; environmentId: string };
+export type ActivityView = { at: string; source: string; target: string; targetId: string; avatar: Avatar | null; title: string; threadId: string; environmentId: string };
 
 /** Your team: who they are, which subscription they run on, and a way to talk to each. */
 export function TeamGrid({ members }: { members: MemberView[] }) {
@@ -34,17 +37,18 @@ export function TeamGrid({ members }: { members: MemberView[] }) {
         <button
           key={m.id}
           type="button"
-          onClick={() => openAsk(m.main ? "" : `@${m.id} `)}
+          onClick={() => openAsk(m.main ? "" : `@${m.name.toLowerCase()} `)}
           title={`${tr(`Parler à ${m.name}`, `Talk to ${m.name}`)} · ${m.home}`}
           className="group flex min-w-0 flex-col gap-2 rounded-xl border border-line bg-surface p-3.5 text-left transition-colors hover:border-ink-3/30 hover:bg-hover/40"
         >
           <div className="flex items-center gap-2.5">
-            <span className="grid size-8 shrink-0 place-items-center rounded-lg text-[15px]" style={{ background: `color-mix(in oklab, ${m.color} 16%, transparent)`, color: m.color }}>
-              {m.emoji ?? m.name.slice(0, 1).toUpperCase()}
+            <span className="grid size-11 shrink-0 place-items-center rounded-xl transition-transform group-hover:-translate-y-0.5" style={{ background: `color-mix(in oklab, ${m.avatar.color} 12%, transparent)` }}>
+              <AgentAvatar avatar={m.avatar} id={m.id} size={34} blink />
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 text-[13px] font-medium text-ink">
                 <span className="truncate">{m.name}</span>
+                {m.title && <span className="truncate font-normal text-ink-3">· {m.title}</span>}
                 {m.main && <span className="shrink-0 rounded border border-line px-1 text-2xs font-normal text-ink-3">{tr("principal", "main")}</span>}
               </div>
               <div className="flex items-center gap-1 text-2xs text-ink-3">
@@ -59,7 +63,7 @@ export function TeamGrid({ members }: { members: MemberView[] }) {
           </div>
           <p className="line-clamp-2 text-xs text-ink-2">{m.role}</p>
           <div className="mt-auto flex items-center gap-2 text-2xs text-ink-3">
-            <code className="font-mono">{m.main ? "⌘J" : `@${m.id}`}</code>
+            <code className="font-mono">{m.main ? "⌘J" : `@${m.name.toLowerCase()}`}</code>
             <span className="ml-auto shrink-0 tabular">{m.memory > 0 ? tr(`${m.memory} ${plural(m.memory, ["souvenir", "souvenirs"], ["", ""])}`, `${m.memory} ${m.memory === 1 ? "memory" : "memories"}`) : tr("mémoire vide", "no memory yet")}</span>
           </div>
         </button>
@@ -106,10 +110,10 @@ export function ActivityList({ items }: { items: ActivityView[] }) {
         return (
           <li key={a.threadId}>
             <Link href={threadHref({ environmentId: a.environmentId, id: a.threadId })} className="flex items-center gap-3 px-4 py-2 transition-colors hover:bg-hover/50">
-              <s.icon className="size-3.5 shrink-0 text-ink-3" />
+              {a.avatar ? <AgentAvatar avatar={a.avatar} id={`act-${a.targetId}`} size={16} /> : <s.icon className="size-3.5 shrink-0 text-ink-3" />}
               <span className="min-w-0 flex-1 truncate text-[13px] text-ink">{a.title}</span>
-              <span className="hidden shrink-0 text-xs text-ink-3 sm:inline">
-                {s.label()} → {a.target}
+              <span className="hidden shrink-0 items-center gap-1 text-xs text-ink-3 sm:inline-flex">
+                <s.icon className="size-3" /> {s.label()} → {a.target}
               </span>
               <span className="w-16 shrink-0 text-right text-xs text-ink-3 tabular" suppressHydrationWarning>
                 {ago(a.at)}

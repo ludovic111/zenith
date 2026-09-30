@@ -28,6 +28,8 @@ import { readPref, subscribePrefs, writePref } from "@/lib/prefs";
 import { openAsk } from "@/components/agent/client";
 import { ZenithMark } from "./logo";
 import { setDrawer, toggleSidebar, useDrawer } from "./sidebar-state";
+import { AgentAvatar } from "@/components/agent/agent-avatar";
+import type { Avatar } from "@/lib/agent/avatar";
 
 export type NavProject = { id: string; name: string; href: string; color: string; tagline: string; dir: string | null };
 
@@ -65,7 +67,7 @@ function useStoredSet(key: string) {
  * lg it is a drawer.
  */
 /** The main agent's folder and its bots', whose threads are your conversations. */
-export type SidebarAgent = { home: string; bots: { id: string; name: string; home: string; color: string; emoji?: string }[] };
+export type SidebarAgent = { home: string; bots: { id: string; name: string; title?: string; home: string; color: string; avatar: Avatar }[] };
 
 export function Sidebar({ projects, code = true, home, agent = null }: { projects: NavProject[]; code?: boolean; home: string; agent?: SidebarAgent | null }) {
   const path = usePathname();
@@ -178,8 +180,9 @@ function MainNav({ path, projects, code, home, agent }: { path: string; projects
                 <ProjectBlock
                   key={id}
                   id={id}
-                  name={`${b.emoji ? `${b.emoji} ` : ""}${b.name}`}
-                  title={b.home}
+                  name={b.name}
+                  title={b.title ? `${b.name} · ${b.title}` : b.name}
+                  icon={<AgentAvatar avatar={b.avatar} id={`side-${b.id}`} size={16} />}
                   color={b.color}
                   threads={c.threads}
                   activeThread={activeThread}
@@ -392,11 +395,14 @@ function ProjectBlock({
   onFold,
   onFull,
   onNewThread,
+  icon,
 }: {
   id: string;
   href?: string;
   name: string;
   title?: string;
+  /** Drawn instead of the color dot (an agent's face). */
+  icon?: React.ReactNode;
   color: string;
   active?: boolean;
   threads: CodeThread[];
@@ -413,9 +419,7 @@ function ProjectBlock({
   const target = href ?? (live[0] ? threadHref(live[0]) : undefined);
   const label = (
     <>
-      <span className="grid size-4 shrink-0 place-items-center">
-        <span className="size-2 rounded-full" style={{ background: color }} />
-      </span>
+      <span className="grid size-4 shrink-0 place-items-center">{icon ?? <span className="size-2 rounded-full" style={{ background: color }} />}</span>
       <span className="min-w-0 flex-1 truncate">{name}</span>
     </>
   );

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { tr } from "@/lib/i18n";
 import { LIFE, guessTarget, type AgentTarget, type Provider } from "@/lib/agent/target";
 import { ProviderIcon } from "./provider-icon";
+import { AgentAvatar } from "./agent-avatar";
 import { askZenith } from "./client";
 
 export type AskBarProps = {
@@ -173,7 +174,7 @@ export function AskBar({ targets, provider: initialProvider, examples = [], sugg
               aria-expanded={menu}
               className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-xs text-ink-2 transition-colors hover:bg-hover hover:text-ink disabled:cursor-default disabled:hover:bg-transparent"
             >
-              {target.bot && target.emoji ? <span className="text-[12px] leading-none">{target.emoji}</span> : <span className="size-2 shrink-0 rounded-full" style={{ background: target.color }} />}
+              {target.avatar ? <AgentAvatar avatar={target.avatar} id={`chip-${target.id}`} size={16} /> : <span className="size-2 shrink-0 rounded-full" style={{ background: target.color }} />}
               <span className="max-w-[12rem] truncate whitespace-nowrap">{target.name}</span>
               {!fixedTarget && auto && <span className="hidden whitespace-nowrap text-ink-3 sm:inline">· auto</span>}
               {!fixedTarget && <ChevronDown className="size-3 text-ink-3" />}
@@ -205,10 +206,13 @@ export function AskBar({ targets, provider: initialProvider, examples = [], sugg
                         area.current?.focus();
                       }}
                     >
-                      <span className="grid size-3.5 place-items-center">
-                        {t.bot && t.emoji ? <span className="text-[12px] leading-none">{t.emoji}</span> : <span className="size-2 rounded-full" style={{ background: t.color }} />}
+                      <span className="grid size-4 place-items-center">
+                        {t.avatar ? <AgentAvatar avatar={t.avatar} id={`menu-${t.id}`} size={16} /> : <span className="size-2 rounded-full" style={{ background: t.color }} />}
                       </span>
-                      <span className="flex-1 truncate" title={t.hint}>{t.name}</span>
+                      <span className="flex-1 truncate" title={t.hint}>
+                        {t.name}
+                        {t.title && <span className="text-ink-3"> · {t.title}</span>}
+                      </span>
                       {t.id === LIFE && <span className="text-2xs text-ink-3">{tr("tout le reste", "everything else")}</span>}
                       {t.bot && t.provider && <ProviderIcon id={t.provider} size={11} />}
                     </MenuRow>

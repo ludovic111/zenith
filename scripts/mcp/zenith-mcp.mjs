@@ -208,7 +208,7 @@ const BOTS = (Array.isArray(CONFIG.agent?.bots) ? CONFIG.agent.bots : []).filter
 );
 const TARGETS = ["life", ...BOTS.map((b) => b.id), ...PROJECTS.filter((id) => (CONFIG.projects ?? []).some((p) => p?.id === id && p.dir)), "zenith"];
 const team = BOTS.length
-  ? ` The user's team of bots (each with its own memory, on the user's Claude or ChatGPT/Codex subscription): ${BOTS.map((b) => `"${b.id}" (${b.name ?? b.id}, ${b.provider ?? CONFIG.agent?.provider ?? "claude"}: ${String(b.role ?? "").replace(/\s+/g, " ").slice(0, 140)})`).join("; ")}.`
+  ? ` The user's team of bots (each with its own memory, on the user's Claude or ChatGPT/Codex subscription): ${BOTS.map((b) => `"${b.id}" (${b.name ?? b.id}${b.title ? `, ${b.title}` : ""}, ${b.provider ?? CONFIG.agent?.provider ?? "claude"}: ${String(b.role ?? "").replace(/\s+/g, " ").slice(0, 140)})`).join("; ")}.`
   : "";
 
 server.registerTool(

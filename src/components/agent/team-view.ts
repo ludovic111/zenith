@@ -6,7 +6,7 @@ import { tr } from "@/lib/i18n";
 import { askLog } from "@/lib/agent/ask";
 import { gatewayStatus } from "@/lib/agent/gateway";
 import { skills } from "@/lib/agent/skills";
-import { agentHome, agentName, bots, configuredModel } from "@/lib/agent/team";
+import { agentAvatar, agentHome, agentName, bots, configuredModel } from "@/lib/agent/team";
 import { agentUi } from "@/lib/agent/ui";
 import type { ActivityView, MemberView, SkillView } from "./team";
 
@@ -24,8 +24,8 @@ export async function teamView(): Promise<MemberView[]> {
   const main: MemberView = {
     id: "life",
     name: agentName(),
-    emoji: "✦",
-    color: "#D9A21B",
+    title: null,
+    avatar: agentAvatar(),
     provider: c.provider,
     model: configuredModel(null, c.provider) ?? null,
     role: tr("L'agent principal : ta vie, tes messages, ton agenda. Il confie le reste à l'équipe.", "The main agent: your life, messages and calendar. It hands the rest to the team."),
@@ -37,8 +37,8 @@ export async function teamView(): Promise<MemberView[]> {
     bots().map(async (b): Promise<MemberView> => ({
       id: b.id,
       name: b.name,
-      emoji: b.emoji ?? null,
-      color: b.color,
+      title: b.title ?? null,
+      avatar: b.avatar,
       provider: b.provider,
       model: configuredModel(b, b.provider) ?? null,
       role: b.role,
@@ -56,11 +56,15 @@ export async function skillViews(): Promise<SkillView[]> {
 
 /** The latest requests zenith made, from anywhere (Dots' "Activity"). */
 export async function activityViews(limit = 12): Promise<ActivityView[]> {
-  const names = Object.fromEntries(agentUi().targets.map((t) => [t.id, t.name]));
+  const all = agentUi().targets;
+  const names = Object.fromEntries(all.map((t) => [t.id, t.name]));
+  const faces = Object.fromEntries(all.flatMap((t) => (t.avatar ? [[t.id, t.avatar]] : [])));
   return (await askLog()).slice(0, limit).map((e) => ({
     at: e.at,
     source: e.source,
     target: names[e.target] ?? e.target,
+    targetId: e.target,
+    avatar: faces[e.target] ?? null,
     title: e.title,
     threadId: e.threadId,
     environmentId: e.environmentId,

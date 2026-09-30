@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AVATAR_ACCESSORIES, AVATAR_SHAPES } from "./agent/avatar.ts";
 
 /** The shape of zenith.config.json. Kept free of server imports so scripts can use it. */
 
@@ -121,12 +122,22 @@ const Routine = z
   .refine((r) => r.at || r.on, { message: "a routine needs a time (at) or Now kinds (on)" })
   .refine((r) => r.on || r.task || r.prompt || r.skill, { message: "a routine needs a task, a skill or a prompt" });
 
+const Shape = z.enum(AVATAR_SHAPES);
+const Accessory = z.enum(AVATAR_ACCESSORIES);
+const Hex = z.string().regex(/^#[0-9a-fA-F]{6}$/, "a color like #8B5CF6");
+
 /** A named agent of your team: its own folder, memory and personality, on Claude or Codex. */
 const Bot = z.object({
   id: Slug,
+  /** Its first name ("Margot"). `@name` calls it too. */
   name: z.string(),
+  /** Its job, shown next to its name ("Mail"). */
+  title: z.string().optional(),
+  /** Its avatar: a shape, a color and an accessory. Default: drawn from its id. */
+  shape: Shape.optional(),
+  color: Hex.optional(),
+  accessory: Accessory.optional(),
   emoji: z.string().optional(),
-  color: z.string().optional(),
   /** What it is for, in a sentence or two. Seeds its SOUL.md, which you can then edit. */
   role: z.string(),
   /** Claude Code (your Claude subscription) or Codex (your ChatGPT subscription). Default: agent.provider. */
@@ -199,6 +210,10 @@ export const ConfigSchema = z.object({
       home: z.string().default("~/.zenith/life"),
       /** Your agent's name: how it calls itself, and how the interface names it. */
       name: z.string().default("zenith"),
+      /** Its avatar: shape, color and accessory. */
+      shape: Shape.optional(),
+      color: Hex.optional(),
+      accessory: Accessory.optional(),
       /** Who answers by default: Claude Code or Codex. */
       provider: z.enum(["claude", "codex"]).default("claude"),
       /** Model id, e.g. "claude-opus-5-5". Default: zenith code's default, else your latest thread's. */

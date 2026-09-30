@@ -8,9 +8,9 @@ import { tr } from "../i18n";
 import { addProject } from "../code/cli";
 import { codeStatus } from "../code/manager";
 import { codeSettings, dispatch, environmentId, shell, type ModelSelection, type Shell } from "../code/api";
-import { LIFE, aliasesOf, guessTarget, type AgentTarget, type Provider } from "./target";
+import { LIFE, aliasesOf, guessTarget, mention, type AgentTarget, type Provider } from "./target";
 import { ensureWorkspace } from "./workspace";
-import { botById, bots, configuredModel, type Bot } from "./team";
+import { agentAvatar, agentName, botById, bots, configuredModel, type Bot } from "./team";
 import { serial, writeJson } from "./files";
 
 /**
@@ -46,16 +46,26 @@ const FALLBACK_MODEL: Record<Provider, string> = { claude: "claude-fable-5-1", c
 export function targets(): AgentTarget[] {
   const c = config();
   return [
-    { id: LIFE, name: tr("Ma vie", "My life"), color: "#D9A21B", emoji: "✦", aliases: [] },
+    // Your agent, by its name once you gave it one ("zenith" would clash with the dashboard's own folder).
+    {
+      id: LIFE,
+      name: agentName() === "zenith" ? tr("Ma vie", "My life") : agentName(),
+      color: agentAvatar().color,
+      emoji: "✦",
+      aliases: agentName() === "zenith" ? [] : aliasesOf(agentName()),
+      avatar: agentAvatar(),
+    },
     ...bots().map((b) => ({
       id: b.id,
       name: b.name,
+      title: b.title,
       color: b.color,
       emoji: b.emoji,
       aliases: aliasesOf(b.id, b.name),
       bot: true,
       provider: b.provider,
       hint: b.role,
+      avatar: b.avatar,
     })),
     ...PROJECTS.filter((p) => projectDir(p)).map((p) => ({
       id: p.id,
@@ -83,9 +93,11 @@ function folderOf(target: string): { dir: string; title: string } | null {
 
 const same = (a: string, b: string) => a.replace(/[\\/]+$/, "").toLowerCase() === b.replace(/[\\/]+$/, "").toLowerCase();
 
-async function codeProject(dir: string, title: string): Promise<{ id: string; shell: Shell }> {
+async function codeProject(dir: string, title: string, rename = false): Promise<{ id: string; shell: Shell }> {
   let s = await shell();
   let hit = s.projects.find((p) => !p.deletedAt && same(p.workspaceRoot, dir));
+  // A bot you renamed keeps its folder: its project follows its new name.
+  if (hit && rename && hit.title !== title) await dispatch({ type: "project.meta.update", projectId: hit.id, title }).catch(() => {});
   if (!hit) {
     await addProject(dir, title);
     s = await shell();
@@ -159,11 +171,11 @@ export async function ask(input: AskInput): Promise<AskResult> {
   if (input.target && !all.some((t) => t.id === input.target)) throw new Error(tr(`Destination inconnue : ${input.target}.`, `Unknown destination: ${input.target}.`));
   let target = input.target ?? guessTarget(text, all);
   // "@my-app fix the login": the mention chose the target, the rest is the request.
-  const forced = /^\s*@([\w-]+)\s+/.exec(text);
-  const hit = forced && all.find((t) => t.id === forced[1].toLowerCase() || t.aliases.includes(forced[1].toLowerCase()));
+  const forced = mention(text);
+  const hit = forced && all.find((t) => t.id === forced.name || t.aliases.includes(forced.name));
   if (forced && hit) {
     if (!input.target) target = hit.id;
-    text = text.slice(forced[0].length).trim();
+    text = text.slice(forced.raw.length).trim();
   }
 
   const bot = botById(target);
@@ -171,10 +183,10 @@ export async function ask(input: AskInput): Promise<AskResult> {
     target === LIFE
       ? { dir: await ensureWorkspace(), title: tr("Ma vie", "My life") }
       : bot
-        ? { dir: await ensureWorkspace(bot.id), title: `${bot.emoji ? `${bot.emoji} ` : ""}${bot.name}` }
+        ? { dir: await ensureWorkspace(bot.id), title: bot.title ? `${bot.name} · ${bot.title}` : bot.name }
         : folderOf(target);
   if (!folder) throw new Error(tr(`Destination inconnue : ${target}.`, `Unknown destination: ${target}.`));
-  const { id: projectId, shell: s } = await codeProject(folder.dir, folder.title);
+  const { id: projectId, shell: s } = await codeProject(folder.dir, folder.title, !!bot);
   const { selection } = await modelFor(input.provider ?? bot?.provider ?? c.agent.provider, s, bot);
   const settings = await codeSettings();
   // Your life and your team read your mail and the web: outside words, always.

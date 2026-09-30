@@ -7,6 +7,8 @@
 
 export const LIFE = "life";
 
+import type { Avatar } from "./avatar";
+
 export type AgentTarget = {
   id: string;
   name: string;
@@ -20,11 +22,15 @@ export type AgentTarget = {
   provider?: Provider;
   /** What it is for (a bot's role), for the menu. */
   hint?: string;
+  /** Its job, next to its name (a bot's title). */
+  title?: string;
+  /** Its face (your agent and its bots). */
+  avatar?: Avatar;
 };
 
 export type Provider = "claude" | "codex";
 
-const fold = (s: string) =>
+export const fold = (s: string) =>
   s
     .toLowerCase()
     .normalize("NFD")
@@ -49,7 +55,7 @@ export function aliasesOf(...names: (string | null | undefined)[]): string[] {
  */
 export function guessTarget(text: string, targets: AgentTarget[]): string {
   const t = fold(text);
-  const forced = /^@([a-z0-9-]+)/.exec(t.trim());
+  const forced = /^@([a-z0-9-]+)/.exec(t.trim()); // folded: "@félix" reads "@felix"
   if (forced) {
     const hit = targets.find((x) => x.id === forced[1] || x.aliases.includes(forced[1]));
     if (hit) return hit.id;
@@ -60,5 +66,11 @@ export function guessTarget(text: string, targets: AgentTarget[]): string {
   return named.length === 1 ? named[0].id : LIFE;
 }
 
+/** A leading `@name` (accents allowed: `@félix`), folded, with the text it covers. */
+export function mention(text: string): { name: string; raw: string } | null {
+  const m = /^\s*@([\p{L}\p{N}-]+)\s+/u.exec(text);
+  return m ? { name: fold(m[1]), raw: m[0] } : null;
+}
+
 /** The request without a leading `@target`. */
-export const stripTarget = (text: string) => text.replace(/^\s*@[\w-]+\s*/, "").trim();
+export const stripTarget = (text: string) => text.replace(/^\s*@[\p{L}\p{N}-]+\s*/u, "").trim();

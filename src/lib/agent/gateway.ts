@@ -9,7 +9,7 @@ import { ask, followUp } from "./ask";
 import { underLimit } from "./auth";
 import { serial, writeJson } from "./files";
 import { selfOrigin } from "./workspace";
-import { LIFE } from "./target";
+import { LIFE, mention } from "./target";
 
 /**
  * The gateway: talk to your agent from your phone, through a Telegram bot of your own
@@ -143,7 +143,7 @@ async function handle(u: Update) {
     }
   }
   if (!thread) {
-    const r = await ask({ prompt: text, target: /^\s*@[\w-]+\s/.test(text) ? undefined : settings()?.target ?? LIFE, source: "gateway" });
+    const r = await ask({ prompt: text, target: mention(text) ? undefined : settings()?.target ?? LIFE, source: "gateway" });
     thread = { threadId: r.threadId, environmentId: r.environmentId };
   }
   await save((s) => void (s.chats[String(chat)] = { ...thread!, at: new Date().toISOString() }));

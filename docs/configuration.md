@@ -258,7 +258,8 @@ The zenith agent and its team (see [agent.md](agent.md)). They run through zenit
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `enabled` | boolean | `true` | Shows Ask zenith (⌘J), the team, the Now list and the routines. |
-| `name` | string | `"zenith"` | Your agent's name: how it calls itself. |
+| `name` | string | `"zenith"` | Your agent's name: how it calls itself, and `@name` to reach it. |
+| `shape`, `color`, `accessory` | string | circle, gold, star | Its avatar (see below). |
 | `home` | string | `"~/.zenith/life"` | The agent's own folder, where conversations about your life run. It holds SOUL.md, USER.md, MEMORY.md and skills/; the bots' folders go next to it (`~/.zenith/bots/<id>`). |
 | `provider` | `"claude"` \| `"codex"` | `"claude"` | Who answers by default (switchable in the ask bar). |
 | `model` | string | — | Model id for that provider, e.g. `"claude-opus-5-5"`. Default: zenith code's default model, else the one of your latest thread. |
@@ -270,12 +271,16 @@ Each bot:
 
 | Field | Type | What it does |
 | --- | --- | --- |
-| `id` | string | Lowercase letters, digits and dashes; not a project id, `life` or `zenith`. You call it with `@id`. |
-| `name` | string | Its name. |
+| `id` | string | Lowercase letters, digits and dashes; not a project id, `life` or `zenith`. Its folder's name. |
+| `name` | string | Its first name. You call it with `@name` (or `@id`). |
+| `title` | string | Its job, shown next to its name ("Mail"). |
+| `shape` | string | Its avatar: `circle`, `blob`, `square`, `pill`, `hexagon`, `triangle`, `heart` or `flower`. Default: drawn from its id. |
+| `color` | `"#RRGGBB"` | Its avatar's color. |
+| `accessory` | string | `none`, `antenna`, `sprout`, `star`, `bow`, `crown`, `glasses` or `headset`. |
 | `role` | string | What it is for, in a sentence or two. Seeds its SOUL.md, which you can then edit. |
 | `provider` | `"claude"` \| `"codex"` | The subscription it runs on. Default: `agent.provider`. Give Claude to bots that need Claude's connectors (Gmail, Calendar…). |
 | `model` | string | Model id for its provider. |
-| `emoji`, `color` | string | How the interface shows it. |
+| `emoji` | string | Kept for older configs; the avatar replaces it. |
 | `enabled` | boolean | `false` benches it. |
 
 Each routine:
@@ -297,8 +302,8 @@ Each routine:
 ```json
 "agent": {
   "bots": [
-    { "id": "inbox", "name": "Inbox", "emoji": "✉️", "provider": "claude", "role": "Keeps my inbox and calendar: triages, drafts replies in my voice, never sends." },
-    { "id": "ops", "name": "Ops", "emoji": "🛠️", "provider": "codex", "role": "Keeps my projects healthy: broken CI, dependencies, PRs. Fixes on a branch, never on main." }
+    { "id": "inbox", "name": "Margot", "title": "Mail", "shape": "pill", "color": "#EC4899", "accessory": "bow", "provider": "claude", "role": "Keeps my inbox and calendar: triages, drafts replies in my voice, never sends." },
+    { "id": "ops", "name": "Hugo", "title": "Workshop", "shape": "square", "color": "#F97316", "accessory": "antenna", "provider": "codex", "role": "Keeps my projects healthy: broken CI, dependencies, PRs. Fixes on a branch, never on main." }
   ],
   "routines": [
     { "id": "morning", "at": "07:30", "task": "refresh-life" },

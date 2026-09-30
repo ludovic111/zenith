@@ -19,7 +19,8 @@ import { routineViews } from "@/components/agent/routine-view";
 import { CodeActions, CodeState } from "@/components/settings/code-actions";
 import { KeyForm } from "@/components/settings/key-form";
 import { gatewayStatus } from "@/lib/agent/gateway";
-import { agentName, bots } from "@/lib/agent/team";
+import { agentAvatar, agentName, bots } from "@/lib/agent/team";
+import { AgentAvatar } from "@/components/agent/agent-avatar";
 import { Code, CodeBlock, Group, Mono, Row, tilde, Toggle } from "@/components/settings/rows";
 
 export const dynamic = "force-dynamic";
@@ -128,8 +129,11 @@ export default async function General() {
             {c.agent.provider === "claude" ? "Claude Code" : "Codex"}
           </span>
         </Row>
-        <Row label={tr("Nom", "Name")} description="agent.name">
-          {agentName()}
+        <Row label={tr("Nom", "Name")} description="agent.name · shape · color · accessory">
+          <span className="inline-flex items-center gap-2">
+            <AgentAvatar avatar={agentAvatar()} id="settings-life" size={20} />
+            {agentName()}
+          </span>
         </Row>
         <Row label={tr("Dossier", "Folder")} description={tr("Son bureau : SOUL.md (personnalité), USER.md (toi), MEMORY.md, skills/", "Its desk: SOUL.md (personality), USER.md (you), MEMORY.md, skills/")}>
           <Mono value={ui.home}>{tilde(ui.home)}</Mono>
@@ -138,8 +142,8 @@ export default async function General() {
           {team.length ? (
             <Link href="/agents" className="inline-flex flex-wrap items-center justify-end gap-x-3 gap-y-1 hover:text-ink">
               {team.map((b) => (
-                <span key={b.id} className="inline-flex items-center gap-1.5">
-                  {b.emoji && <span>{b.emoji}</span>}
+                <span key={b.id} className="inline-flex items-center gap-1.5" title={b.title}>
+                  <AgentAvatar avatar={b.avatar} id={`settings-${b.id}`} size={18} />
                   {b.name}
                   <ProviderIcon id={b.provider} size={11} className="text-ink-3" />
                 </span>

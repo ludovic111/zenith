@@ -852,6 +852,36 @@
           "default": "zenith",
           "type": "string"
         },
+        "shape": {
+          "type": "string",
+          "enum": [
+            "circle",
+            "blob",
+            "square",
+            "pill",
+            "hexagon",
+            "triangle",
+            "heart",
+            "flower"
+          ]
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "accessory": {
+          "type": "string",
+          "enum": [
+            "none",
+            "antenna",
+            "sprout",
+            "star",
+            "bow",
+            "crown",
+            "glasses",
+            "headset"
+          ]
+        },
         "provider": {
           "default": "claude",
           "type": "string",
@@ -955,10 +985,40 @@
               "name": {
                 "type": "string"
               },
-              "emoji": {
+              "title": {
                 "type": "string"
               },
+              "shape": {
+                "type": "string",
+                "enum": [
+                  "circle",
+                  "blob",
+                  "square",
+                  "pill",
+                  "hexagon",
+                  "triangle",
+                  "heart",
+                  "flower"
+                ]
+              },
               "color": {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{6}$"
+              },
+              "accessory": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "antenna",
+                  "sprout",
+                  "star",
+                  "bow",
+                  "crown",
+                  "glasses",
+                  "headset"
+                ]
+              },
+              "emoji": {
                 "type": "string"
               },
               "role": {

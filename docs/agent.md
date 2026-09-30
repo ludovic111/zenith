@@ -43,19 +43,19 @@ Each item has one gesture: **Hand off**. zenith starts an agent with a precise r
 
 ## Its team
 
-One main agent (the one for "My life") and, if you like, **bots**: named agents, each with a role, its own folder, personality and memory, running on **your Claude subscription** (through Claude Code) or **your ChatGPT subscription** (through Codex). The team of ChatGPT Dots and Grok Bots, on your own subscriptions, on your Mac.
+One main agent (the one for "My life") and, if you like, **bots**: agents with a first name, a job and a face (a bright shape with two eyes and an accessory, like Dots and Grok Bots), each with its own folder, personality and memory, running on **your Claude subscription** (through Claude Code) or **your ChatGPT subscription** (through Codex). The team of ChatGPT Dots and Grok Bots, on your own subscriptions, on your Mac.
 
 ```json
 "agent": {
-  "name": "zenith",
+  "name": "Celeste", "shape": "circle", "color": "#F5A524", "accessory": "star",
   "bots": [
-    { "id": "inbox", "name": "Inbox", "emoji": "✉️", "provider": "claude", "role": "Keeps my inbox and calendar: triages, drafts replies, never sends." },
-    { "id": "ops", "name": "Ops", "emoji": "🛠️", "provider": "codex", "role": "Keeps my projects healthy: CI, dependencies, PRs. Fixes on a branch, never on main." }
+    { "id": "inbox", "name": "Margot", "title": "Mail", "shape": "pill", "color": "#EC4899", "accessory": "bow", "provider": "claude", "role": "Keeps my inbox and calendar: triages, drafts replies, never sends." },
+    { "id": "ops", "name": "Hugo", "title": "Workshop", "shape": "square", "color": "#F97316", "accessory": "antenna", "provider": "codex", "role": "Keeps my projects healthy: CI, dependencies, PRs. Fixes on a branch, never on main." }
   ]
 }
 ```
 
-- **Talk to them**: `@inbox …` in the bar, ⌘J or ⌘K; or the destination menu; or their card in **AI agents → Team**. The Claude/Codex chip follows the bot's subscription.
+- **Talk to them**: `@margot …` in the bar, ⌘J or ⌘K; or the destination menu; or their card in **AI agents → Team**. The Claude/Codex chip follows the bot's subscription.
 - **Passing work around**: the main agent knows them (role, subscription) and hands them what fits their role with `zenith_delegate`, then reports back. A bot on Codex that needs Gmail hands the job to a bot on Claude.
 - Their conversations are in the sidebar, under **Conversations**.
 

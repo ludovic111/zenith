@@ -6,6 +6,7 @@ import { agentHome } from "./workspace";
 import { bots } from "./team";
 import type { NowItem } from "./now";
 import type { AgentTarget, Provider } from "./target";
+import type { Avatar } from "./avatar";
 
 /** What the ask bar needs from the server: destinations, provider, and words to start from. */
 
@@ -14,7 +15,7 @@ export type AgentUi = {
   targets: AgentTarget[];
   provider: Provider;
   home: string;
-  bots: { id: string; name: string; home: string; color: string; emoji?: string }[];
+  bots: { id: string; name: string; title?: string; home: string; color: string; avatar: Avatar }[];
 };
 
 export function agentUi(): AgentUi {
@@ -24,7 +25,7 @@ export function agentUi(): AgentUi {
     targets: targets(),
     provider: c.agent.provider,
     home: agentHome(),
-    bots: bots().map(({ id, name, home, color, emoji }) => ({ id, name, home, color, emoji })),
+    bots: bots().map(({ id, name, title, home, color, avatar }) => ({ id, name, title, home, color, avatar })),
   };
 }
 

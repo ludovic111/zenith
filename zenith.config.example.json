@@ -47,8 +47,8 @@
   "agent": {
     "provider": "claude",
     "bots": [
-      { "id": "inbox", "name": "Inbox", "emoji": "✉️", "provider": "claude", "role": "Keeps my inbox and calendar: triages, drafts replies in my voice, never sends." },
-      { "id": "ops", "name": "Ops", "emoji": "🛠️", "provider": "codex", "role": "Keeps my projects healthy: broken CI, dependencies, PRs. Fixes on a branch, never on main." }
+      { "id": "inbox", "name": "Margot", "title": "Mail", "shape": "pill", "color": "#EC4899", "accessory": "bow", "provider": "claude", "role": "Keeps my inbox and calendar: triages, drafts replies in my voice, never sends." },
+      { "id": "ops", "name": "Hugo", "title": "Workshop", "shape": "square", "color": "#F97316", "accessory": "antenna", "provider": "codex", "role": "Keeps my projects healthy: broken CI, dependencies, PRs. Fixes on a branch, never on main." }
     ],
     "routines": [
       { "id": "morning", "name": "Morning capture", "at": "07:30", "task": "refresh-life" },

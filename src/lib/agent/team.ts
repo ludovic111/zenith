@@ -2,8 +2,8 @@ import "server-only";
 import os from "node:os";
 import path from "node:path";
 import { config, type BotConfig } from "../config";
-import { PALETTE } from "../config-schema";
 import { PROJECTS } from "../projects";
+import { avatarOf, type Avatar } from "./avatar";
 import type { Provider } from "./target";
 
 /**
@@ -20,10 +20,16 @@ export const agentHome = () => path.resolve(expand(config().agent.home));
 /** The main agent's name ("zenith" unless you renamed it). */
 export const agentName = () => config().agent.name.trim() || "zenith";
 
+/** The main agent's avatar (`agent.shape`, `agent.color`, `agent.accessory`). */
+export const agentAvatar = (): Avatar => {
+  const c = config().agent;
+  return avatarOf("life", { shape: c.shape ?? "circle", color: c.color ?? "#D9A21B", accessory: c.accessory ?? "star" });
+};
+
 /** Ids a bot can't take: they already name a destination. */
 const RESERVED = new Set(["life", "zenith", "all"]);
 
-export type Bot = BotConfig & { color: string; provider: Provider; home: string };
+export type Bot = BotConfig & { color: string; avatar: Avatar; provider: Provider; home: string };
 
 /** The enabled bots whose id is free, with a color, a provider and a folder. */
 export function bots(): Bot[] {
@@ -32,12 +38,10 @@ export function bots(): Bot[] {
   const root = path.join(path.dirname(agentHome()), "bots");
   return c.agent.bots
     .filter((b) => b.enabled && !taken.has(b.id))
-    .map((b, i) => ({
-      ...b,
-      color: b.color ?? PALETTE[(i + 3) % PALETTE.length][0],
-      provider: b.provider ?? c.agent.provider,
-      home: path.join(root, b.id),
-    }));
+    .map((b) => {
+      const avatar = avatarOf(b.id, b);
+      return { ...b, color: avatar.color, avatar, provider: b.provider ?? c.agent.provider, home: path.join(root, b.id) };
+    });
 }
 
 export const botById = (id: string | null | undefined) => (id ? bots().find((b) => b.id === id) ?? null : null);

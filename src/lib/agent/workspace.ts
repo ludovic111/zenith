@@ -8,7 +8,8 @@ import { config } from "../config";
 import { PROJECTS, projectDir } from "../projects";
 import { OWNER } from "../identity";
 import { l10n, tr } from "../i18n";
-import { agentHome, agentName, bots, type Bot } from "./team";
+import { agentAvatar, agentHome, agentName, bots, type Bot } from "./team";
+import { avatarSvg } from "./avatar";
 import { seedSkills, skills, skillsDir, type Skill } from "./skills";
 
 export { agentHome } from "./team";
@@ -125,14 +126,14 @@ async function instructions(bot: Bot | null, team: Bot[], skillList: Skill[]): P
   ];
   const mates = [
     ...(bot ? [`| life | ${main} | ${c.agent.provider === "codex" ? "Codex" : "Claude"} | ${tr("l'agent principal : tout ce qui n'a pas d'autre place", "the main agent: everything without another place")} |`] : []),
-    ...team.filter((b) => b.id !== bot?.id).map((b) => `| ${b.id} | ${b.emoji ? `${b.emoji} ` : ""}${b.name} | ${b.provider === "codex" ? "Codex" : "Claude"} | ${b.role.replace(/\s+/g, " ").trim()} |`),
+    ...team.filter((b) => b.id !== bot?.id).map((b) => `| ${b.id} | ${b.name}${b.title ? ` · ${b.title}` : ""} | ${b.provider === "codex" ? "Codex" : "Claude"} | ${b.role.replace(/\s+/g, " ").trim()} |`),
   ];
   const skillRows = skillList.map((s) => `- **${s.id}** — ${s.description || s.name} (\`${tilde(s.file)}\`)`);
 
   const intro = bot
     ? tr(
-        `Tu es **${name}**${bot.emoji ? ` ${bot.emoji}` : ""}, un agent de l'équipe de ${who()}. ${main} est l'agent principal : il te confie du travail, et ${who()} peut aussi te parler directement (« @${bot.id} » dans zenith). Ce dossier (${tilde(home)}) est ton bureau, pas un dépôt de code.`,
-        `You are **${name}**${bot.emoji ? ` ${bot.emoji}` : ""}, an agent of ${who()}'s team. ${main} is the main agent: it hands you work, and ${who()} can also talk to you directly ("@${bot.id}" in zenith). This folder (${tilde(home)}) is your desk, not a code repository.`,
+        `Tu es **${name}**${bot.title ? ` (${bot.title})` : ""}, un agent de l'équipe de ${who()}. ${main} est l'agent principal : il te confie du travail, et ${who()} peut aussi te parler directement (« @${bot.id} » dans zenith). Ce dossier (${tilde(home)}) est ton bureau, pas un dépôt de code.`,
+        `You are **${name}**${bot.title ? ` (${bot.title})` : ""}, an agent of ${who()}'s team. ${main} is the main agent: it hands you work, and ${who()} can also talk to you directly ("@${bot.id}" in zenith). This folder (${tilde(home)}) is your desk, not a code repository.`,
       )
     : tr(
         `Tu es **${name}**, l'agent personnel de ${who()} : sa vie perso et pro, ses projets, son argent, son agenda, ses messages. On te parle depuis la barre « Demande à zenith », depuis ⌘K, depuis la liste « Maintenant », depuis une routine ou depuis son téléphone. Ce dossier (${tilde(home)}) est ton bureau, pas un dépôt de code.`,
@@ -141,7 +142,7 @@ async function instructions(bot: Bot | null, team: Bot[], skillList: Skill[]): P
 
   const sections: string[] = [
     bot
-      ? `# ${name} — ${tr(`dans l'équipe de ${who()}`, `on ${who()}'s team`)}`
+      ? `# ${name}${bot.title ? ` · ${bot.title}` : ""} — ${tr(`dans l'équipe de ${who()}`, `on ${who()}'s team`)}`
       : `# ${name} — ${tr(`l'agent de ${who()}`, `${who()}'s agent`)}`,
     tr(
       "> Fichier écrit par zenith à chaque demande : ne le modifie pas, il serait écrasé. Ta personnalité est dans SOUL.md, ta mémoire dans MEMORY.md, ce que tu sais de la personne dans USER.md, tes savoir-faire dans skills/.",
@@ -308,6 +309,8 @@ export async function ensureWorkspace(botId?: string | null): Promise<string> {
   const claude = path.join(home, "CLAUDE.md");
   const current = await readFile(claude, "utf8").catch(() => null);
   if (current === null || current === OLD_CLAUDE) await writeFile(claude, "@AGENTS.md\n");
+  // Its face, which zenith code shows next to the project.
+  await put(path.join(home, "favicon.svg"), avatarSvg(bot?.avatar ?? agentAvatar(), { size: 64, id: bot?.id ?? "life" }) + "\n");
   await linkSkills(path.join(home, ".claude", "skills"));
   await linkSkills(path.join(home, ".agents", "skills"));
 
