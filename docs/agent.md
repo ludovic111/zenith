@@ -79,7 +79,11 @@ The instructions tell it who you are, where your brief and documents are, your p
 
 And to **learn without being asked**: a correction or a preference goes in `USER.md`, a decision in `MEMORY.md`, a job it will do again becomes a skill. These files stay short (past a limit, zenith truncates them and asks it to consolidate).
 
-What it can reach: zenith's brief and documents, your Obsidian notes, the shell (`git`, `gh`…), the web, and its session's tools — **your Claude connectors** (Gmail, Google Calendar, Drive…) on Claude, Codex's plugins on Codex. When one is missing, it says which. The folder also plugs in zenith's MCP server for both Claude Code (`.mcp.json`) and Codex (`.codex/config.toml`).
+The MCP gives access to zenith's brief and documents and local Obsidian notes. The shell (`git`, `gh`…), web and account connectors depend on tools actually exposed in the session; Claude connectors are not automatically available in Codex. The agent checks each access with a read and identifies what is missing.
+
+A local MCP configured in Codex does not prove that a Kira or cloud ChatGPT session can reach this Mac. Check that `zenith_*` tools are exposed in that session, then call `zenith_brief`. Reads fall back to `context/` after three seconds if the server does not respond, marking the fallback and retaining the document date. Acting requires the running server and its existing local authorization. Creating a token, tunnel or persistent access, or changing permissions, requires your specific approval.
+
+The folder also plugs in zenith's MCP server for both Claude Code (`.mcp.json`) and Codex (`.codex/config.toml`).
 
 ## Acting on anything
 

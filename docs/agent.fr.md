@@ -79,7 +79,11 @@ Les consignes lui disent qui tu es, où sont ton brief et tes documents, tes pro
 
 Et d'**apprendre sans qu'on le lui demande** : une correction ou une préférence va dans `USER.md`, une décision dans `MEMORY.md`, une démarche qu'il refera devient un skill. Ces fichiers restent courts (au-delà d'une limite, zenith tronque et lui demande de consolider).
 
-Ce qu'il atteint : le brief et les documents de zenith, tes notes Obsidian, le shell (`git`, `gh`…), le web, et les outils de sa session — **tes connecteurs Claude** (Gmail, Google Agenda, Drive…) sur Claude, les plugins de Codex sur Codex. Quand il en manque un, il dit lequel. Le dossier branche aussi le serveur MCP de zenith pour Claude Code (`.mcp.json`) et Codex (`.codex/config.toml`).
+Le MCP donne accès au brief, aux documents de zenith et aux notes Obsidian locales. Le shell (`git`, `gh`…), le web et les connecteurs de comptes dépendent des outils réellement exposés dans la session ; les connecteurs Claude ne sont pas automatiquement disponibles dans Codex. L'agent vérifie chaque accès par une lecture et signale ce qui manque.
+
+Un MCP local configuré dans Codex ne prouve pas qu'une session Kira ou ChatGPT dans le cloud peut atteindre ce Mac. Vérifie que les outils `zenith_*` sont exposés dans cette session, puis appelle `zenith_brief`. Les lectures basculent sur `context/` après trois secondes si le serveur ne répond pas, avec une mention du repli et la date du document. Agir exige le serveur lancé et son autorisation locale existante. Toute création de token, tunnel ou accès persistant, ou modification des permissions, demande ton accord précis.
+
+Le dossier branche aussi le serveur MCP de zenith pour Claude Code (`.mcp.json`) et Codex (`.codex/config.toml`).
 
 ## Agir sur tout
 

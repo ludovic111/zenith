@@ -19,6 +19,8 @@ import { z } from "zod";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const BASE = process.env.ZENITH_URL ?? "http://127.0.0.1:4747";
+// Context has a disk copy: leave time for fallback inside the client's tool timeout.
+const READ_TIMEOUT_MS = 3_000;
 const home = (p) => p.replace(/^~(?=$|\/)/, os.homedir());
 
 /** The config, found like zenith does (ZENITH_CONFIG, perso/, then the root); an empty object when missing or invalid. */
@@ -47,7 +49,7 @@ const DOCS = ["brief", "vie", "argent", "annuaire", "veille", ...PROJECTS.map((p
 
 async function doc(name) {
   try {
-    const res = await fetch(`${BASE}/api/context/${name}`, { signal: AbortSignal.timeout(60_000) });
+    const res = await fetch(`${BASE}/api/context/${name}`, { signal: AbortSignal.timeout(READ_TIMEOUT_MS) });
     if (res.ok) return await res.text();
   } catch {}
   try {
@@ -89,6 +91,7 @@ async function markdownFiles(dir, root = dir, out = []) {
 }
 
 const text = (t) => ({ content: [{ type: "text", text: t }] });
+const error = (t) => ({ ...text(t), isError: true });
 const server = new McpServer({ name: "zenith", version: "1.2.0" });
 const projectList = PROJECTS.length ? PROJECTS.map((id) => (NAMES[id] && NAMES[id] !== id ? `${id} (${NAMES[id]})` : id)).join(", ") : "none configured";
 
@@ -197,8 +200,8 @@ const attempt = async (fn) => {
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     if (/timeout|abort/i.test(msg))
-      return text(tr("zenith n'a pas répondu à temps : la demande a peut-être abouti. Vérifie avec zenith_now avant de réessayer.", "zenith didn't answer in time: the request may have gone through. Check with zenith_now before retrying."));
-    return text(/fetch failed|ECONNREFUSED/i.test(msg) ? NOT_RUNNING : `${tr("Échec", "Failed")}: ${msg}`);
+      return error(tr("zenith n'a pas répondu à temps : la demande a peut-être abouti. Vérifie avec zenith_now avant de réessayer.", "zenith didn't answer in time: the request may have gone through. Check with zenith_now before retrying."));
+    return error(/fetch failed|ECONNREFUSED/i.test(msg) ? NOT_RUNNING : `${tr("Échec", "Failed")}: ${msg}`);
   }
 };
 
