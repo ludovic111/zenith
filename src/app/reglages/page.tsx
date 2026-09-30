@@ -16,6 +16,8 @@ import { CodeActions, CodeState } from "@/components/settings/code-actions";
 import { agentAvatar, agentName, bots } from "@/lib/agent/team";
 import { AgentAvatar } from "@/components/agent/agent-avatar";
 import { YouSettings } from "@/components/setup/settings";
+import { UpdatePanel } from "@/components/setup/updates";
+import { selfRestarts, updateState } from "@/lib/updater";
 import type { YouDraft } from "@/components/setup/you";
 import { Code, CodeBlock, Group, Mono, Row, tilde, Toggle } from "@/components/settings/rows";
 
@@ -28,7 +30,7 @@ export function generateMetadata(): Metadata {
 export default async function General() {
   const c = config();
   const codeHere = existsSync(path.join(process.cwd(), "src", "lib", "code"));
-  const mac = await source(apple);
+  const [mac, update] = await Promise.all([source(apple), updateState()]);
   const team = bots();
   const agent = config().agent;
   const you: YouDraft = JSON.parse(JSON.stringify({ name: c.owner.name, locale: c.locale, currency: c.currency, timezone: c.timezone, location: c.location }));
@@ -68,6 +70,14 @@ export default async function General() {
           </Link>
         ))}
       </Group>
+
+      <section id="maj" className="mt-8 scroll-mt-16">
+        <div className="mb-2 px-1">
+          <h2 className="text-[13px] font-semibold text-ink">{tr("Mises à jour", "Updates")}</h2>
+          <p className="mt-0.5 text-xs text-ink-3">{tr("zenith se met à jour depuis GitHub.", "zenith updates itself from GitHub.")}</p>
+        </div>
+        <UpdatePanel initial={update} auto={c.updates.auto} selfRestarts={selfRestarts()} />
+      </section>
 
       {codeHere && (
         <Group title="zenith code" description={tr("L'espace de code, un fork de T3 Code lancé avec zenith.", "The coding workspace, a T3 Code fork started with zenith.")}>

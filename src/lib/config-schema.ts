@@ -202,6 +202,8 @@ export const ConfigSchema = z.object({
   code: z
     .object({ enabled: z.boolean().default(true), port: z.number().default(4749), home: z.string().optional() })
     .default({ enabled: true, port: 4749 }),
+  /** Updates from GitHub: the installed app pulls, builds and restarts on its own when `auto` (never over local changes). */
+  updates: z.object({ auto: z.boolean().default(true) }).default({ auto: true }),
   /** The zenith agent: "Ask zenith", the Now list, delegation to agents and routines. Runs through zenith code. */
   agent: z
     .object({

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
-import { ChevronLeft, ChevronRight, FolderPlus, GitPullRequest, PanelLeft, Plus, RotateCw, Search, Settings, SquarePen } from "lucide-react";
+import { ArrowDownToLine, ChevronLeft, ChevronRight, FolderPlus, GitPullRequest, PanelLeft, Plus, RotateCw, Search, Settings, SquarePen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { tr } from "@/lib/i18n";
 import { BRAND } from "@/lib/code/brand";
@@ -77,7 +77,10 @@ export type SidebarAgent = {
   bots: { id: string; name: string; title?: string; home: string; color: string; avatar: Avatar }[];
 };
 
-export function Sidebar({ projects, code = true, home, agent = null }: { projects: NavProject[]; code?: boolean; home: string; agent?: SidebarAgent | null }) {
+/** An update on its way, for a line above Settings. */
+export type SidebarUpdate = { state: string; behind: number } | null;
+
+export function Sidebar({ projects, code = true, home, agent = null, update = null }: { projects: NavProject[]; code?: boolean; home: string; agent?: SidebarAgent | null; update?: SidebarUpdate }) {
   const path = usePathname();
   const drawer = useDrawer();
   const settings = isSettingsPath(path);
@@ -108,13 +111,13 @@ export function Sidebar({ projects, code = true, home, agent = null }: { project
             <PanelLeft className="size-4" />
           </button>
         </div>
-        {settings ? <SettingsNav path={path} /> : <MainNav path={path} projects={projects} code={code} home={home} agent={agent} />}
+        {settings ? <SettingsNav path={path} /> : <MainNav path={path} projects={projects} code={code} home={home} agent={agent} update={update} />}
       </aside>
     </>
   );
 }
 
-function MainNav({ path, projects, code, home, agent }: { path: string; projects: NavProject[]; code: boolean; home: string; agent: SidebarAgent | null }) {
+function MainNav({ path, projects, code, home, agent, update }: { path: string; projects: NavProject[]; code: boolean; home: string; agent: SidebarAgent | null; update: SidebarUpdate }) {
   const router = useRouter();
   const { status, snapshot, ready } = useCode();
   const [folded, toggleFolded] = useStoredSet(FOLDED_KEY);
@@ -323,6 +326,22 @@ function MainNav({ path, projects, code, home, agent }: { path: string; projects
       </nav>
 
       <div className="flex flex-col gap-px border-t border-line px-2 py-2 mac:border-black/5 dark:mac:border-white/5">
+        {update && (
+          <Row
+            icon={<ArrowDownToLine className="size-4" />}
+            href="/reglages#maj"
+            label={
+              update.state === "available"
+                ? tr(`Mise à jour disponible`, `Update available`)
+                : update.state === "restart"
+                  ? tr("Redémarre pour mettre à jour", "Restart to update")
+                  : update.state === "error"
+                    ? tr("Mise à jour en échec", "Update failed")
+                    : tr("Mise à jour en cours…", "Updating…")
+            }
+            quiet
+          />
+        )}
         <Row icon={<Settings className="size-4" />} label={tr("Réglages", "Settings")} kbd="⌘," href="/reglages" />
       </div>
     </>

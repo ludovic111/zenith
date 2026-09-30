@@ -22,6 +22,10 @@ export async function register() {
     startGateway();
   }
 
+  // Updates from GitHub (the installed app applies them when no agent is working).
+  const { startUpdater } = await import("./lib/updater");
+  startUpdater();
+
   // Context for agents: rewritten every 10 minutes into context/ and the Obsidian vault.
   const { writeContext } = await import("./lib/context");
   const run = () => writeContext().catch((e) => console.error("[zenith] context:", e));

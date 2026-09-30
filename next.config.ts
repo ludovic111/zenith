@@ -8,6 +8,8 @@ import type { NextConfig } from "next";
 const perso = existsSync("perso/index.ts") ? "./perso/index.ts" : "./src/lib/perso-empty.ts";
 
 const nextConfig: NextConfig = {
+  // The updater builds the next version beside the running one, then swaps them.
+  distDir: process.env.ZENITH_DIST_DIR || ".next",
   devIndicators: false,
   turbopack: { resolveAlias: { "@perso": perso } },
 };

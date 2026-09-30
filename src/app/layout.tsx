@@ -12,6 +12,7 @@ import { EXTENSIONS } from "@/lib/extensions";
 import { CodeHost } from "@/components/code/code-host";
 import { AskDialog } from "@/components/agent/ask-dialog";
 import { SUGGESTIONS, agentUi } from "@/lib/agent/ui";
+import { updateState } from "@/lib/updater";
 import "./globals.css";
 
 export function generateMetadata(): Metadata {
@@ -31,7 +32,7 @@ export const viewport: Viewport = {
 // Before paint: inside zenith.app (its user agent), and the sidebar hidden with ⌘B.
 const BOOT = `try{var d=document.documentElement;if(/ZenithMac\\//.test(navigator.userAgent))d.dataset.shell="mac";if(localStorage.getItem("zenith:sidebar")==="hidden")d.dataset.sidebar="hidden"}catch(e){}`;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const c = config();
   const loc = l10n();
   const nav = PROJECTS.map(({ id, name, href, color, tagline, dir }) => ({ id, name, href, color, tagline, dir: projectDir({ dir }) }));
@@ -40,6 +41,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   for (const e of EXTENSIONS) for (const p of e.pages ?? []) titles[`/${p.slug}`] = [p.title];
   for (const p of PROJECTS) titles[p.href] = [tr("Projets", "Projects"), p.name];
   const ui = agentUi();
+  const u = await updateState();
+  const update = u.state !== "idle" && (u.state !== "available" || (u.behind ?? 0) > 0) ? { state: u.state, behind: u.behind ?? 0 } : null;
   const agent = ui.enabled ? { targets: ui.targets, provider: ui.provider } : null;
   return (
     <html lang={loc.locale} className="h-full" suppressHydrationWarning>
@@ -49,7 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="h-full overflow-hidden">
         <L10nProvider value={loc}>
           <div className="flex h-dvh">
-            <Sidebar projects={nav} code={c.code.enabled} home={process.cwd()} agent={agent ? { home: ui.home, name: ui.name, avatar: ui.avatar, bots: ui.bots } : null} />
+            <Sidebar projects={nav} code={c.code.enabled} update={update} home={process.cwd()} agent={agent ? { home: ui.home, name: ui.name, avatar: ui.avatar, bots: ui.bots } : null} />
             <div className="flex min-w-0 flex-1 flex-col bg-background">
               <main className="relative min-h-0 flex-1 overflow-y-auto">
                 <TitleBar titles={titles} />
