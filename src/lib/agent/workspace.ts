@@ -62,6 +62,11 @@ async function inline(file: string, cap: number): Promise<string> {
 /** Drops a leading "# Title" and "> note" lines: the section heading says it already. */
 const body = (md: string) => md.replace(/^#[^\n]*\n+/, "").replace(/^(>[^\n]*\n)+\n*/, "").trim();
 
+/** French elision before a vowel: "d'Iris", "qu'Iris", but "de Margot". */
+const vowel = (name: string) => /^[aeiouyhàâäéèêëîïôöùûü]/i.test(name);
+const de = (name: string) => (vowel(name) ? `d'${name}` : `de ${name}`);
+const que = (name: string) => (vowel(name) ? `qu'${name}` : `que ${name}`);
+
 const who = () => OWNER.firstName || OWNER.name || tr("la personne qui t'utilise", "the person using you");
 
 // ——— Seeds: written once, then yours ——————————————————————————————————————————
@@ -69,7 +74,7 @@ const who = () => OWNER.firstName || OWNER.name || tr("la personne qui t'utilise
 const soulSeed = (bot: Bot | null) => {
   const name = bot?.name ?? agentName();
   const head = tr(
-    `# Personnalité de ${name}\n\n> Ce fichier est à toi : ${name} le relit à chaque demande. Change son ton, ses habitudes, ce qu'il doit toujours ou jamais faire.\n\n`,
+    `# Personnalité ${de(name)}\n\n> Ce fichier est à toi : ${name} le relit à chaque demande. Change son ton, ses habitudes, ce qu'il doit toujours ou jamais faire.\n\n`,
     `# ${name}'s personality\n\n> This file is yours: ${name} rereads it on every request. Change its tone, its habits, what it must always or never do.\n\n`,
   );
   if (bot) return `${head}${bot.role.trim()}\n`;
@@ -99,7 +104,7 @@ const userSeed = () => {
 const memorySeed = (bot: Bot | null) => {
   const name = bot?.name ?? agentName();
   return tr(
-    `# Mémoire de ${name}\n\nCe que ${name} a appris et doit garder : décisions, leçons, où en sont les choses. ${name} et toi pouvez l'écrire ; jamais de secrets.\n`,
+    `# Mémoire ${de(name)}\n\nCe ${que(name)} a appris et doit garder : décisions, leçons, où en sont les choses. ${name} et toi pouvez l'écrire ; jamais de secrets.\n`,
     `# ${name}'s memory\n\nWhat ${name} learned and should keep: decisions, lessons, where things stand. Both ${name} and you can edit it; never secrets.\n`,
   );
 };
