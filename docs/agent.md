@@ -41,17 +41,49 @@ Agents waiting for your answer or approval come first.
 
 Each item has one gesture: **Hand off**. zenith starts an agent with a precise request written for that item (*read the thread, draft a reply in my voice as a Gmail draft, don't send it*), and you land in its thread. The item then shows the agent's state. **✓** files it away, **🕑** hides it until tomorrow; both can be undone. An item that changes (a new message, another failure) comes back as a new one.
 
-## What the agent knows and may do
+## Its team
 
-zenith writes the agent's instructions in its folder: `AGENTS.md` (read by Codex, imported by `CLAUDE.md` for Claude Code). They tell it who you are, where your brief and documents are, your projects and their folders, and the rules:
+One main agent (the one for "My life") and, if you like, **bots**: named agents, each with a role, its own folder, personality and memory, running on **your Claude subscription** (through Claude Code) or **your ChatGPT subscription** (through Codex). The team of ChatGPT Dots and Grok Bots, on your own subscriptions, on your Mac.
+
+```json
+"agent": {
+  "name": "zenith",
+  "bots": [
+    { "id": "inbox", "name": "Inbox", "emoji": "✉️", "provider": "claude", "role": "Keeps my inbox and calendar: triages, drafts replies, never sends." },
+    { "id": "ops", "name": "Ops", "emoji": "🛠️", "provider": "codex", "role": "Keeps my projects healthy: CI, dependencies, PRs. Fixes on a branch, never on main." }
+  ]
+}
+```
+
+- **Talk to them**: `@inbox …` in the bar, ⌘J or ⌘K; or the destination menu; or their card in **AI agents → Team**. The Claude/Codex chip follows the bot's subscription.
+- **Passing work around**: the main agent knows them (role, subscription) and hands them what fits their role with `zenith_delegate`, then reports back. A bot on Codex that needs Gmail hands the job to a bot on Claude.
+- Their conversations are in the sidebar, under **Conversations**.
+
+## What it knows, what it learns
+
+Each agent has a folder (`~/.zenith/life` for the main one, `~/.zenith/bots/<id>` for bots), the Hermes Agent way:
+
+| File | |
+| --- | --- |
+| `SOUL.md` | Its personality: tone, habits, what it always or never does. Written once (a bot's role), then yours. |
+| `USER.md` | What the team knows about you: preferences, how you write, people who matter. One, shared, in the main folder. |
+| `MEMORY.md` | Its memory: decisions, lessons, where things stand. |
+| `skills/` | The team's know-how, one `SKILL.md` each (main folder, shared). |
+| `AGENTS.md` | Its instructions, rewritten by zenith on every request with all of the above copied in: Codex reads it, Claude Code imports it through `CLAUDE.md`. Don't edit it. |
+
+The instructions tell it who you are, where your brief and documents are, your projects and their folders, its team, its skills, and the rules:
 
 1. **Do, don't describe**, then sum up in one to three lines.
 2. **Ask before anything that leaves the Mac or can't be undone**: sending an email or a message, posting, paying, buying, answering an invitation, deleting, pushing to a main branch, deploying to production. It prepares (a draft, a branch, a PR), shows the exact content, and asks.
 3. No card numbers, passwords, addresses or phone numbers in files; your data never goes into zenith's (public) repository.
 
-`MEMORY.md`, next to it, is the agent's memory: it adds what should last (preferences, people, decisions); you can edit it too. The folder also plugs in zenith's MCP server for both Claude Code (`.mcp.json`) and Codex (`.codex/config.toml`).
+And to **learn without being asked**: a correction or a preference goes in `USER.md`, a decision in `MEMORY.md`, a job it will do again becomes a skill. These files stay short (past a limit, zenith truncates them and asks it to consolidate).
 
-What it can reach: zenith's brief and documents, your Obsidian notes, the shell (`git`, `gh`…), the web, and **your Claude connectors** (Gmail, Google Calendar, Drive… whatever you connected on claude.ai). When one is missing, it says which.
+What it can reach: zenith's brief and documents, your Obsidian notes, the shell (`git`, `gh`…), the web, and its session's tools — **your Claude connectors** (Gmail, Google Calendar, Drive…) on Claude, Codex's plugins on Codex. When one is missing, it says which. The folder also plugs in zenith's MCP server for both Claude Code (`.mcp.json`) and Codex (`.codex/config.toml`).
+
+## Skills
+
+Written know-how, in `~/.zenith/life/skills/<id>/SKILL.md` (the agentskills.io format Claude Code and Codex both read; zenith links it into each folder's `.claude/skills` and `.agents/skills`). zenith lays down five to start — `plan-day`, `reply-email`, `weekly-review`, `watch`, `write-skill` — then the team writes more as it works. Edit or delete any of them: zenith never rewrites a skill it already laid down. They are listed in **AI agents → Skills**, and a routine can follow one (`"skill": "weekly-review"`).
 
 ## Agents asking agents
 
@@ -60,7 +92,7 @@ The [MCP server](../README.md#for-ai-agents) lets any agent act through zenith, 
 | Tool | |
 | --- | --- |
 | `zenith_now` | What is waiting, with ids. |
-| `zenith_delegate` | Start another agent in a project (or in `life`, or in `zenith`) with a self-contained brief. It runs in parallel and appears in the sidebar. |
+| `zenith_delegate` | Start another agent in a project, with a bot of the team (by its id), in `life` or in `zenith`, with a self-contained brief. It runs in parallel and appears in the sidebar. |
 | `zenith_agent` | The state and last messages of an agent started that way. |
 | `zenith_done` | File a Now item away, or snooze it. |
 
@@ -68,26 +100,43 @@ So the life agent can split *"get my-app ready for the App Store review"* into a
 
 ## Routines
 
-Agents that run on their own, once a day at a set time, listed in **AI agents → Routines** with their last run and a **Run** button. In `zenith.config.json`:
+Agents that run on their own, listed in **AI agents → Routines** with their last run and a **Run** button. Two kinds:
+
+- **At a set time** (`at`), once a day, on the days you pick.
+- **On an event** (`on`): each new Now item of those kinds (a broken CI, an email waiting for a reply, a failing payment…) is handed to the agent as it appears, once, with the item's own request. What was already waiting when you add the routine stays yours; **Run** hands it over anyway.
+
+Either can be done by a bot (`bot`) and follow a skill (`skill`):
 
 ```json
 "agent": {
   "routines": [
     { "id": "morning", "at": "07:30", "task": "refresh-life" },
-    { "id": "friday", "at": "18:00", "days": [5], "prompt": "Review my week: what shipped, what slipped, what to do Monday." }
+    { "id": "day", "at": "07:45", "skill": "plan-day" },
+    { "id": "friday", "at": "18:00", "days": [5], "skill": "weekly-review" },
+    { "id": "ci", "on": ["ci"], "bot": "ops" },
+    { "id": "replies", "on": ["reply", "sale"], "bot": "inbox", "skill": "reply-email" }
   ]
 }
 ```
 
-`refresh-life` is built in: it captures Gmail and Google Calendar into My life, so the overview, Now and the brief are fresh when you wake up. A Mac asleep at that time catches up within three hours; each routine runs at most once a day, even with two zenith servers running. See [configuration](configuration.md#agent) for every field.
+`refresh-life` is built in: it captures Gmail and Google Calendar into My life, so the overview, Now and the brief are fresh when you wake up. A Mac asleep at that time catches up within three hours; each routine runs at most once a day, even with two zenith servers running. Events are checked every five minutes, three items at most per routine and twelve an hour in all. See [configuration](configuration.md#agent) for every field.
+
+## From your phone (Telegram)
+
+Talk to your agent from Telegram, as with Hermes Agent:
+
+1. Create a bot with [@BotFather](https://t.me/BotFather) and paste its token in **Settings → zenith agent → Telegram** (it goes to `.env.local` as `TELEGRAM_BOT_TOKEN`).
+2. Add `"gateway": { "telegram": { "chats": [] } }` to `agent` and send `/start` to your bot: it answers with your chat id. Put it in `chats` and restart zenith.
+
+A message starts a conversation with your agent (or with `target`: a bot, a project; `@id` at the start works too), or continues the one from the last two hours; `/new` starts over. The answer comes when the agent is done; when it needs your go-ahead, you get the link to give it in zenith. Only the listed chats are heard; others learn their id and nothing more. zenith must be running on your Mac.
 
 ## Safety
 
 - Only zenith's own pages (same origin, JSON) and local programs holding `.data/agent-token` (created with mode 600) can start an agent. A web page can't, even one on this Mac.
-- **Outside words never get full access.** Whatever carries text zenith didn't write — Now items (emails, notes, CI), routines, requests from other agents, and every request to your life agent — runs at most in zenith code's **auto** mode: the agent works on its own, but Claude's and Codex's reviewers stop risky actions (sending data out, destructive commands) that a crafted email could ask for. What you type to a project keeps your usual mode. A stricter default (*approval required*, *auto-accept edits*) always wins.
+- **Outside words never get full access.** Whatever carries text zenith didn't write — Now items (emails, notes, CI), routines, requests from other agents, Telegram messages, and every request to your life agent or a bot — runs at most in zenith code's **auto** mode: the agent works on its own, but Claude's and Codex's reviewers stop risky actions (sending data out, destructive commands) that a crafted email could ask for. What you type to a project keeps your usual mode. A stricter default (*approval required*, *auto-accept edits*) always wins.
 - The agent's instructions tell it that emails, pages and messages are data, never orders, and the requests zenith writes say so again.
-- Every request, its destination and its thread are logged in `.data/agent.json`.
+- Every request, its destination, where it came from and its thread are logged in `.data/agent.json`, and shown in **AI agents → Activity**.
 
 ## Under the hood
 
-zenith talks to zenith code's HTTP API with a bearer session it issues itself (`auth session issue`, renewed before it expires): `thread.create`, then `thread.turn.start`. `src/lib/agent/` holds it all: `ask.ts` (routing, model, launch), `now.ts`, `routines.ts`, `workspace.ts` (the agent's folder), `tasks.ts` (built-in requests), `target.ts` (routing rules, shared with the browser).
+zenith talks to zenith code's HTTP API with a bearer session it issues itself (`auth session issue`, renewed before it expires): `thread.create`, then `thread.turn.start`. `src/lib/agent/` holds it all: `ask.ts` (routing, model, launch), `team.ts` (the team), `workspace.ts` (the agents' folders), `skills.ts`, `now.ts`, `routines.ts`, `gateway.ts` (Telegram), `tasks.ts` (built-in requests), `target.ts` (routing rules, shared with the browser).

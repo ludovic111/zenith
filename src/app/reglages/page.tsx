@@ -17,6 +17,9 @@ import { ProviderIcon } from "@/components/agent/provider-icon";
 import { RoutinesList } from "@/components/agent/routines-panel";
 import { routineViews } from "@/components/agent/routine-view";
 import { CodeActions, CodeState } from "@/components/settings/code-actions";
+import { KeyForm } from "@/components/settings/key-form";
+import { gatewayStatus } from "@/lib/agent/gateway";
+import { agentName, bots } from "@/lib/agent/team";
 import { Code, CodeBlock, Group, Mono, Row, tilde, Toggle } from "@/components/settings/rows";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +32,8 @@ export default async function General() {
   const c = config();
   const codeHere = existsSync(path.join(process.cwd(), "src", "lib", "code"));
   const [mac, list] = await Promise.all([source(apple), routineViews()]);
+  const team = bots();
+  const gw = gatewayStatus();
   const ui = agentUi();
   const code = codeStatus();
   const node = process.execPath;
@@ -109,7 +114,10 @@ export default async function General() {
 
       <Group
         title={tr("Agent zenith", "zenith agent")}
-        description={tr("« Demande à zenith », la liste Maintenant, les routines. Passe par zenith code.", '"Ask zenith", the Now list, routines. Runs through zenith code.')}
+        description={tr(
+          "« Demande à zenith », son équipe, la liste Maintenant, les routines, Telegram. Passe par zenith code, sur tes abonnements Claude et ChatGPT.",
+          '"Ask zenith", its team, the Now list, routines, Telegram. Runs through zenith code, on your Claude and ChatGPT subscriptions.',
+        )}
       >
         <Row label={tr("Activé", "Enabled")} description={c.agent.enabled && !c.code.enabled ? tr("Inactif tant que zenith code est désactivé", "Inactive while zenith code is disabled") : "agent.enabled"}>
           <Toggle on={ui.enabled} labels={yesNo} />
@@ -120,8 +128,39 @@ export default async function General() {
             {c.agent.provider === "claude" ? "Claude Code" : "Codex"}
           </span>
         </Row>
-        <Row label={tr("Dossier", "Folder")} description={tr("Son bureau : instructions, mémoire, conversations sur ta vie", "Its desk: instructions, memory, conversations about your life")}>
+        <Row label={tr("Nom", "Name")} description="agent.name">
+          {agentName()}
+        </Row>
+        <Row label={tr("Dossier", "Folder")} description={tr("Son bureau : SOUL.md (personnalité), USER.md (toi), MEMORY.md, skills/", "Its desk: SOUL.md (personality), USER.md (you), MEMORY.md, skills/")}>
           <Mono value={ui.home}>{tilde(ui.home)}</Mono>
+        </Row>
+        <Row label={tr("Équipe", "Team")} description="agent.bots">
+          {team.length ? (
+            <Link href="/agents" className="inline-flex flex-wrap items-center justify-end gap-x-3 gap-y-1 hover:text-ink">
+              {team.map((b) => (
+                <span key={b.id} className="inline-flex items-center gap-1.5">
+                  {b.emoji && <span>{b.emoji}</span>}
+                  {b.name}
+                  <ProviderIcon id={b.provider} size={11} className="text-ink-3" />
+                </span>
+              ))}
+            </Link>
+          ) : (
+            <span className="text-ink-3">{tr("Aucun bot", "No bot")}</span>
+          )}
+        </Row>
+        <Row
+          stack
+          label="Telegram"
+          description={
+            gw.running
+              ? tr(`À l'écoute · ${gw.chats} chat${gw.chats > 1 ? "s" : ""} autorisé${gw.chats > 1 ? "s" : ""} (agent.gateway.telegram.chats)`, `Listening · ${gw.chats} allowed chat${gw.chats === 1 ? "" : "s"} (agent.gateway.telegram.chats)`)
+              : gw.configured
+                ? tr("Colle le jeton de ton bot (@BotFather), puis envoie-lui /start : il te donne l'id du chat à autoriser.", "Paste your bot's token (@BotFather), then send it /start: it tells you the chat id to allow.")
+                : tr("Parle à ton agent depuis ton téléphone : ajoute \"gateway\": { \"telegram\": { \"chats\": [] } } dans agent, puis colle ici le jeton de ton bot.", 'Talk to your agent from your phone: add "gateway": { "telegram": { "chats": [] } } to agent, then paste your bot\'s token here.')
+          }
+        >
+          <KeyForm name="TELEGRAM_BOT_TOKEN" collapsed={gw.token} placeholder={gw.token ? tr("Nouveau jeton", "New token") : "123456:ABC…"} />
         </Row>
         <div>
           <div className="flex items-baseline justify-between gap-4 px-4 pb-1 pt-3">

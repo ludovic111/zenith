@@ -1,6 +1,6 @@
 import "server-only";
 import { l10n } from "@/lib/i18n";
-import { routines } from "@/lib/agent/routines";
+import { KIND_NAMES, routines } from "@/lib/agent/routines";
 import { agentUi } from "@/lib/agent/ui";
 import type { RoutineView } from "./routines-panel";
 
@@ -15,8 +15,8 @@ function localNow() {
 }
 
 /** Next scheduled run of a routine (ISO), or null when paused or on no day. */
-export function nextRun(r: { at: string; days: number[]; enabled: boolean }): string | null {
-  if (!r.enabled || !r.days.length) return null;
+export function nextRun(r: { at?: string; days: number[]; enabled: boolean }): string | null {
+  if (!r.enabled || !r.at || !r.days.length) return null;
   const [h, m] = r.at.split(":").map(Number);
   const now = localNow();
   for (let k = 0; k <= 7; k++) {
@@ -34,10 +34,11 @@ export async function routineViews(): Promise<RoutineView[]> {
   return list.map((r) => ({
     id: r.id,
     title: r.title,
-    at: r.at,
+    at: r.at ?? null,
+    on: r.on ? r.on.map((k) => KIND_NAMES()[k]) : null,
     days: r.days,
     enabled: r.enabled,
-    target: names[r.project ?? "life"] ?? r.project ?? "",
+    target: names[r.bot ?? r.project ?? "life"] ?? r.bot ?? r.project ?? "",
     last: r.last,
     next: nextRun(r),
   }));

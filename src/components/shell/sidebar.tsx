@@ -64,7 +64,10 @@ function useStoredSet(key: string) {
  * becomes the settings navigation, for zenith and zenith code alike. ⌘B hides it; below
  * lg it is a drawer.
  */
-export function Sidebar({ projects, code = true, home, agent = null }: { projects: NavProject[]; code?: boolean; home: string; agent?: { home: string } | null }) {
+/** The main agent's folder and its bots', whose threads are your conversations. */
+export type SidebarAgent = { home: string; bots: { id: string; name: string; home: string; color: string; emoji?: string }[] };
+
+export function Sidebar({ projects, code = true, home, agent = null }: { projects: NavProject[]; code?: boolean; home: string; agent?: SidebarAgent | null }) {
   const path = usePathname();
   const drawer = useDrawer();
   const settings = isSettingsPath(path);
@@ -101,7 +104,7 @@ export function Sidebar({ projects, code = true, home, agent = null }: { project
   );
 }
 
-function MainNav({ path, projects, code, home, agent }: { path: string; projects: NavProject[]; code: boolean; home: string; agent: { home: string } | null }) {
+function MainNav({ path, projects, code, home, agent }: { path: string; projects: NavProject[]; code: boolean; home: string; agent: SidebarAgent | null }) {
   const router = useRouter();
   const { status, snapshot, ready } = useCode();
   const [folded, toggleFolded] = useStoredSet(FOLDED_KEY);
@@ -109,7 +112,7 @@ function MainNav({ path, projects, code, home, agent }: { path: string; projects
   const onCode = appPathOf(path) !== null;
 
   // zenith code's projects and threads, matched to zenith's projects by folder.
-  const { byZenithProject, others, life, all } = useMemo(() => {
+  const { byZenithProject, others, life, team, all } = useMemo(() => {
     const threadsOf = new Map<string, CodeThread[]>();
     for (const t of snapshot?.threads ?? []) {
       const k = `${t.environmentId}:${t.projectId}`;
@@ -119,16 +122,22 @@ function MainNav({ path, projects, code, home, agent }: { path: string; projects
     const byZenithProject = new Map<string, ReturnType<typeof entry>>();
     const others: ReturnType<typeof entry>[] = [];
     let life: ReturnType<typeof entry> | null = null;
+    const team = new Map<string, ReturnType<typeof entry>>();
     for (const p of snapshot?.projects ?? []) {
       if (agent && !life && sameDir(p.workspaceRoot, agent.home)) {
         life = entry(p);
+        continue;
+      }
+      const bot = agent?.bots.find((b) => sameDir(p.workspaceRoot, b.home));
+      if (bot && !team.has(bot.id)) {
+        team.set(bot.id, entry(p));
         continue;
       }
       const owner = projects.find((z) => z.dir && sameDir(z.dir, p.workspaceRoot));
       if (owner && !byZenithProject.has(owner.id)) byZenithProject.set(owner.id, entry(p));
       else others.push(entry(p));
     }
-    return { byZenithProject, others, life, all: snapshot?.threads ?? [] };
+    return { byZenithProject, others, life, team, all: snapshot?.threads ?? [] };
   }, [snapshot, projects, agent]);
 
   const navigate = useCallback(
@@ -158,9 +167,30 @@ function MainNav({ path, projects, code, home, agent }: { path: string; projects
           ))}
         </div>
 
-        {agent && codeReady && life && life.threads.length > 0 && (
+        {agent && codeReady && ((life && life.threads.length > 0) || [...team.values()].some((b) => b.threads.length > 0)) && (
           <Group label={tr("Conversations", "Conversations")} actions={<IconButton label={tr("Demander à zenith", "Ask zenith")} onClick={() => openAsk()}><Plus className="size-3.5" /></IconButton>}>
-            <Threads id="zenith:life" threads={life.threads} activeThread={activeThread} full={full.has("zenith:life")} onFull={() => toggleFull("zenith:life")} />
+            {life && life.threads.length > 0 && <Threads id="zenith:life" threads={life.threads} activeThread={activeThread} full={full.has("zenith:life")} onFull={() => toggleFull("zenith:life")} />}
+            {agent.bots.map((b) => {
+              const c = team.get(b.id);
+              if (!c?.threads.length) return null;
+              const id = `zenith:bot:${b.id}`;
+              return (
+                <ProjectBlock
+                  key={id}
+                  id={id}
+                  name={`${b.emoji ? `${b.emoji} ` : ""}${b.name}`}
+                  title={b.home}
+                  color={b.color}
+                  threads={c.threads}
+                  activeThread={activeThread}
+                  folded={folded.has(id)}
+                  full={full.has(id)}
+                  onFold={() => toggleFolded(id)}
+                  onFull={() => toggleFull(id)}
+                  onNewThread={() => openAsk(`@${b.id} `)}
+                />
+              );
+            })}
           </Group>
         )}
 

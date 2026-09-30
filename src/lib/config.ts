@@ -5,7 +5,7 @@ import { ConfigSchema as Schema, PALETTE } from "./config-schema";
 import { setL10n } from "./i18n";
 import type { Config, ProjectConfig } from "./config-schema";
 
-export type { Config, ProjectConfig, IdentityConfig, SubscriptionConfig, BrandName, NetworkName, RoutineConfig } from "./config-schema";
+export type { Config, ProjectConfig, IdentityConfig, SubscriptionConfig, BrandName, NetworkName, RoutineConfig, BotConfig } from "./config-schema";
 export { ConfigSchema } from "./config-schema";
 
 /**

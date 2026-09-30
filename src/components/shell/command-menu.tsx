@@ -59,7 +59,7 @@ export function CommandMenu({ projects, links, code = true, agent = null }: { pr
     setAsking(true);
     setAskError(null);
     try {
-      const r = await askZenith({ prompt: search.trim(), provider: agent.provider, source: "command" });
+      const r = await askZenith({ prompt: search.trim(), provider: askTarget?.provider ?? agent.provider, source: "command" });
       setOpen(false);
       setSearch("");
       router.push(r.href);

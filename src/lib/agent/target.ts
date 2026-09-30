@@ -1,7 +1,8 @@
 /**
  * Where a request to zenith goes: one of your projects when it names one (its agent works
- * in that folder), else zenith's own folder, where the agent sees your whole life and can
- * hand work to project agents. Pure, so the ask bar shows the destination as you type.
+ * in that folder), a bot of your team when you call it (`@id`), else zenith's own folder,
+ * where the agent sees your whole life and can hand work to the others. Pure, so the ask
+ * bar shows the destination as you type.
  */
 
 export const LIFE = "life";
@@ -13,6 +14,12 @@ export type AgentTarget = {
   emoji?: string;
   /** Lowercase words that name it: id, name, folder, repository, single-word identity names. */
   aliases: string[];
+  /** A bot of your team: only `@id` or the menu send a request to it. */
+  bot?: boolean;
+  /** The subscription it runs on, when it has its own (a bot). */
+  provider?: Provider;
+  /** What it is for (a bot's role), for the menu. */
+  hint?: string;
 };
 
 export type Provider = "claude" | "codex";
@@ -37,8 +44,8 @@ export function aliasesOf(...names: (string | null | undefined)[]): string[] {
 }
 
 /**
- * The target a sentence is about. `@id` at the start forces it; otherwise the single
- * project it names; several projects, or none, go to your life agent.
+ * The target a sentence is about. `@id` at the start forces it (a project or a bot);
+ * otherwise the single project it names; several projects, or none, go to your life agent.
  */
 export function guessTarget(text: string, targets: AgentTarget[]): string {
   const t = fold(text);
@@ -48,7 +55,7 @@ export function guessTarget(text: string, targets: AgentTarget[]): string {
     if (hit) return hit.id;
   }
   const named = targets.filter(
-    (x) => x.id !== LIFE && x.aliases.some((a) => new RegExp(`(^|[^a-z0-9])${escape(a)}($|[^a-z0-9])`).test(t)),
+    (x) => x.id !== LIFE && !x.bot && x.aliases.some((a) => new RegExp(`(^|[^a-z0-9])${escape(a)}($|[^a-z0-9])`).test(t)),
   );
   return named.length === 1 ? named[0].id : LIFE;
 }

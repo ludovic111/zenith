@@ -53,6 +53,18 @@ export function AskBar({ targets, provider: initialProvider, examples = [], sugg
   const target = targets.find((t) => t.id === targetId) ?? targets[0];
   const auto = chosen === null;
 
+  // A bot runs on its own subscription: the chip follows it, and comes back when you leave it.
+  const lastBot = useRef<string | null>(null);
+  useEffect(() => {
+    if (target.bot && target.provider) {
+      if (lastBot.current !== target.id) setProvider(target.provider);
+      lastBot.current = target.id;
+    } else if (lastBot.current) {
+      lastBot.current = null;
+      setProvider(initialProvider);
+    }
+  }, [target, initialProvider]);
+
   const pool = examples.length ? examples : [tr("Dis-moi ce que tu veux…", "Tell me what you want…")];
   const placeholder = pool[tick % pool.length];
 
@@ -161,13 +173,13 @@ export function AskBar({ targets, provider: initialProvider, examples = [], sugg
               aria-expanded={menu}
               className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-xs text-ink-2 transition-colors hover:bg-hover hover:text-ink disabled:cursor-default disabled:hover:bg-transparent"
             >
-              <span className="size-2 shrink-0 rounded-full" style={{ background: target.color }} />
+              {target.bot && target.emoji ? <span className="text-[12px] leading-none">{target.emoji}</span> : <span className="size-2 shrink-0 rounded-full" style={{ background: target.color }} />}
               <span className="max-w-[12rem] truncate whitespace-nowrap">{target.name}</span>
               {!fixedTarget && auto && <span className="hidden whitespace-nowrap text-ink-3 sm:inline">· auto</span>}
               {!fixedTarget && <ChevronDown className="size-3 text-ink-3" />}
             </button>
             {menu && (
-              <ul role="listbox" className="absolute left-0 top-full z-50 mt-1 w-60 overflow-hidden rounded-lg border border-line bg-popover p-1 shadow-lg">
+              <ul role="listbox" className="absolute left-0 top-full z-50 mt-1 max-h-[60vh] w-64 overflow-y-auto rounded-lg border border-line bg-popover p-1 shadow-lg">
                 <li>
                   <MenuRow
                     active={auto}
@@ -182,8 +194,9 @@ export function AskBar({ targets, provider: initialProvider, examples = [], sugg
                   </MenuRow>
                 </li>
                 <li className="-mx-1 my-1 h-px bg-line" />
-                {targets.map((t) => (
+                {targets.map((t, i) => (
                   <li key={t.id}>
+                    {i > 0 && !!targets[i - 1].bot !== !!t.bot && <div className="-mx-1 my-1 h-px bg-line" />}
                     <MenuRow
                       active={!auto && chosen === t.id}
                       onClick={() => {
@@ -193,10 +206,11 @@ export function AskBar({ targets, provider: initialProvider, examples = [], sugg
                       }}
                     >
                       <span className="grid size-3.5 place-items-center">
-                        <span className="size-2 rounded-full" style={{ background: t.color }} />
+                        {t.bot && t.emoji ? <span className="text-[12px] leading-none">{t.emoji}</span> : <span className="size-2 rounded-full" style={{ background: t.color }} />}
                       </span>
-                      <span className="flex-1 truncate">{t.name}</span>
+                      <span className="flex-1 truncate" title={t.hint}>{t.name}</span>
                       {t.id === LIFE && <span className="text-2xs text-ink-3">{tr("tout le reste", "everything else")}</span>}
+                      {t.bot && t.provider && <ProviderIcon id={t.provider} size={11} />}
                     </MenuRow>
                   </li>
                 ))}

@@ -88,4 +88,4 @@ export const extensionPage = (slug: string) => EXTENSIONS.flatMap((e) => e.pages
 export const extensionRoute = (path: string) => EXTENSIONS.flatMap((e) => e.routes ?? []).find((r) => r.path === path) ?? null;
 
 /** Env vars that the settings page may write. */
-export const WRITABLE_KEYS = () => new Set(["RAILWAY_TOKEN", "GITHUB_TOKEN", "REVENUECAT_API_KEY", "OPENROUTER_API_KEY", ...EXTENSIONS.flatMap((e) => e.keys ?? [])]);
+export const WRITABLE_KEYS = () => new Set(["RAILWAY_TOKEN", "GITHUB_TOKEN", "REVENUECAT_API_KEY", "OPENROUTER_API_KEY", "TELEGRAM_BOT_TOKEN", ...EXTENSIONS.flatMap((e) => e.keys ?? [])]);

@@ -91,23 +91,50 @@ const Subscription = z.object({
   manage_url: z.string().optional(),
 });
 
+const Slug = z.string().regex(/^[a-z0-9][a-z0-9-]*$/, "lowercase letters, digits and dashes");
+
+/** What the Now list can hold; a routine with `on` hands new ones to an agent. */
+export const NOW_KINDS = ["down", "payment", "birthday", "sale", "reply", "civic", "ci", "refresh"] as const;
+
 const Routine = z
   .object({
-    id: z.string().regex(/^[a-z0-9][a-z0-9-]*$/, "lowercase letters, digits and dashes"),
+    id: Slug,
     name: z.string().optional(),
     /** Local time, "HH:MM" (24 h). */
-    at: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "HH:MM, 24-hour"),
+    at: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "HH:MM, 24-hour").optional(),
     /** ISO weekdays it runs on (1 = Monday … 7 = Sunday). Default: every day. */
     days: z.array(z.number().int().min(1).max(7)).default([1, 2, 3, 4, 5, 6, 7]),
+    /** Instead of a time: each new Now item of these kinds is handed to the agent, as it appears. */
+    on: z.array(z.enum(NOW_KINDS)).min(1).optional(),
     /** A built-in task: "refresh-life" captures Gmail and Google Calendar into My life. */
     task: z.enum(["refresh-life"]).optional(),
-    /** What to ask, in your words (when no built-in task). */
+    /** A skill of the agent's folder to follow (skills/<id>/SKILL.md). */
+    skill: z.string().optional(),
+    /** What to ask, in your words (or added to the task, the skill or the Now item). */
     prompt: z.string().optional(),
+    /** A bot id (agent.bots) to run it. */
+    bot: z.string().optional(),
     /** A project id to run it in; default: the agent's own folder. */
     project: z.string().optional(),
     enabled: z.boolean().default(true),
   })
-  .refine((r) => r.task || r.prompt, { message: "a routine needs a task or a prompt" });
+  .refine((r) => r.at || r.on, { message: "a routine needs a time (at) or Now kinds (on)" })
+  .refine((r) => r.on || r.task || r.prompt || r.skill, { message: "a routine needs a task, a skill or a prompt" });
+
+/** A named agent of your team: its own folder, memory and personality, on Claude or Codex. */
+const Bot = z.object({
+  id: Slug,
+  name: z.string(),
+  emoji: z.string().optional(),
+  color: z.string().optional(),
+  /** What it is for, in a sentence or two. Seeds its SOUL.md, which you can then edit. */
+  role: z.string(),
+  /** Claude Code (your Claude subscription) or Codex (your ChatGPT subscription). Default: agent.provider. */
+  provider: z.enum(["claude", "codex"]).optional(),
+  /** Model id; default: as for the main agent. */
+  model: z.string().optional(),
+  enabled: z.boolean().default(true),
+});
 
 export const ConfigSchema = z.object({
   $schema: z.string().optional(),
@@ -170,6 +197,8 @@ export const ConfigSchema = z.object({
       enabled: z.boolean().default(true),
       /** The agent's own folder, where your life conversations live. */
       home: z.string().default("~/.zenith/life"),
+      /** Your agent's name: how it calls itself, and how the interface names it. */
+      name: z.string().default("zenith"),
       /** Who answers by default: Claude Code or Codex. */
       provider: z.enum(["claude", "codex"]).default("claude"),
       /** Model id, e.g. "claude-opus-5-5". Default: zenith code's default, else your latest thread's. */
@@ -179,8 +208,26 @@ export const ConfigSchema = z.object({
         .array(Routine)
         .refine((list) => new Set(list.map((r) => r.id)).size === list.length, { message: "routine ids must be unique" })
         .default([]),
+      /** Your team: named agents with a role, each on Claude or Codex, that your agent hands work to. */
+      bots: z
+        .array(Bot)
+        .refine((list) => new Set(list.map((b) => b.id)).size === list.length, { message: "bot ids must be unique" })
+        .default([]),
+      /** Talk to your agent from elsewhere. Telegram: the bot token is TELEGRAM_BOT_TOKEN (.env.local). */
+      gateway: z
+        .object({
+          telegram: z
+            .object({
+              /** Chat ids allowed to talk to it (send /start to your bot to learn yours). */
+              chats: z.array(z.union([z.number().int(), z.string().regex(/^-?\d+$/)])).default([]),
+              /** Where messages go: "life" (default), a bot id or a project id. */
+              target: z.string().optional(),
+            })
+            .optional(),
+        })
+        .default({}),
     })
-    .default({ enabled: true, home: "~/.zenith/life", provider: "claude", routines: [] }),
+    .default({ enabled: true, home: "~/.zenith/life", name: "zenith", provider: "claude", routines: [], bots: [], gateway: {} }),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
@@ -191,3 +238,4 @@ export type BrandName = z.infer<typeof Brand>;
 export type NetworkName = z.infer<typeof Network>;
 
 export type RoutineConfig = z.infer<typeof Routine>;
+export type BotConfig = z.infer<typeof Bot>;

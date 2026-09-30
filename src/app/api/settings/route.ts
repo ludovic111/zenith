@@ -22,6 +22,7 @@ export async function POST(request: Request) {
   await writeFile(FILE, lines.join("\n") + "\n", { mode: 0o600 });
 
   process.env[name] = clean;
+  if (name === "TELEGRAM_BOT_TOKEN") (await import("@/lib/agent/gateway")).startGateway();
   // Drop every cached source and any session an extension kept (globalThis.__<name>Cookie, __<name>Session…).
   const g = globalThis as Record<string, unknown>;
   (g.__zenithCache as Map<string, unknown> | undefined)?.clear();

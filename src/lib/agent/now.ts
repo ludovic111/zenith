@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { PROJECTS } from "../projects";
+import type { NOW_KINDS } from "../config-schema";
 import { l10n, tr } from "../i18n";
 import { ago } from "../format";
 import { source } from "../source";
@@ -22,7 +23,7 @@ import { serial, writeJson } from "./files";
  * an item that comes back changed (a new email, another failure) is a new item.
  */
 
-export type NowKind = "down" | "payment" | "birthday" | "sale" | "reply" | "civic" | "ci" | "refresh";
+export type NowKind = (typeof NOW_KINDS)[number];
 
 export type NowItem = {
   id: string;

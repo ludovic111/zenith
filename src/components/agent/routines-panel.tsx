@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { CalendarClock, LoaderCircle, Play } from "lucide-react";
+import { CalendarClock, LoaderCircle, Play, Radar } from "lucide-react";
 import { ago, date } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -12,11 +12,13 @@ import { threadHref } from "@/components/code/store";
 export type RoutineView = {
   id: string;
   title: string;
-  at: string;
+  at: string | null;
+  /** The Now kinds it acts on, named, when it runs on an event. */
+  on: string[] | null;
   days: number[];
   enabled: boolean;
   target: string;
-  last: { at: string; threadId?: string; environmentId?: string; error?: string } | null;
+  last: { at: string; threadId?: string; environmentId?: string; error?: string; item?: string } | null;
   /** Next scheduled run (ISO), null when paused. */
   next?: string | null;
 };
@@ -24,6 +26,7 @@ export type RoutineView = {
 const DAY = () => [tr("lun", "Mon"), tr("mar", "Tue"), tr("mer", "Wed"), tr("jeu", "Thu"), tr("ven", "Fri"), tr("sam", "Sat"), tr("dim", "Sun")];
 
 function when(r: RoutineView) {
+  if (r.on) return tr(`à chaque ${r.on.join(", ")}`, `on each ${r.on.join(", ")}`);
   const days =
     r.days.length === 7
       ? tr("tous les jours", "every day")
@@ -33,7 +36,7 @@ function when(r: RoutineView) {
   return tr(`${days} à ${r.at}`, `${days} at ${r.at}`);
 }
 
-/** Agents that run on their own, once a day: when, where, their last and next run, and a way to run one now. */
+/** Agents that run on their own, at a set time or on an event: when, who, their last and next run, and a way to run one now. */
 export function RoutinesList({ routines, className }: { routines: RoutineView[]; className?: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
@@ -57,7 +60,11 @@ export function RoutinesList({ routines, className }: { routines: RoutineView[];
     <ul className={cn("divide-y divide-line", className)}>
       {routines.map((r) => (
         <li key={r.id} className="flex items-center gap-3 px-4 py-2.5">
-          <CalendarClock className={cn("size-4 shrink-0", r.enabled ? "text-ink-3" : "text-ink-3/50")} />
+          {r.on ? (
+            <Radar className={cn("size-4 shrink-0", r.enabled ? "text-ink-3" : "text-ink-3/50")} />
+          ) : (
+            <CalendarClock className={cn("size-4 shrink-0", r.enabled ? "text-ink-3" : "text-ink-3/50")} />
+          )}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 text-[13px]">
               <span className={cn("truncate", r.enabled ? "text-ink" : "text-ink-3")}>{r.title}</span>

@@ -33,7 +33,7 @@ cp zenith.config.example.json zenith.config.json
 | `obsidian` | object | `{ "exportDir": "zenith" }` | Your Obsidian vault. See [obsidian](#obsidian). |
 | `mac` | object | `{ "bundleId": "dev.zenith.app" }` | The native Mac app. See [mac](#mac). |
 | `code` | object | `{ "enabled": true, "port": 4749 }` | zenith code, the coding workspace. See [code](#code). |
-| `agent` | object | `{ "enabled": true, "provider": "claude" }` | The zenith agent: Ask zenith, Now, routines. See [agent](#agent). |
+| `agent` | object | `{ "enabled": true, "provider": "claude" }` | The zenith agent and its team: Ask zenith, Now, routines, Telegram. See [agent](#agent). |
 
 ```json
 {
@@ -253,15 +253,30 @@ Without `vault`, zenith uses the vault currently open in Obsidian.
 
 ## agent
 
-The zenith agent (see [agent.md](agent.md)). It runs through zenith code, so `code.enabled` must stay on.
+The zenith agent and its team (see [agent.md](agent.md)). They run through zenith code, so `code.enabled` must stay on.
 
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `enabled` | boolean | `true` | Shows Ask zenith (⌘J), the Now list and the routines. |
-| `home` | string | `"~/.zenith/life"` | The agent's own folder, where conversations about your life run. zenith writes its instructions there. |
+| `enabled` | boolean | `true` | Shows Ask zenith (⌘J), the team, the Now list and the routines. |
+| `name` | string | `"zenith"` | Your agent's name: how it calls itself. |
+| `home` | string | `"~/.zenith/life"` | The agent's own folder, where conversations about your life run. It holds SOUL.md, USER.md, MEMORY.md and skills/; the bots' folders go next to it (`~/.zenith/bots/<id>`). |
 | `provider` | `"claude"` \| `"codex"` | `"claude"` | Who answers by default (switchable in the ask bar). |
 | `model` | string | — | Model id for that provider, e.g. `"claude-opus-5-5"`. Default: zenith code's default model, else the one of your latest thread. |
-| `routines` | array | `[]` | Agents that run on their own, once a day. |
+| `bots` | array | `[]` | Your team: named agents with a role, each on Claude or Codex. |
+| `routines` | array | `[]` | Agents that run on their own, at a set time or on an event. |
+| `gateway` | object | `{}` | Talk to your agent from elsewhere: `{ "telegram": { "chats": [123456789], "target": "life" } }`, with the bot token in `TELEGRAM_BOT_TOKEN`. |
+
+Each bot:
+
+| Field | Type | What it does |
+| --- | --- | --- |
+| `id` | string | Lowercase letters, digits and dashes; not a project id, `life` or `zenith`. You call it with `@id`. |
+| `name` | string | Its name. |
+| `role` | string | What it is for, in a sentence or two. Seeds its SOUL.md, which you can then edit. |
+| `provider` | `"claude"` \| `"codex"` | The subscription it runs on. Default: `agent.provider`. Give Claude to bots that need Claude's connectors (Gmail, Calendar…). |
+| `model` | string | Model id for its provider. |
+| `emoji`, `color` | string | How the interface shows it. |
+| `enabled` | boolean | `false` benches it. |
 
 Each routine:
 
@@ -270,17 +285,26 @@ Each routine:
 | `id` | string | Lowercase letters, digits and dashes. |
 | `at` | `"HH:MM"` | Local time. A Mac asleep then catches up within three hours. |
 | `days` | number[] | ISO weekdays, 1 = Monday … 7 = Sunday. Default: every day. |
+| `on` | string[] | Instead of `at`: Now kinds (`down`, `payment`, `birthday`, `sale`, `reply`, `civic`, `ci`, `refresh`). Each new item of those kinds is handed to the agent once, as it appears. |
 | `task` | `"refresh-life"` | A built-in request: capture Gmail and Google Calendar into My life. |
-| `prompt` | string | Or your own request, in your words. |
-| `project` | string | A project id to run it in. Default: the agent's folder. |
+| `skill` | string | A skill to follow (`skills/<id>/SKILL.md`). |
+| `prompt` | string | Your own request, in your words (or added to the task, the skill or the Now item). |
+| `bot` | string | A bot id to run it. |
+| `project` | string | A project id to run it in. Default: the agent's folder (or, with `on`, where the item belongs). |
 | `name` | string | Shown in AI agents → Routines. |
 | `enabled` | boolean | `false` pauses it. |
 
 ```json
 "agent": {
+  "bots": [
+    { "id": "inbox", "name": "Inbox", "emoji": "✉️", "provider": "claude", "role": "Keeps my inbox and calendar: triages, drafts replies in my voice, never sends." },
+    { "id": "ops", "name": "Ops", "emoji": "🛠️", "provider": "codex", "role": "Keeps my projects healthy: broken CI, dependencies, PRs. Fixes on a branch, never on main." }
+  ],
   "routines": [
     { "id": "morning", "at": "07:30", "task": "refresh-life" },
-    { "id": "weekly-review", "at": "18:00", "days": [5], "prompt": "Review my week: what shipped, what slipped, what to do Monday. Keep it to 10 lines." }
+    { "id": "day", "at": "07:45", "skill": "plan-day" },
+    { "id": "weekly-review", "at": "18:00", "days": [5], "skill": "weekly-review" },
+    { "id": "ci", "on": ["ci"], "bot": "ops" }
   ]
 }
 ```

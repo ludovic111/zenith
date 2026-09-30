@@ -41,17 +41,49 @@ Les agents qui attendent ta réponse ou ton approbation passent devant.
 
 Chaque élément a un seul geste : **Confier**. zenith lance un agent avec une consigne précise écrite pour cet élément (*lis le fil, rédige une réponse dans mon ton en brouillon Gmail, ne l'envoie pas*), et tu arrives dans son thread. L'élément montre ensuite où en est l'agent. **✓** le classe, **🕑** le cache jusqu'à demain ; les deux s'annulent. Un élément qui change (un nouveau message, un nouvel échec) revient comme un nouveau.
 
-## Ce que l'agent sait et peut faire
+## Son équipe
 
-zenith écrit les consignes de l'agent dans son dossier : `AGENTS.md` (lu par Codex, importé par `CLAUDE.md` pour Claude Code). Elles lui disent qui tu es, où sont ton brief et tes documents, tes projets et leurs dossiers, et les règles :
+Un agent principal (celui de « Ma vie ») et, si tu veux, des **bots** : des agents nommés, chacun avec un rôle, son dossier, sa personnalité et sa mémoire, qui tournent sur **ton abonnement Claude** (par Claude Code) ou **ton abonnement ChatGPT** (par Codex). C'est l'équipe des ChatGPT Dots et des Grok Bots, sur tes propres abonnements, sur ton Mac.
+
+```json
+"agent": {
+  "name": "zenith",
+  "bots": [
+    { "id": "courrier", "name": "Courrier", "emoji": "✉️", "provider": "claude", "role": "Tient ma boîte mail et mon agenda : trie, prépare les réponses en brouillon, n'envoie jamais rien." },
+    { "id": "atelier", "name": "Atelier", "emoji": "🛠️", "provider": "codex", "role": "Veille à la santé technique de mes projets : CI, dépendances, PR. Répare dans une branche, jamais sur main." }
+  ]
+}
+```
+
+- **Leur parler** : `@courrier …` dans la barre, ⌘J ou ⌘K ; ou le menu de destination ; ou leur carte dans **Agents IA → Équipe**. La puce Claude/Codex suit l'abonnement du bot.
+- **Se passer le travail** : l'agent principal les connaît (rôle, abonnement) et leur confie ce qui est dans leur rôle avec `zenith_delegate`, puis rend compte. Un bot sur Codex qui a besoin de Gmail passe la main à un bot sur Claude.
+- Leurs conversations sont dans la barre latérale, sous **Conversations**.
+
+## Ce qu'il sait, ce qu'il apprend
+
+Chaque agent a un dossier (`~/.zenith/life` pour le principal, `~/.zenith/bots/<id>` pour les bots), à la manière de Hermes Agent :
+
+| Fichier | |
+| --- | --- |
+| `SOUL.md` | Sa personnalité : ton, habitudes, ce qu'il fait toujours ou jamais. Écrit une fois (le rôle d'un bot), puis à toi. |
+| `USER.md` | Ce que l'équipe sait de toi : préférences, façon d'écrire, personnes importantes. Un seul, partagé, dans le dossier principal. |
+| `MEMORY.md` | Sa mémoire : décisions, leçons, où en sont les choses. |
+| `skills/` | Les savoir-faire de l'équipe, un `SKILL.md` chacun (dossier principal, partagé). |
+| `AGENTS.md` | Ses consignes, réécrites par zenith à chaque demande, avec tout ce qui précède recopié dedans : Codex le lit, Claude Code l'importe par `CLAUDE.md`. Ne le modifie pas. |
+
+Les consignes lui disent qui tu es, où sont ton brief et tes documents, tes projets et leurs dossiers, son équipe, ses skills, et les règles :
 
 1. **Faire, pas décrire**, puis résumer en une à trois lignes.
 2. **Demander avant ce qui sort du Mac ou ne se défait pas** : envoyer un e-mail ou un message, publier, payer, acheter, répondre à une invitation, supprimer, pousser sur une branche principale, déployer en production. Il prépare (brouillon, branche, PR), montre le contenu exact, et demande.
 3. Pas de numéro de carte, mot de passe, adresse ou téléphone dans un fichier ; tes données n'entrent jamais dans le dépôt (public) de zenith.
 
-`MEMORY.md`, à côté, est la mémoire de l'agent : il y ajoute ce qui doit durer (préférences, personnes, décisions) ; tu peux la modifier aussi. Le dossier branche aussi le serveur MCP de zenith pour Claude Code (`.mcp.json`) et Codex (`.codex/config.toml`).
+Et d'**apprendre sans qu'on le lui demande** : une correction ou une préférence va dans `USER.md`, une décision dans `MEMORY.md`, une démarche qu'il refera devient un skill. Ces fichiers restent courts (au-delà d'une limite, zenith tronque et lui demande de consolider).
 
-Ce qu'il atteint : le brief et les documents de zenith, tes notes Obsidian, le shell (`git`, `gh`…), le web, et **tes connecteurs Claude** (Gmail, Google Agenda, Drive… tout ce que tu as branché sur claude.ai). Quand il en manque un, il dit lequel.
+Ce qu'il atteint : le brief et les documents de zenith, tes notes Obsidian, le shell (`git`, `gh`…), le web, et les outils de sa session — **tes connecteurs Claude** (Gmail, Google Agenda, Drive…) sur Claude, les plugins de Codex sur Codex. Quand il en manque un, il dit lequel. Le dossier branche aussi le serveur MCP de zenith pour Claude Code (`.mcp.json`) et Codex (`.codex/config.toml`).
+
+## Skills
+
+Des savoir-faire écrits, dans `~/.zenith/life/skills/<id>/SKILL.md` (le format agentskills.io que Claude Code et Codex lisent tous deux ; zenith les relie dans `.claude/skills` et `.agents/skills` de chaque dossier). zenith en pose cinq au départ — `plan-day`, `reply-email`, `weekly-review`, `watch`, `write-skill` — puis l'équipe en écrit d'autres au fil du travail. Tu peux les modifier ou les supprimer : zenith ne réécrit jamais un skill qu'il a déjà posé. Ils sont listés dans **Agents IA → Skills**, et une routine peut en suivre un (`"skill": "weekly-review"`).
 
 ## Des agents qui en appellent d'autres
 
@@ -60,7 +92,7 @@ Le [serveur MCP](../README.fr.md#pour-les-agents-ia) permet à n'importe quel ag
 | Outil | |
 | --- | --- |
 | `zenith_now` | Ce qui attend, avec les ids. |
-| `zenith_delegate` | Lance un autre agent dans un projet (ou dans `life`, ou dans `zenith`) avec une consigne complète. Il travaille en parallèle et apparaît dans la barre latérale. |
+| `zenith_delegate` | Lance un autre agent dans un projet, chez un bot de l'équipe (par son id), dans `life` ou dans `zenith`, avec une consigne complète. Il travaille en parallèle et apparaît dans la barre latérale. |
 | `zenith_agent` | L'état et les derniers messages d'un agent lancé ainsi. |
 | `zenith_done` | Classe un élément de Maintenant, ou le reporte. |
 
@@ -68,26 +100,43 @@ L'agent de vie peut ainsi découper *« prépare my-app pour la review App Store
 
 ## Routines
 
-Des agents qui travaillent seuls, une fois par jour à heure fixe, listés dans **Agents IA → Routines** avec leur dernier passage et un bouton **Lancer**. Dans `zenith.config.json` :
+Des agents qui travaillent seuls, listés dans **Agents IA → Routines** avec leur dernier passage et un bouton **Lancer**. Deux sortes :
+
+- **À heure fixe** (`at`), une fois par jour, les jours choisis.
+- **Sur un événement** (`on`) : chaque nouvel élément de Maintenant de ces sortes (une CI cassée, un e-mail qui attend une réponse, un paiement en échec…) est confié à l'agent dès qu'il apparaît, une seule fois, avec la consigne de l'élément. Ce qui attendait déjà quand tu ajoutes la routine reste à toi ; **Lancer** le lui confie quand même.
+
+Chacune peut être faite par un bot (`bot`) et suivre un skill (`skill`) :
 
 ```json
 "agent": {
   "routines": [
     { "id": "matin", "at": "07:30", "task": "refresh-life" },
-    { "id": "vendredi", "at": "18:00", "days": [5], "prompt": "Fais le bilan de ma semaine : ce qui est sorti, ce qui a glissé, quoi faire lundi." }
+    { "id": "journee", "at": "07:45", "skill": "plan-day" },
+    { "id": "vendredi", "at": "18:00", "days": [5], "skill": "weekly-review" },
+    { "id": "ci", "on": ["ci"], "bot": "atelier" },
+    { "id": "reponses", "on": ["reply", "sale"], "bot": "courrier", "skill": "reply-email" }
   ]
 }
 ```
 
-`refresh-life` est intégrée : elle relève Gmail et Google Agenda dans Ma vie, pour que la vue d'ensemble, Maintenant et le brief soient frais à ton réveil. Un Mac endormi à l'heure dite rattrape dans les trois heures ; chaque routine tourne au plus une fois par jour, même avec deux serveurs zenith. Tous les champs : [configuration](configuration.md#agent).
+`refresh-life` est intégrée : elle relève Gmail et Google Agenda dans Ma vie, pour que la vue d'ensemble, Maintenant et le brief soient frais à ton réveil. Un Mac endormi à l'heure dite rattrape dans les trois heures ; chaque routine tourne au plus une fois par jour, même avec deux serveurs zenith. Les événements sont regardés toutes les cinq minutes, trois éléments au plus par routine et douze par heure en tout. Tous les champs : [configuration](configuration.md#agent).
+
+## Depuis ton téléphone (Telegram)
+
+Parle à ton agent depuis Telegram, comme à Hermes Agent :
+
+1. Crée un bot avec [@BotFather](https://t.me/BotFather) et colle son jeton dans **Réglages → Agent zenith → Telegram** (il va dans `.env.local` sous `TELEGRAM_BOT_TOKEN`).
+2. Ajoute `"gateway": { "telegram": { "chats": [] } }` dans `agent`, envoie `/start` à ton bot : il te répond l'id de ton chat. Mets-le dans `chats` et relance zenith.
+
+Un message lance une conversation avec ton agent (ou `target` : un bot, un projet ; `@id` au début marche aussi), ou poursuit celle des deux dernières heures ; `/new` repart de zéro. La réponse arrive quand l'agent a fini ; s'il attend ton accord, tu reçois le lien pour le lui donner dans zenith. Seuls les chats listés sont écoutés ; les autres apprennent leur id, rien de plus. zenith doit tourner sur ton Mac.
 
 ## Sécurité
 
 - Seules les pages de zenith (même origine, JSON) et les programmes locaux qui lisent `.data/agent-token` (créé en mode 600) peuvent lancer un agent. Une page web ne le peut pas, même ouverte sur ce Mac.
-- **Les mots venus d'ailleurs n'ont jamais tous les droits.** Tout ce qui porte un texte que zenith n'a pas écrit — éléments de Maintenant (e-mails, notes, CI), routines, demandes d'autres agents, et toute demande à ton agent de vie — tourne au plus en mode **auto** de zenith code : l'agent travaille seul, mais les relecteurs de Claude et de Codex bloquent les actions risquées (faire sortir des données, commandes destructrices) qu'un e-mail piégé pourrait demander. Ce que tu tapes pour un projet garde ton mode habituel. Un mode par défaut plus strict (*approbation requise*, *modifications acceptées*) l'emporte toujours.
+- **Les mots venus d'ailleurs n'ont jamais tous les droits.** Tout ce qui porte un texte que zenith n'a pas écrit — éléments de Maintenant (e-mails, notes, CI), routines, demandes d'autres agents, messages Telegram, et toute demande à ton agent de vie ou à un bot — tourne au plus en mode **auto** de zenith code : l'agent travaille seul, mais les relecteurs de Claude et de Codex bloquent les actions risquées (faire sortir des données, commandes destructrices) qu'un e-mail piégé pourrait demander. Ce que tu tapes pour un projet garde ton mode habituel. Un mode par défaut plus strict (*approbation requise*, *modifications acceptées*) l'emporte toujours.
 - Les consignes de l'agent lui disent que les e-mails, pages et messages sont des données, jamais des ordres, et les demandes que zenith écrit le rappellent.
-- Chaque demande, sa destination et son thread sont notés dans `.data/agent.json`.
+- Chaque demande, sa destination, son origine et son thread sont notés dans `.data/agent.json`, et affichés dans **Agents IA → Activité**.
 
 ## Sous le capot
 
-zenith parle à l'API HTTP de zenith code avec une session qu'il émet lui-même (`auth session issue`, renouvelée avant expiration) : `thread.create`, puis `thread.turn.start`. Tout est dans `src/lib/agent/` : `ask.ts` (destination, modèle, lancement), `now.ts`, `routines.ts`, `workspace.ts` (le dossier de l'agent), `tasks.ts` (consignes intégrées), `target.ts` (règles de destination, partagées avec le navigateur).
+zenith parle à l'API HTTP de zenith code avec une session qu'il émet lui-même (`auth session issue`, renouvelée avant expiration) : `thread.create`, puis `thread.turn.start`. Tout est dans `src/lib/agent/` : `ask.ts` (destination, modèle, lancement), `team.ts` (l'équipe), `workspace.ts` (les dossiers des agents), `skills.ts`, `now.ts`, `routines.ts`, `gateway.ts` (Telegram), `tasks.ts` (consignes intégrées), `target.ts` (règles de destination, partagées avec le navigateur).

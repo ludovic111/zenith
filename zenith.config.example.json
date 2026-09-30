@@ -46,6 +46,14 @@
   "code": { "enabled": true, "port": 4749 },
   "agent": {
     "provider": "claude",
-    "routines": [{ "id": "morning", "name": "Morning capture", "at": "07:30", "task": "refresh-life" }]
+    "bots": [
+      { "id": "inbox", "name": "Inbox", "emoji": "✉️", "provider": "claude", "role": "Keeps my inbox and calendar: triages, drafts replies in my voice, never sends." },
+      { "id": "ops", "name": "Ops", "emoji": "🛠️", "provider": "codex", "role": "Keeps my projects healthy: broken CI, dependencies, PRs. Fixes on a branch, never on main." }
+    ],
+    "routines": [
+      { "id": "morning", "name": "Morning capture", "at": "07:30", "task": "refresh-life" },
+      { "id": "day", "name": "My day", "at": "07:45", "skill": "plan-day" },
+      { "id": "ci", "name": "Fix the CI", "on": ["ci"], "bot": "ops" }
+    ]
   }
 }

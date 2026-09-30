@@ -7,17 +7,19 @@ export async function register() {
   const { startCodeServer } = await import("./lib/code/manager");
   startCodeServer();
 
-  // The zenith agent: its folder, the token local agents act with, and its routines.
+  // The zenith agent: its team's folders, the token local agents act with, its routines and its gateway.
   const { config } = await import("./lib/config");
   if (config().agent.enabled) {
-    const [{ ensureWorkspace }, { agentToken }, { startRoutines }] = await Promise.all([
+    const [{ ensureTeam }, { agentToken }, { startRoutines }, { startGateway }] = await Promise.all([
       import("./lib/agent/workspace"),
       import("./lib/agent/auth"),
       import("./lib/agent/routines"),
+      import("./lib/agent/gateway"),
     ]);
     agentToken();
-    ensureWorkspace().catch((e) => console.error("[zenith] agent folder:", e));
+    ensureTeam().catch((e) => console.error("[zenith] agent folders:", e));
     startRoutines();
+    startGateway();
   }
 
   // Context for agents: rewritten every 10 minutes into context/ and the Obsidian vault.

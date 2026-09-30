@@ -3,16 +3,29 @@ import { config } from "../config";
 import { tr } from "../i18n";
 import { targets } from "./ask";
 import { agentHome } from "./workspace";
+import { bots } from "./team";
 import type { NowItem } from "./now";
 import type { AgentTarget, Provider } from "./target";
 
 /** What the ask bar needs from the server: destinations, provider, and words to start from. */
 
-export type AgentUi = { enabled: boolean; targets: AgentTarget[]; provider: Provider; home: string };
+export type AgentUi = {
+  enabled: boolean;
+  targets: AgentTarget[];
+  provider: Provider;
+  home: string;
+  bots: { id: string; name: string; home: string; color: string; emoji?: string }[];
+};
 
 export function agentUi(): AgentUi {
   const c = config();
-  return { enabled: c.agent.enabled && c.code.enabled, targets: targets(), provider: c.agent.provider, home: agentHome() };
+  return {
+    enabled: c.agent.enabled && c.code.enabled,
+    targets: targets(),
+    provider: c.agent.provider,
+    home: agentHome(),
+    bots: bots().map(({ id, name, home, color, emoji }) => ({ id, name, home, color, emoji })),
+  };
 }
 
 /** Placeholders drawn from what is waiting for you, then things anyone might ask. */

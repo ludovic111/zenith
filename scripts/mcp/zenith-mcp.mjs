@@ -202,8 +202,14 @@ const attempt = async (fn) => {
   }
 };
 
-// Only projects with a folder can host an agent.
-const TARGETS = ["life", ...PROJECTS.filter((id) => (CONFIG.projects ?? []).some((p) => p?.id === id && p.dir)), "zenith"];
+// Only projects with a folder can host an agent; bots of the team have their own.
+const BOTS = (Array.isArray(CONFIG.agent?.bots) ? CONFIG.agent.bots : []).filter(
+  (b) => typeof b?.id === "string" && b.enabled !== false && !["life", "zenith", "all", ...PROJECTS].includes(b.id),
+);
+const TARGETS = ["life", ...BOTS.map((b) => b.id), ...PROJECTS.filter((id) => (CONFIG.projects ?? []).some((p) => p?.id === id && p.dir)), "zenith"];
+const team = BOTS.length
+  ? ` The user's team of bots (each with its own memory, on the user's Claude or ChatGPT/Codex subscription): ${BOTS.map((b) => `"${b.id}" (${b.name ?? b.id}, ${b.provider ?? CONFIG.agent?.provider ?? "claude"}: ${String(b.role ?? "").replace(/\s+/g, " ").slice(0, 140)})`).join("; ")}.`
+  : "";
 
 server.registerTool(
   "zenith_now",
@@ -228,11 +234,11 @@ server.registerTool(
   {
     title: "Hand work to an agent",
     description:
-      `Starts another AI agent (Claude Code or Codex, in zenith code) that works in parallel: in a project's folder for code (${projectList}), in "zenith" for the dashboard itself, or in "life" for anything else. It does not see your conversation: give it a complete, self-contained brief. Returns its thread id (follow up with zenith_agent) and a link the user can open.`,
+      `Starts another AI agent (Claude Code or Codex, in zenith code) that works in parallel: in a project's folder for code (${projectList}), in "zenith" for the dashboard itself, a bot of the team by its id for what fits its role, or in "life" for anything else.${team} It does not see your conversation: give it a complete, self-contained brief. Returns its thread id (follow up with zenith_agent) and a link the user can open.`,
     inputSchema: {
       prompt: z.string().min(8).describe("the complete brief for the agent"),
       project: z.enum(TARGETS).optional().describe(`where it works: ${TARGETS.join(", ")}; default: guessed from the brief`),
-      provider: z.enum(["claude", "codex"]).optional().describe("Claude Code or Codex; default: the user's choice"),
+      provider: z.enum(["claude", "codex"]).optional().describe("Claude Code or Codex; default: the bot's, else the user's choice"),
       now_id: z.string().optional().describe("the zenith_now item this handles, if any"),
     },
   },

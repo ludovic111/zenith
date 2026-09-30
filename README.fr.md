@@ -11,13 +11,14 @@ Il tourne sur ta machine, ne répond que sur `127.0.0.1` et n'envoie tes donnée
 | Page | Contenu |
 | --- | --- |
 | **Demande à zenith** | Une seule boîte, partout (accueil, pages projet, ⌘J, ⌘K) : dis ce que tu veux, un agent le fait et s'ouvre en thread. Va au projet que tu nommes, sinon à ton agent de vie. La plupart des pages proposent aussi des actions d'agent en un clic sur ce qu'elles montrent (préparer une réponse, réparer une CI, revoir les abonnements…) |
-| **Maintenant** | Ce qui t'attend, le plus pressant d'abord, avec pour chaque chose *Confier* à un agent, *fait* et *plus tard*. Et les routines : des agents qui travaillent seuls chaque matin |
+| **Maintenant** | Ce qui t'attend, le plus pressant d'abord, avec pour chaque chose *Confier* à un agent, *fait* et *plus tard*. Et les routines : des agents qui travaillent seuls à heure fixe, ou dès qu'une chose nouvelle attend |
+| **Équipe** | Ton agent et ses bots : des agents nommés avec un rôle, leur personnalité (SOUL.md), leur mémoire et des skills partagés, chacun sur ton abonnement Claude ou ChatGPT (Codex). `@nom` pour parler à l'un d'eux ; ils se passent le travail. Joignables depuis Telegram |
 | Accueil | Aujourd'hui en une ligne, Demande à zenith, Maintenant, tous les projets dans un tableau (état, latence, chiffres clés, commits), l'argent, les agents au travail, six mois de commits, le fil de tout ce qui se passe |
 | Ma vie | Météo, qualité de l'air, UV et pollens, agenda (14 jours, fériés, anniversaires), ce qui t'attend, morceau en cours, temps d'écran, dépenses, rythme de travail |
 | Projets | Une page par projet : disponibilité, latence, trafic et déploiements (Railway), CI, issues et PR (GitHub), releases et téléchargements, note et avis App Store, MRR RevenueCat, sessions d'agents, notes Obsidian, carte d'identité |
 | **Code** | **zenith code** : parle à Claude Code, Codex et d'autres agents dans n'importe lequel de tes projets — diffs, terminaux, worktrees, validations. Ses threads vivent dans la barre latérale de zenith, sous leur projet |
 | Veille | Qui parle de tes projets (Hacker News, GitHub), notifications, nouvelles étoiles, contributions, actualité, marchés, état du Mac |
-| Agents | Toutes les sessions Claude Code et Codex : en cours, coût, lignes écrites, PR, commande pour reprendre ; limites des forfaits ; routines |
+| Agents | Ton équipe, les routines, les skills et l'activité récente ; toutes les sessions Claude Code et Codex : en cours, coût, lignes écrites, PR, commande pour reprendre ; limites des forfaits |
 | Abonnements | Tout ce que tu paies, total mensuel dans ta devise, prochains prélèvements, paiements en échec, jauges Claude / ChatGPT |
 | Annuaire | Noms, identifiants, domaines (registraire, renouvellement, certificat, e-mail), stores et services de chaque projet |
 | Réglages | Un seul endroit pour zenith (configuration, zenith code, l'agent, brancher tes outils d'IA, l'app Mac, sources de données et clés) et zenith code (fournisseurs, projets, contrôle de source, raccourcis…) |

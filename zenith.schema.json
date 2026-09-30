@@ -832,8 +832,11 @@
       "default": {
         "enabled": true,
         "home": "~/.zenith/life",
+        "name": "zenith",
         "provider": "claude",
-        "routines": []
+        "routines": [],
+        "bots": [],
+        "gateway": {}
       },
       "type": "object",
       "properties": {
@@ -843,6 +846,10 @@
         },
         "home": {
           "default": "~/.zenith/life",
+          "type": "string"
+        },
+        "name": {
+          "default": "zenith",
           "type": "string"
         },
         "provider": {
@@ -890,13 +897,36 @@
                   "maximum": 7
                 }
               },
+              "on": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "down",
+                    "payment",
+                    "birthday",
+                    "sale",
+                    "reply",
+                    "civic",
+                    "ci",
+                    "refresh"
+                  ]
+                }
+              },
               "task": {
                 "type": "string",
                 "enum": [
                   "refresh-life"
                 ]
               },
+              "skill": {
+                "type": "string"
+              },
               "prompt": {
+                "type": "string"
+              },
+              "bot": {
                 "type": "string"
               },
               "project": {
@@ -908,9 +938,83 @@
               }
             },
             "required": [
-              "id",
-              "at"
+              "id"
             ]
+          }
+        },
+        "bots": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]*$"
+              },
+              "name": {
+                "type": "string"
+              },
+              "emoji": {
+                "type": "string"
+              },
+              "color": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "provider": {
+                "type": "string",
+                "enum": [
+                  "claude",
+                  "codex"
+                ]
+              },
+              "model": {
+                "type": "string"
+              },
+              "enabled": {
+                "default": true,
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "role"
+            ]
+          }
+        },
+        "gateway": {
+          "default": {},
+          "type": "object",
+          "properties": {
+            "telegram": {
+              "type": "object",
+              "properties": {
+                "chats": {
+                  "default": [],
+                  "type": "array",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      {
+                        "type": "string",
+                        "pattern": "^-?\\d+$"
+                      }
+                    ]
+                  }
+                },
+                "target": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }
