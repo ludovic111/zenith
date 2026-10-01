@@ -1,0 +1,45 @@
+# zenith in Rust: the coding-agents server (crates/zenith-code and its parts in
+# crates/zenith-code/crates/*) and the Mac app (crates/zenith-app). The interface stays web,
+# in code/apps/web.
+[workspace]
+resolver = "2"
+members = [
+  "crates/zenith-app",
+  "crates/zenith-code",
+  "crates/zenith-code/crates/*",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+# Versions shared by every crate: `serde = { workspace = true }`.
+[workspace.dependencies]
+anyhow = "1"
+async-trait = "0.1"
+axum = { version = "0.8", features = ["macros", "ws"] }
+base64 = "0.22"
+bytes = "1"
+futures = "0.3"
+hmac = "0.12"
+jiff = { version = "0.2", features = ["serde"] }
+rand = "0.9"
+regex = "1"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "gzip", "stream"] }
+rusqlite = { version = "0.37", features = ["bundled", "serde_json"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order", "float_roundtrip"] }
+sha2 = "0.10"
+thiserror = "2"
+tokio = { version = "1", features = ["full"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
+tower-http = { version = "0.6", features = ["fs", "compression-gzip", "cors", "set-header"] }
+tracing = "0.1"
+uuid = { version = "1", features = ["v4", "serde"] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+opt-level = "s"

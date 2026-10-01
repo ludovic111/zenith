@@ -10,6 +10,8 @@ export function isSidebarUtilityPage(pathname: string) {
     pathname.startsWith("/settings/") ||
     pathname.startsWith("/projects/") ||
     pathname === "/usage" ||
+    // zenith: the Sessions page (`zenith/SessionsPage.tsx`) is a utility page too.
+    pathname === "/sessions" ||
     pathname === "/pull-requests"
   );
 }

@@ -1,0 +1,947 @@
+{
+  "steps": [
+    {
+      "name": "initialize",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-session-id": "<session>",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "protocolVersion": "2025-06-18",
+          "capabilities": {
+            "logging": {},
+            "tools": {
+              "listChanged": true
+            },
+            "completions": {}
+          },
+          "serverInfo": {
+            "name": "T3 Code",
+            "version": "0.0.43"
+          }
+        }
+      }
+    },
+    {
+      "name": "status",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 40,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"available\":true,\"visible\":true,\"tabId\":\"tab-7\",\"url\":\"http://localhost:5173/\",\"title\":\"Dev\",\"loading\":false}"
+            }
+          ],
+          "structuredContent": {
+            "available": true,
+            "visible": true,
+            "tabId": "tab-7",
+            "url": "http://localhost:5173/",
+            "title": "Dev",
+            "loading": false
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "status of a tab",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 41,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"available\":true,\"visible\":true,\"tabId\":\"tab-7\",\"url\":\"http://localhost:5173/\",\"title\":\"Dev\",\"loading\":false}"
+            }
+          ],
+          "structuredContent": {
+            "available": true,
+            "visible": true,
+            "tabId": "tab-7",
+            "url": "http://localhost:5173/",
+            "title": "Dev",
+            "loading": false
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "open",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 42,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"available\":true,\"visible\":true,\"tabId\":\"tab-7\",\"url\":\"http://localhost:5173/\",\"title\":\"Dev\",\"loading\":false}"
+            }
+          ],
+          "structuredContent": {
+            "available": true,
+            "visible": true,
+            "tabId": "tab-7",
+            "url": "http://localhost:5173/",
+            "title": "Dev",
+            "loading": false
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "open hidden",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 43,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"available\":true,\"visible\":true,\"tabId\":\"tab-7\",\"url\":\"http://localhost:5173/\",\"title\":\"Dev\",\"loading\":false}"
+            }
+          ],
+          "structuredContent": {
+            "available": true,
+            "visible": true,
+            "tabId": "tab-7",
+            "url": "http://localhost:5173/",
+            "title": "Dev",
+            "loading": false
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "navigate",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 44,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"available\":true,\"visible\":true,\"tabId\":\"tab-7\",\"url\":\"http://localhost:5173/settings\",\"title\":\"Dev\",\"loading\":false}"
+            }
+          ],
+          "structuredContent": {
+            "available": true,
+            "visible": true,
+            "tabId": "tab-7",
+            "url": "http://localhost:5173/settings",
+            "title": "Dev",
+            "loading": false
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "click",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 45,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"toolIcon\":{\"_tag\":\"website\",\"pageUrl\":\"http://localhost:5173/\"}}"
+            }
+          ],
+          "structuredContent": {
+            "toolIcon": {
+              "_tag": "website",
+              "pageUrl": "http://localhost:5173/"
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "click by coordinates",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 46,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"toolIcon\":{\"_tag\":\"website\",\"pageUrl\":\"http://localhost:5173/\"}}"
+            }
+          ],
+          "structuredContent": {
+            "toolIcon": {
+              "_tag": "website",
+              "pageUrl": "http://localhost:5173/"
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "scroll returning another tab",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 47,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"toolIcon\":{\"_tag\":\"website\",\"pageUrl\":\"http://localhost:5173/\"}}"
+            }
+          ],
+          "structuredContent": {
+            "toolIcon": {
+              "_tag": "website",
+              "pageUrl": "http://localhost:5173/"
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "evaluate",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 48,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"toolIcon\":{\"_tag\":\"website\",\"pageUrl\":\"http://localhost:5173/\"},\"value\":[\"Connect\",\"Continue\"]}"
+            }
+          ],
+          "structuredContent": {
+            "toolIcon": {
+              "_tag": "website",
+              "pageUrl": "http://localhost:5173/"
+            },
+            "value": [
+              "Connect",
+              "Continue"
+            ]
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "wait for",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 49,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"toolIcon\":{\"_tag\":\"website\",\"pageUrl\":\"http://localhost:5173/\"}}"
+            }
+          ],
+          "structuredContent": {
+            "toolIcon": {
+              "_tag": "website",
+              "pageUrl": "http://localhost:5173/"
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "resize",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 50,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"tabId\":\"tab-7\",\"setting\":{\"_tag\":\"fill\"},\"viewport\":{\"width\":800,\"height\":600},\"toolIcon\":{\"_tag\":\"website\",\"pageUrl\":\"http://localhost:5173/\"}}"
+            }
+          ],
+          "structuredContent": {
+            "tabId": "tab-7",
+            "setting": {
+              "_tag": "fill"
+            },
+            "viewport": {
+              "width": 800,
+              "height": 600
+            },
+            "toolIcon": {
+              "_tag": "website",
+              "pageUrl": "http://localhost:5173/"
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "resize freeform",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 51,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"tabId\":\"tab-7\",\"setting\":{\"_tag\":\"fill\"},\"viewport\":{\"width\":800,\"height\":600},\"toolIcon\":{\"_tag\":\"website\",\"pageUrl\":\"http://localhost:5173/\"}}"
+            }
+          ],
+          "structuredContent": {
+            "tabId": "tab-7",
+            "setting": {
+              "_tag": "fill"
+            },
+            "viewport": {
+              "width": 800,
+              "height": 600
+            },
+            "toolIcon": {
+              "_tag": "website",
+              "pageUrl": "http://localhost:5173/"
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "set appearance",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 52,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"tabId\":\"tab-7\",\"colorScheme\":\"dark\",\"toolIcon\":{\"_tag\":\"website\",\"pageUrl\":\"http://localhost:5173/\"}}"
+            }
+          ],
+          "structuredContent": {
+            "tabId": "tab-7",
+            "colorScheme": "dark",
+            "toolIcon": {
+              "_tag": "website",
+              "pageUrl": "http://localhost:5173/"
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "type into a non-editable target",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 53,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Preview automation type requires an editable focused element."
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "name": "press timing out",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 54,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Preview automation press timed out after 15000ms."
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "name": "recording start",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 55,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"tabId\":\"tab-7\",\"recording\":true,\"startedAt\":\"2026-09-01T00:00:00.000Z\",\"toolIcon\":{\"_tag\":\"website\",\"pageUrl\":\"http://localhost:5173/\"}}"
+            }
+          ],
+          "structuredContent": {
+            "tabId": "tab-7",
+            "recording": true,
+            "startedAt": "2026-09-01T00:00:00.000Z",
+            "toolIcon": {
+              "_tag": "website",
+              "pageUrl": "http://localhost:5173/"
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "recording stop from an older desktop",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 56,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Update the desktop app to transfer recordings. The recording remains on the desktop."
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "name": "snapshot",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 57,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"url\":\"http://localhost:5173/\"}"
+            },
+            {
+              "type": "text",
+              "text": "{\"url\":\"http://localhost:5173/\",\"title\":\"Dev\",\"loading\":false,\"visibleText\":\"Save your changes\",\"interactiveElements\":[{\"tag\":\"button\",\"role\":\"button\",\"name\":\"Save\",\"selector\":\"#save\",\"x\":0,\"y\":0,\"width\":20,\"height\":10}],\"consoleEntries\":[{\"level\":\"log\",\"text\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…\",\"timestamp\":\"t\"}],\"networkEntries\":[],\"actionTimeline\":[],\"screenshot\":{\"mimeType\":\"image/png\",\"width\":1,\"height\":1}}"
+            },
+            {
+              "type": "text",
+              "text": "Snapshot text was bounded. Omitted: accessibilityTree (use interactiveElements locators or preview_evaluate); console entries text after 500 characters."
+            },
+            {
+              "type": "image",
+              "data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=",
+              "mimeType": "image/png"
+            }
+          ],
+          "structuredContent": {
+            "url": "http://localhost:5173/",
+            "title": "Dev",
+            "loading": false,
+            "visibleText": "Save your changes",
+            "interactiveElements": [
+              {
+                "tag": "button",
+                "role": "button",
+                "name": "Save",
+                "selector": "#save",
+                "x": 0,
+                "y": 0,
+                "width": 20,
+                "height": 10
+              }
+            ],
+            "consoleEntries": [
+              {
+                "level": "log",
+                "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…",
+                "timestamp": "t"
+              }
+            ],
+            "networkEntries": [],
+            "actionTimeline": [],
+            "screenshot": {
+              "mimeType": "image/png",
+              "width": 1,
+              "height": 1
+            },
+            "omitted": [
+              "accessibilityTree (use interactiveElements locators or preview_evaluate)",
+              "console entries text after 500 characters"
+            ]
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "snapshot without the image",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 58,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"url\":\"http://localhost:5173/\"}"
+            },
+            {
+              "type": "text",
+              "text": "{\"url\":\"http://localhost:5173/\",\"title\":\"Dev\",\"loading\":false,\"visibleText\":\"Save your changes\",\"interactiveElements\":[{\"tag\":\"button\",\"role\":\"button\",\"name\":\"Save\",\"selector\":\"#save\",\"x\":0,\"y\":0,\"width\":20,\"height\":10}],\"consoleEntries\":[{\"level\":\"log\",\"text\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…\",\"timestamp\":\"t\"}],\"networkEntries\":[],\"actionTimeline\":[],\"screenshot\":{\"mimeType\":\"image/png\",\"width\":1,\"height\":1}}"
+            },
+            {
+              "type": "text",
+              "text": "Snapshot text was bounded. Omitted: accessibilityTree (use interactiveElements locators or preview_evaluate); console entries text after 500 characters."
+            }
+          ],
+          "structuredContent": {
+            "url": "http://localhost:5173/",
+            "title": "Dev",
+            "loading": false,
+            "visibleText": "Save your changes",
+            "interactiveElements": [
+              {
+                "tag": "button",
+                "role": "button",
+                "name": "Save",
+                "selector": "#save",
+                "x": 0,
+                "y": 0,
+                "width": 20,
+                "height": 10
+              }
+            ],
+            "consoleEntries": [
+              {
+                "level": "log",
+                "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…",
+                "timestamp": "t"
+              }
+            ],
+            "networkEntries": [],
+            "actionTimeline": [],
+            "screenshot": {
+              "mimeType": "image/png",
+              "width": 1,
+              "height": 1
+            },
+            "omitted": [
+              "accessibilityTree (use interactiveElements locators or preview_evaluate)",
+              "console entries text after 500 characters"
+            ]
+          },
+          "isError": false
+        }
+      }
+    }
+  ],
+  "commands": [],
+  "hostRequests": [
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabIdExplicit": false,
+      "operation": "status",
+      "input": {},
+      "timeoutMs": 15000
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-3",
+      "tabIdExplicit": true,
+      "operation": "status",
+      "input": {},
+      "timeoutMs": 15000
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-7",
+      "tabIdExplicit": false,
+      "operation": "open",
+      "input": {
+        "reuseExistingTab": true
+      },
+      "timeoutMs": 15000
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-7",
+      "tabIdExplicit": false,
+      "operation": "open",
+      "input": {
+        "url": "localhost:5173",
+        "show": false,
+        "open": false,
+        "reuseExistingTab": true
+      },
+      "timeoutMs": 15000
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-7",
+      "tabIdExplicit": false,
+      "operation": "navigate",
+      "input": {
+        "target": {
+          "kind": "environment-port",
+          "port": 5173
+        },
+        "timeoutMs": 2000
+      },
+      "timeoutMs": 2000
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-7",
+      "tabIdExplicit": false,
+      "operation": "click",
+      "input": {
+        "locator": "text=Go",
+        "timeoutMs": 1000
+      },
+      "timeoutMs": 1000
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-7",
+      "tabIdExplicit": true,
+      "operation": "status",
+      "input": {},
+      "timeoutMs": 500
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-7",
+      "tabIdExplicit": false,
+      "operation": "click",
+      "input": {
+        "x": 1.5,
+        "y": 2
+      },
+      "timeoutMs": 15000
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-7",
+      "tabIdExplicit": true,
+      "operation": "status",
+      "input": {},
+      "timeoutMs": 500
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-7",
+      "tabIdExplicit": false,
+      "operation": "scroll",
+      "input": {
+        "deltaY": 100
+      },
+      "timeoutMs": 15000
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-8",
+      "tabIdExplicit": true,
+      "operation": "status",
+      "input": {},
+      "timeoutMs": 500
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-8",
+      "tabIdExplicit": false,
+      "operation": "evaluate",
+      "input": {
+        "expression": "buttons()"
+      },
+      "timeoutMs": 15000
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-8",
+      "tabIdExplicit": true,
+      "operation": "status",
+      "input": {},
+      "timeoutMs": 500
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-8",
+      "tabIdExplicit": false,
+      "operation": "waitFor",
+      "input": {
+        "text": "Saved"
+      },
+      "timeoutMs": 15000
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-8",
+      "tabIdExplicit": true,
+      "operation": "status",
+      "input": {},
+      "timeoutMs": 500
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-8",
+      "tabIdExplicit": false,
+      "operation": "resize",
+      "input": {
+        "mode": "fill"
+      },
+      "timeoutMs": 15000
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-7",
+      "tabIdExplicit": true,
+      "operation": "status",
+      "input": {},
+      "timeoutMs": 500
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-7",
+      "tabIdExplicit": false,
+      "operation": "resize",
+      "input": {
+        "mode": "freeform",
+        "width": 800,
+        "height": 600
+      },
+      "timeoutMs": 15000
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-7",
+      "tabIdExplicit": true,
+      "operation": "status",
+      "input": {},
+      "timeoutMs": 500
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-7",
+      "tabIdExplicit": false,
+      "operation": "setColorScheme",
+      "input": {
+        "colorScheme": "dark"
+      },
+      "timeoutMs": 15000
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-7",
+      "tabIdExplicit": true,
+      "operation": "status",
+      "input": {},
+      "timeoutMs": 500
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-7",
+      "tabIdExplicit": false,
+      "operation": "type",
+      "input": {
+        "text": "hi"
+      },
+      "timeoutMs": 15000
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-7",
+      "tabIdExplicit": false,
+      "operation": "press",
+      "input": {
+        "key": "Enter",
+        "modifiers": [
+          "Meta"
+        ]
+      },
+      "timeoutMs": 15000
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-7",
+      "tabIdExplicit": false,
+      "operation": "recordingStart",
+      "input": {},
+      "timeoutMs": 15000
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-7",
+      "tabIdExplicit": true,
+      "operation": "status",
+      "input": {},
+      "timeoutMs": 500
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-7",
+      "tabIdExplicit": false,
+      "operation": "recordingStop",
+      "input": {
+        "transferToEnvironment": true
+      },
+      "timeoutMs": 120000
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-7",
+      "tabIdExplicit": true,
+      "operation": "status",
+      "input": {},
+      "timeoutMs": 500
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-7",
+      "tabIdExplicit": false,
+      "operation": "snapshot",
+      "input": {},
+      "timeoutMs": 15000
+    },
+    {
+      "requestId": "<request>",
+      "threadId": "thread-golden",
+      "tabId": "tab-7",
+      "tabIdExplicit": true,
+      "operation": "snapshot",
+      "input": {},
+      "timeoutMs": 15000
+    }
+  ]
+}

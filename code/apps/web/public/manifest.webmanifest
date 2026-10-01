@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "zenith code",
-  "short_name": "zenith code",
+  "name": "zenith",
+  "short_name": "zenith",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

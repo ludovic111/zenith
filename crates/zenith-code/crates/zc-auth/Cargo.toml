@@ -1,0 +1,37 @@
+[package]
+name = "zc-auth"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "zenith code: sessions, pairing credentials, websocket tickets, cookies, DPoP, the RPC scope map and the auth HTTP API"
+
+[dependencies]
+zc-contracts = { path = "../zc-contracts" }
+zc-core = { path = "../zc-core" }
+zc-db = { path = "../zc-db" }
+zc-http = { path = "../zc-http" }
+zc-rpc = { path = "../zc-rpc" }
+async-trait = { workspace = true }
+axum = { workspace = true }
+base64 = { workspace = true }
+bytes = { workspace = true }
+futures = { workspace = true }
+hmac = { workspace = true }
+http = "1"
+jiff = { workspace = true }
+p256 = { version = "0.13", default-features = false, features = ["ecdsa", "std"] }
+rand = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+subtle = "2"
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+url = "2"
+
+[dev-dependencies]
+http-body-util = "0.1"
+tempfile = "3"
+tower = { version = "0.5", features = ["util"] }

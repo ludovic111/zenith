@@ -1,0 +1,2 @@
+# One line is wider than rustfmt’s default: zenith reads like prose.
+max_width = 160

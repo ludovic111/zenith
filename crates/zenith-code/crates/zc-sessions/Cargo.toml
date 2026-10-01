@@ -1,0 +1,24 @@
+[package]
+name = "zc-sessions"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "zenith code: every Claude Code and Codex session of this Mac, read from their own logs, and GET /api/zenith/sessions"
+
+[dependencies]
+zc-http = { path = "../zc-http" }
+zc-rpc = { path = "../zc-rpc" }
+async-trait = { workspace = true }
+axum = { workspace = true }
+http = "1"
+jiff = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+http-body-util = "0.1"
+tempfile = "3"
+tower = { version = "0.5", features = ["util"] }

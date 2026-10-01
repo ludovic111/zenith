@@ -1,0 +1,29 @@
+[package]
+name = "zc-providers"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "zenith code in Rust: the provider core (service, registries, session directory, reaper, event logs, model manifest)"
+
+[dependencies]
+zc-contracts = { path = "../zc-contracts" }
+zc-core = { path = "../zc-core" }
+zc-db = { path = "../zc-db" }
+zc-ports = { path = "../zc-ports" }
+async-trait = { workspace = true }
+futures = { workspace = true }
+jiff = { workspace = true }
+regex = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tokio-util = { version = "0.7", features = ["rt"] }
+tracing = { workspace = true }
+url = "2"
+
+[dev-dependencies]
+zc-settings = { path = "../zc-settings" }
+tempfile = "3"
+tokio = { workspace = true, features = ["test-util"] }

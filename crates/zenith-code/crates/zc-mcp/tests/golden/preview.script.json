@@ -1,0 +1,541 @@
+{
+  "environmentId": "environment-golden",
+  "threadId": "thread-golden",
+  "thread": {
+    "id": "thread-golden",
+    "projectId": "project-golden",
+    "title": "Thread",
+    "modelSelection": {
+      "instanceId": "codex",
+      "model": "gpt-5"
+    },
+    "runtimeMode": "full-access",
+    "interactionMode": "default",
+    "branch": null,
+    "worktreePath": null,
+    "pullRequests": [
+      {
+        "host": "github.com",
+        "repository": "acme/widgets",
+        "number": 3,
+        "url": "https://github.com/acme/widgets/pull/3",
+        "source": "agent",
+        "linkedAt": "2026-08-10T00:00:00.000Z",
+        "snapshot": {
+          "state": "open",
+          "title": "PR 3",
+          "headBranch": "feat-c",
+          "baseBranch": "feat-b",
+          "isDraft": false,
+          "updatedAt": null,
+          "syncedAt": "2026-08-27T00:00:00.000Z"
+        },
+        "stack": null
+      },
+      {
+        "host": "github.com",
+        "repository": "acme/widgets",
+        "number": 1,
+        "url": "https://github.com/acme/widgets/pull/1",
+        "source": "created",
+        "linkedAt": "2026-08-10T00:00:00.000Z",
+        "snapshot": {
+          "state": "open",
+          "title": "PR 1",
+          "headBranch": "feat-a",
+          "baseBranch": "main",
+          "isDraft": false,
+          "updatedAt": null,
+          "syncedAt": "2026-08-27T00:00:00.000Z"
+        },
+        "stack": null
+      },
+      {
+        "host": "github.com",
+        "repository": "acme/widgets",
+        "number": 2,
+        "url": "https://github.com/acme/widgets/pull/2",
+        "source": "agent",
+        "linkedAt": "2026-08-10T00:00:00.000Z",
+        "snapshot": {
+          "state": "open",
+          "title": "PR 2",
+          "headBranch": "feat-b",
+          "baseBranch": "feat-a",
+          "isDraft": false,
+          "updatedAt": null,
+          "syncedAt": "2026-08-27T00:00:00.000Z"
+        },
+        "stack": null
+      },
+      {
+        "host": "github.com",
+        "repository": "acme/widgets",
+        "number": 9,
+        "url": "https://github.com/acme/widgets/pull/9",
+        "source": "stack-dismissed",
+        "linkedAt": "2026-08-10T00:00:00.000Z",
+        "snapshot": null,
+        "stack": null
+      },
+      {
+        "host": "github.com",
+        "repository": "acme/widgets",
+        "number": 10,
+        "url": "https://github.com/acme/widgets/pull/10",
+        "source": "manual",
+        "linkedAt": "2026-08-10T00:00:00.000Z",
+        "snapshot": null,
+        "stack": null
+      }
+    ],
+    "latestTurn": null,
+    "createdAt": "2026-08-01T00:00:00.000Z",
+    "updatedAt": "2026-08-20T00:00:00.000Z",
+    "archivedAt": null,
+    "settledOverride": null,
+    "settledAt": null,
+    "session": null,
+    "latestUserMessageAt": "2026-08-20T00:00:00.000Z",
+    "hasPendingApprovals": false,
+    "hasPendingUserInput": false,
+    "hasActionableProposedPlan": false
+  },
+  "project": {
+    "id": "project-golden",
+    "title": "Project",
+    "workspaceRoot": "/workspace/golden",
+    "defaultModelSelection": null,
+    "scripts": [],
+    "repositoryIdentity": {
+      "canonicalKey": "github.com/acme/widgets",
+      "locator": {
+        "source": "git-remote",
+        "remoteName": "origin",
+        "remoteUrl": "git@github.com:Acme/Widgets.git"
+      },
+      "provider": "github",
+      "displayName": "Acme/Widgets",
+      "owner": "Acme",
+      "name": "Widgets"
+    },
+    "createdAt": "2026-08-01T00:00:00.000Z",
+    "updatedAt": "2026-08-01T00:00:00.000Z"
+  },
+  "rejectLink": [],
+  "rejectUnlink": [],
+  "credentials": {
+    "preview": [
+      "preview"
+    ]
+  },
+  "host": {
+    "clientId": "desktop-golden",
+    "supportedOperations": [
+      "status",
+      "open",
+      "navigate",
+      "snapshot",
+      "click",
+      "type",
+      "press",
+      "scroll",
+      "evaluate",
+      "waitFor",
+      "recordingStart",
+      "recordingStop",
+      "resize",
+      "setColorScheme"
+    ],
+    "responses": {
+      "status": {
+        "ok": true,
+        "result": {
+          "available": true,
+          "visible": true,
+          "tabId": "tab-7",
+          "url": "http://localhost:5173/",
+          "title": "Dev",
+          "loading": false
+        }
+      },
+      "open": {
+        "ok": true,
+        "result": {
+          "available": true,
+          "visible": true,
+          "tabId": "tab-7",
+          "url": "http://localhost:5173/",
+          "title": "Dev",
+          "loading": false
+        }
+      },
+      "navigate": {
+        "ok": true,
+        "result": {
+          "available": true,
+          "visible": true,
+          "tabId": "tab-7",
+          "url": "http://localhost:5173/settings",
+          "title": "Dev",
+          "loading": false
+        }
+      },
+      "click": {
+        "ok": true,
+        "result": {}
+      },
+      "scroll": {
+        "ok": true,
+        "result": {
+          "tabId": "tab-8"
+        }
+      },
+      "evaluate": {
+        "ok": true,
+        "result": [
+          "Connect",
+          "Continue"
+        ]
+      },
+      "waitFor": {
+        "ok": true
+      },
+      "resize": {
+        "ok": true,
+        "result": {
+          "tabId": "tab-7",
+          "setting": {
+            "_tag": "fill"
+          },
+          "viewport": {
+            "width": 800,
+            "height": 600
+          }
+        }
+      },
+      "setColorScheme": {
+        "ok": true,
+        "result": {
+          "tabId": "tab-7",
+          "colorScheme": "dark"
+        }
+      },
+      "type": {
+        "ok": false,
+        "error": {
+          "_tag": "PreviewAutomationTargetNotEditableError",
+          "message": "not editable",
+          "detail": {
+            "selectorKind": "focused-element"
+          }
+        }
+      },
+      "press": {
+        "ok": false,
+        "error": {
+          "_tag": "PreviewAutomationTimeoutError",
+          "message": "slow"
+        }
+      },
+      "recordingStart": {
+        "ok": true,
+        "result": {
+          "tabId": "tab-7",
+          "recording": true,
+          "startedAt": "2026-09-01T00:00:00.000Z"
+        }
+      },
+      "recordingStop": {
+        "ok": true,
+        "result": {
+          "id": "rec",
+          "tabId": "tab-7",
+          "path": "/desktop/rec.webm",
+          "mimeType": "video/webm",
+          "sizeBytes": 6,
+          "createdAt": "2026-09-01T00:00:00.000Z"
+        }
+      },
+      "snapshot": {
+        "ok": true,
+        "result": {
+          "url": "http://localhost:5173/",
+          "title": "Dev",
+          "loading": false,
+          "visibleText": "Save your changes",
+          "interactiveElements": [
+            {
+              "tag": "button",
+              "role": "button",
+              "name": "Save",
+              "selector": "#save",
+              "x": 0,
+              "y": 0,
+              "width": 20,
+              "height": 10
+            }
+          ],
+          "accessibilityTree": {
+            "role": "document"
+          },
+          "consoleEntries": [
+            {
+              "level": "log",
+              "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "timestamp": "t"
+            }
+          ],
+          "networkEntries": [],
+          "actionTimeline": [],
+          "screenshot": {
+            "mimeType": "image/png",
+            "data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=",
+            "width": 1,
+            "height": 1
+          }
+        }
+      }
+    }
+  },
+  "steps": [
+    {
+      "name": "initialize",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-06-18\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"golden\", \"version\": \"1.0.0\"}}}"
+    },
+    {
+      "name": "status",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 40, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_status\", \"arguments\": {}}}"
+    },
+    {
+      "name": "status of a tab",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 41, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_status\", \"arguments\": {\"tabId\": \"tab-3\"}}}"
+    },
+    {
+      "name": "open",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 42, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_open\", \"arguments\": {}}}"
+    },
+    {
+      "name": "open hidden",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 43, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_open\", \"arguments\": {\"show\": false, \"url\": \"localhost:5173\"}}}"
+    },
+    {
+      "name": "navigate",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 44, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_navigate\", \"arguments\": {\"target\": {\"kind\": \"environment-port\", \"port\": 5173}, \"timeoutMs\": 2000}}}"
+    },
+    {
+      "name": "click",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 45, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_click\", \"arguments\": {\"locator\": \"text=Go\", \"timeoutMs\": 1000}}}"
+    },
+    {
+      "name": "click by coordinates",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 46, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_click\", \"arguments\": {\"x\": 1.5, \"y\": 2}}}"
+    },
+    {
+      "name": "scroll returning another tab",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 47, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_scroll\", \"arguments\": {\"deltaY\": 100}}}"
+    },
+    {
+      "name": "evaluate",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 48, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_evaluate\", \"arguments\": {\"expression\": \"buttons()\"}}}"
+    },
+    {
+      "name": "wait for",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 49, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_wait_for\", \"arguments\": {\"text\": \"Saved\"}}}"
+    },
+    {
+      "name": "resize",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 50, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_resize\", \"arguments\": {\"mode\": \"fill\"}}}"
+    },
+    {
+      "name": "resize freeform",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 51, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_resize\", \"arguments\": {\"mode\": \"freeform\", \"width\": 800, \"height\": 600}}}"
+    },
+    {
+      "name": "set appearance",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 52, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_set_appearance\", \"arguments\": {\"colorScheme\": \"dark\"}}}"
+    },
+    {
+      "name": "type into a non-editable target",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 53, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_type\", \"arguments\": {\"text\": \"hi\"}}}"
+    },
+    {
+      "name": "press timing out",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 54, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_press\", \"arguments\": {\"key\": \"Enter\", \"modifiers\": [\"Meta\"]}}}"
+    },
+    {
+      "name": "recording start",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 55, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_recording_start\", \"arguments\": {}}}"
+    },
+    {
+      "name": "recording stop from an older desktop",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 56, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_recording_stop\", \"arguments\": {}}}"
+    },
+    {
+      "name": "snapshot",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 57, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_snapshot\", \"arguments\": {}}}"
+    },
+    {
+      "name": "snapshot without the image",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 58, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_snapshot\", \"arguments\": {\"includeImage\": false, \"tabId\": \"tab-7\"}}}"
+    }
+  ]
+}

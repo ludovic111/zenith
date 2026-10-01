@@ -1,0 +1,17 @@
+[package]
+name = "zc-ports"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "zenith code in Rust: the service traits that break the orchestration / providers / git / textgen cycles"
+
+[dependencies]
+zc-contracts = { path = "../zc-contracts" }
+thiserror = { workspace = true }
+async-trait = { workspace = true }
+futures = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }

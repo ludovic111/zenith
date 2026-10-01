@@ -1,0 +1,1512 @@
+{
+  "steps": [
+    {
+      "name": "initialize without a credential",
+      "status": 401,
+      "headers": {
+        "content-type": "application/json",
+        "www-authenticate": "Bearer",
+        "cache-control": "no-store"
+      },
+      "body": {
+        "error": "invalid_mcp_credential",
+        "message": "A valid provider-scoped MCP bearer credential is required."
+      }
+    },
+    {
+      "name": "initialize with an unknown credential",
+      "status": 401,
+      "headers": {
+        "content-type": "application/json",
+        "www-authenticate": "Bearer",
+        "cache-control": "no-store"
+      },
+      "body": {
+        "error": "invalid_mcp_credential",
+        "message": "A valid provider-scoped MCP bearer credential is required."
+      }
+    },
+    {
+      "name": "GET is not allowed",
+      "status": 405,
+      "headers": {
+        "allow": "POST"
+      },
+      "body": null
+    },
+    {
+      "name": "PUT is not allowed",
+      "status": 405,
+      "headers": {
+        "allow": "POST"
+      },
+      "body": null
+    },
+    {
+      "name": "OPTIONS is not allowed",
+      "status": 405,
+      "headers": {
+        "allow": "POST"
+      },
+      "body": null
+    },
+    {
+      "name": "wrong content type",
+      "status": 415,
+      "headers": {},
+      "body": null
+    },
+    {
+      "name": "accept without event-stream",
+      "status": 406,
+      "headers": {},
+      "body": null
+    },
+    {
+      "name": "browser origin",
+      "status": 403,
+      "headers": {},
+      "body": null
+    },
+    {
+      "name": "initialize",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-session-id": "<session>",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "protocolVersion": "2025-06-18",
+          "capabilities": {
+            "logging": {},
+            "tools": {
+              "listChanged": true
+            },
+            "completions": {}
+          },
+          "serverInfo": {
+            "name": "T3 Code",
+            "version": "0.0.43"
+          }
+        }
+      }
+    },
+    {
+      "name": "initialize again inside the session",
+      "status": 400,
+      "headers": {},
+      "body": null
+    },
+    {
+      "name": "initialized notification",
+      "status": 202,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": null
+    },
+    {
+      "name": "ping without a session",
+      "status": 400,
+      "headers": {},
+      "body": null
+    },
+    {
+      "name": "ping with an unknown session",
+      "status": 404,
+      "headers": {},
+      "body": null
+    },
+    {
+      "name": "ping",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {}
+      }
+    },
+    {
+      "name": "ping with a string id",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": "abc",
+        "result": {}
+      }
+    },
+    {
+      "name": "ping with an unsupported protocol header",
+      "status": 400,
+      "headers": {},
+      "body": null
+    },
+    {
+      "name": "ping without the protocol header",
+      "status": 400,
+      "headers": {},
+      "body": null
+    },
+    {
+      "name": "parse error",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": null,
+        "error": {
+          "code": -32700,
+          "message": "Parse error",
+          "_tag": "ParseError"
+        }
+      }
+    },
+    {
+      "name": "invalid request",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "error": {
+          "code": -32600,
+          "message": "Invalid Request",
+          "_tag": "InvalidRequest"
+        }
+      }
+    },
+    {
+      "name": "empty batch",
+      "status": 400,
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": null,
+        "error": {
+          "code": -32600,
+          "message": "Invalid Request",
+          "_tag": "InvalidRequest"
+        }
+      }
+    },
+    {
+      "name": "batch",
+      "status": 400,
+      "headers": {},
+      "body": null
+    },
+    {
+      "name": "client response",
+      "status": 202,
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": null
+    },
+    {
+      "name": "unknown method",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 9,
+        "error": {
+          "_tag": "Cause",
+          "code": -32601,
+          "message": "Method not found: foo/bar",
+          "data": [
+            {
+              "_tag": "Fail",
+              "error": {
+                "code": -32601,
+                "message": "Method not found: foo/bar",
+                "_tag": "MethodNotFound"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "unknown notification",
+      "status": 202,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": null
+    },
+    {
+      "name": "tools/list",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 10,
+        "result": {
+          "tools": [
+            "preview_status",
+            "preview_open",
+            "preview_navigate",
+            "preview_resize",
+            "preview_set_appearance",
+            "preview_click",
+            "preview_type",
+            "preview_press",
+            "preview_scroll",
+            "preview_evaluate",
+            "preview_wait_for",
+            "preview_recording_start",
+            "preview_recording_stop",
+            "preview_snapshot",
+            "link_pull_request",
+            "unlink_pull_request",
+            "list_thread_pull_requests",
+            "device_list",
+            "device_open",
+            "device_close",
+            "device_screenshot"
+          ]
+        }
+      }
+    },
+    {
+      "name": "resources/list",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 11,
+        "result": {
+          "resources": []
+        }
+      }
+    },
+    {
+      "name": "resources/templates/list",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 12,
+        "result": {
+          "resourceTemplates": []
+        }
+      }
+    },
+    {
+      "name": "prompts/list",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 13,
+        "result": {
+          "prompts": []
+        }
+      }
+    },
+    {
+      "name": "logging/setLevel",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 14,
+        "result": {}
+      }
+    },
+    {
+      "name": "completion/complete",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 15,
+        "error": {
+          "_tag": "Cause",
+          "code": -32602,
+          "message": "Unknown completion reference or argument",
+          "data": [
+            {
+              "_tag": "Fail",
+              "error": {
+                "code": -32602,
+                "message": "Unknown completion reference or argument"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "tools/call without params",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 16,
+        "error": {
+          "_tag": "Cause",
+          "code": -32602,
+          "message": "Invalid method parameters",
+          "data": [
+            {
+              "_tag": "Fail",
+              "error": {
+                "code": -32602,
+                "message": "Invalid method parameters",
+                "_tag": "InvalidParams"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "tools/call with array arguments",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 17,
+        "error": {
+          "_tag": "Cause",
+          "code": -32602,
+          "message": "Invalid method parameters",
+          "data": [
+            {
+              "_tag": "Fail",
+              "error": {
+                "code": -32602,
+                "message": "Invalid method parameters",
+                "_tag": "InvalidParams"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "tools/call with a numeric name",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 18,
+        "error": {
+          "_tag": "Cause",
+          "code": -32602,
+          "message": "Invalid method parameters",
+          "data": [
+            {
+              "_tag": "Fail",
+              "error": {
+                "code": -32602,
+                "message": "Invalid method parameters",
+                "_tag": "InvalidParams"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "cancelled notification",
+      "status": 202,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": null
+    },
+    {
+      "name": "initialize without client info",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 19,
+        "error": {
+          "_tag": "Cause",
+          "code": -32602,
+          "message": "Invalid method parameters",
+          "data": [
+            {
+              "_tag": "Fail",
+              "error": {
+                "code": -32602,
+                "message": "Invalid method parameters",
+                "_tag": "InvalidParams"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "initialize offering an older protocol",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-session-id": "<session>",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 20,
+        "result": {
+          "protocolVersion": "2025-06-18",
+          "capabilities": {
+            "logging": {},
+            "tools": {
+              "listChanged": true
+            },
+            "completions": {}
+          },
+          "serverInfo": {
+            "name": "T3 Code",
+            "version": "0.0.43"
+          }
+        }
+      }
+    },
+    {
+      "name": "notification without a session",
+      "status": 400,
+      "headers": {},
+      "body": null
+    },
+    {
+      "name": "unknown tool",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 11,
+        "error": {
+          "_tag": "Cause",
+          "code": -32602,
+          "message": "Tool 'no_such_tool' not found",
+          "data": [
+            {
+              "_tag": "Fail",
+              "error": {
+                "code": -32602,
+                "message": "Tool 'no_such_tool' not found"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "list thread pull requests",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 12,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"pullRequests\":[{\"host\":\"github.com\",\"repository\":\"acme/widgets\",\"number\":3,\"url\":\"https://github.com/acme/widgets/pull/3\",\"source\":\"agent\",\"state\":\"open\",\"title\":\"PR 3\",\"headBranch\":\"feat-c\",\"baseBranch\":\"feat-b\",\"isDraft\":false,\"stack\":{\"kind\":\"derived\",\"position\":3,\"size\":3}},{\"host\":\"github.com\",\"repository\":\"acme/widgets\",\"number\":1,\"url\":\"https://github.com/acme/widgets/pull/1\",\"source\":\"created\",\"state\":\"open\",\"title\":\"PR 1\",\"headBranch\":\"feat-a\",\"baseBranch\":\"main\",\"isDraft\":false,\"stack\":{\"kind\":\"derived\",\"position\":1,\"size\":3}},{\"host\":\"github.com\",\"repository\":\"acme/widgets\",\"number\":2,\"url\":\"https://github.com/acme/widgets/pull/2\",\"source\":\"agent\",\"state\":\"open\",\"title\":\"PR 2\",\"headBranch\":\"feat-b\",\"baseBranch\":\"feat-a\",\"isDraft\":false,\"stack\":{\"kind\":\"derived\",\"position\":2,\"size\":3}},{\"host\":\"github.com\",\"repository\":\"acme/widgets\",\"number\":10,\"url\":\"https://github.com/acme/widgets/pull/10\",\"source\":\"manual\",\"state\":null,\"title\":null,\"headBranch\":null,\"baseBranch\":null,\"isDraft\":null,\"stack\":null}],\"chains\":[{\"kind\":\"derived\",\"numbers\":[1,2,3]},{\"kind\":\"derived\",\"numbers\":[10]}]}"
+            }
+          ],
+          "structuredContent": {
+            "pullRequests": [
+              {
+                "host": "github.com",
+                "repository": "acme/widgets",
+                "number": 3,
+                "url": "https://github.com/acme/widgets/pull/3",
+                "source": "agent",
+                "state": "open",
+                "title": "PR 3",
+                "headBranch": "feat-c",
+                "baseBranch": "feat-b",
+                "isDraft": false,
+                "stack": {
+                  "kind": "derived",
+                  "position": 3,
+                  "size": 3
+                }
+              },
+              {
+                "host": "github.com",
+                "repository": "acme/widgets",
+                "number": 1,
+                "url": "https://github.com/acme/widgets/pull/1",
+                "source": "created",
+                "state": "open",
+                "title": "PR 1",
+                "headBranch": "feat-a",
+                "baseBranch": "main",
+                "isDraft": false,
+                "stack": {
+                  "kind": "derived",
+                  "position": 1,
+                  "size": 3
+                }
+              },
+              {
+                "host": "github.com",
+                "repository": "acme/widgets",
+                "number": 2,
+                "url": "https://github.com/acme/widgets/pull/2",
+                "source": "agent",
+                "state": "open",
+                "title": "PR 2",
+                "headBranch": "feat-b",
+                "baseBranch": "feat-a",
+                "isDraft": false,
+                "stack": {
+                  "kind": "derived",
+                  "position": 2,
+                  "size": 3
+                }
+              },
+              {
+                "host": "github.com",
+                "repository": "acme/widgets",
+                "number": 10,
+                "url": "https://github.com/acme/widgets/pull/10",
+                "source": "manual",
+                "state": null,
+                "title": null,
+                "headBranch": null,
+                "baseBranch": null,
+                "isDraft": null,
+                "stack": null
+              }
+            ],
+            "chains": [
+              {
+                "kind": "derived",
+                "numbers": [
+                  1,
+                  2,
+                  3
+                ]
+              },
+              {
+                "kind": "derived",
+                "numbers": [
+                  10
+                ]
+              }
+            ]
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "list thread pull requests without arguments",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 13,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"pullRequests\":[{\"host\":\"github.com\",\"repository\":\"acme/widgets\",\"number\":3,\"url\":\"https://github.com/acme/widgets/pull/3\",\"source\":\"agent\",\"state\":\"open\",\"title\":\"PR 3\",\"headBranch\":\"feat-c\",\"baseBranch\":\"feat-b\",\"isDraft\":false,\"stack\":{\"kind\":\"derived\",\"position\":3,\"size\":3}},{\"host\":\"github.com\",\"repository\":\"acme/widgets\",\"number\":1,\"url\":\"https://github.com/acme/widgets/pull/1\",\"source\":\"created\",\"state\":\"open\",\"title\":\"PR 1\",\"headBranch\":\"feat-a\",\"baseBranch\":\"main\",\"isDraft\":false,\"stack\":{\"kind\":\"derived\",\"position\":1,\"size\":3}},{\"host\":\"github.com\",\"repository\":\"acme/widgets\",\"number\":2,\"url\":\"https://github.com/acme/widgets/pull/2\",\"source\":\"agent\",\"state\":\"open\",\"title\":\"PR 2\",\"headBranch\":\"feat-b\",\"baseBranch\":\"feat-a\",\"isDraft\":false,\"stack\":{\"kind\":\"derived\",\"position\":2,\"size\":3}},{\"host\":\"github.com\",\"repository\":\"acme/widgets\",\"number\":10,\"url\":\"https://github.com/acme/widgets/pull/10\",\"source\":\"manual\",\"state\":null,\"title\":null,\"headBranch\":null,\"baseBranch\":null,\"isDraft\":null,\"stack\":null}],\"chains\":[{\"kind\":\"derived\",\"numbers\":[1,2,3]},{\"kind\":\"derived\",\"numbers\":[10]}]}"
+            }
+          ],
+          "structuredContent": {
+            "pullRequests": [
+              {
+                "host": "github.com",
+                "repository": "acme/widgets",
+                "number": 3,
+                "url": "https://github.com/acme/widgets/pull/3",
+                "source": "agent",
+                "state": "open",
+                "title": "PR 3",
+                "headBranch": "feat-c",
+                "baseBranch": "feat-b",
+                "isDraft": false,
+                "stack": {
+                  "kind": "derived",
+                  "position": 3,
+                  "size": 3
+                }
+              },
+              {
+                "host": "github.com",
+                "repository": "acme/widgets",
+                "number": 1,
+                "url": "https://github.com/acme/widgets/pull/1",
+                "source": "created",
+                "state": "open",
+                "title": "PR 1",
+                "headBranch": "feat-a",
+                "baseBranch": "main",
+                "isDraft": false,
+                "stack": {
+                  "kind": "derived",
+                  "position": 1,
+                  "size": 3
+                }
+              },
+              {
+                "host": "github.com",
+                "repository": "acme/widgets",
+                "number": 2,
+                "url": "https://github.com/acme/widgets/pull/2",
+                "source": "agent",
+                "state": "open",
+                "title": "PR 2",
+                "headBranch": "feat-b",
+                "baseBranch": "feat-a",
+                "isDraft": false,
+                "stack": {
+                  "kind": "derived",
+                  "position": 2,
+                  "size": 3
+                }
+              },
+              {
+                "host": "github.com",
+                "repository": "acme/widgets",
+                "number": 10,
+                "url": "https://github.com/acme/widgets/pull/10",
+                "source": "manual",
+                "state": null,
+                "title": null,
+                "headBranch": null,
+                "baseBranch": null,
+                "isDraft": null,
+                "stack": null
+              }
+            ],
+            "chains": [
+              {
+                "kind": "derived",
+                "numbers": [
+                  1,
+                  2,
+                  3
+                ]
+              },
+              {
+                "kind": "derived",
+                "numbers": [
+                  10
+                ]
+              }
+            ]
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "link by url",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 14,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"host\":\"github.com\",\"repository\":\"acme/widgets\",\"number\":77,\"url\":\"https://github.com/Acme/Widgets/pull/77/files\",\"alreadyLinked\":false}"
+            }
+          ],
+          "structuredContent": {
+            "host": "github.com",
+            "repository": "acme/widgets",
+            "number": 77,
+            "url": "https://github.com/Acme/Widgets/pull/77/files",
+            "alreadyLinked": false
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "link by repository and number",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 15,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"host\":\"github.com\",\"repository\":\"acme/other\",\"number\":7,\"url\":\"https://github.com/acme/other/pull/7\",\"alreadyLinked\":false}"
+            }
+          ],
+          "structuredContent": {
+            "host": "github.com",
+            "repository": "acme/other",
+            "number": 7,
+            "url": "https://github.com/acme/other/pull/7",
+            "alreadyLinked": false
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "link on another host",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 16,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"host\":\"gitlab.example\",\"repository\":\"group/project\",\"number\":3,\"url\":\"https://gitlab.example/group/project/pull/3\",\"alreadyLinked\":false}"
+            }
+          ],
+          "structuredContent": {
+            "host": "gitlab.example",
+            "repository": "group/project",
+            "number": 3,
+            "url": "https://gitlab.example/group/project/pull/3",
+            "alreadyLinked": false
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "link already linked",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 17,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"host\":\"github.com\",\"repository\":\"acme/widgets\",\"number\":123,\"url\":\"https://github.com/acme/widgets/pull/123\",\"alreadyLinked\":true}"
+            }
+          ],
+          "structuredContent": {
+            "host": "github.com",
+            "repository": "acme/widgets",
+            "number": 123,
+            "url": "https://github.com/acme/widgets/pull/123",
+            "alreadyLinked": true
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "link an issue url",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 18,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "This is not a recognised pull request URL. Pass repository and number instead."
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "name": "link without a number",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 19,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Pass either url, or both repository and number."
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "name": "link with a negative number",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 20,
+        "error": {
+          "_tag": "Cause",
+          "code": -32602,
+          "message": "Invalid parameters for tool 'link_pull_request': Expected a value greater than or equal to 1\n  at [\"number\"]",
+          "data": [
+            {
+              "_tag": "Fail",
+              "error": {
+                "code": -32602,
+                "message": "Invalid parameters for tool 'link_pull_request': Expected a value greater than or equal to 1\n  at [\"number\"]"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "link with a string number",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 21,
+        "error": {
+          "_tag": "Cause",
+          "code": -32602,
+          "message": "Invalid parameters for tool 'link_pull_request': Expected number | undefined\n  at [\"number\"]",
+          "data": [
+            {
+              "_tag": "Fail",
+              "error": {
+                "code": -32602,
+                "message": "Invalid parameters for tool 'link_pull_request': Expected number | undefined\n  at [\"number\"]"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "link with an empty url",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 22,
+        "error": {
+          "_tag": "Cause",
+          "code": -32602,
+          "message": "Invalid parameters for tool 'link_pull_request': Expected a value with a length of at least 1\n  at [\"url\"]",
+          "data": [
+            {
+              "_tag": "Fail",
+              "error": {
+                "code": -32602,
+                "message": "Invalid parameters for tool 'link_pull_request': Expected a value with a length of at least 1\n  at [\"url\"]"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "link with null fields",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 23,
+        "error": {
+          "_tag": "Cause",
+          "code": -32602,
+          "message": "Invalid parameters for tool 'link_pull_request': Expected string | undefined\n  at [\"host\"]",
+          "data": [
+            {
+              "_tag": "Fail",
+              "error": {
+                "code": -32602,
+                "message": "Invalid parameters for tool 'link_pull_request': Expected string | undefined\n  at [\"host\"]"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "unlink linked",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 24,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"host\":\"github.com\",\"repository\":\"acme/widgets\",\"number\":5,\"wasLinked\":true}"
+            }
+          ],
+          "structuredContent": {
+            "host": "github.com",
+            "repository": "acme/widgets",
+            "number": 5,
+            "wasLinked": true
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "unlink not linked",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 25,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"host\":\"github.com\",\"repository\":\"acme/widgets\",\"number\":9,\"wasLinked\":false}"
+            }
+          ],
+          "structuredContent": {
+            "host": "github.com",
+            "repository": "acme/widgets",
+            "number": 9,
+            "wasLinked": false
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "name": "device list without device access",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 26,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Agent device access is turned off for this environment."
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "name": "device open without device access",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 27,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Agent device access is turned off for this environment."
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "name": "device screenshot without device access",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 28,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Device screenshot failed."
+            }
+          ],
+          "structuredContent": {
+            "error": {
+              "_tag": "DeviceToolUnavailableError",
+              "operation": "screenshot",
+              "failureCount": 1
+            }
+          },
+          "isError": true
+        }
+      }
+    },
+    {
+      "name": "preview status without preview access",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 29,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "MCP credential does not grant the preview capability: browser preview tools are off for this thread. Do not retry them. To check a page, use a headless browser from the shell, such as Playwright, or curl. The user can turn on \"Agent browser access\" in Settings; it applies when the agent session next starts."
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "name": "preview snapshot without preview access",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 30,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Preview snapshot failed: MCP credential does not grant the preview capability: browser preview tools are off for this thread. Do not retry them. To check a page, use a headless browser from the shell, such as Playwright, or curl. The user can turn on \"Agent browser access\" in Settings; it applies when the agent session next starts."
+            }
+          ],
+          "structuredContent": {
+            "error": {
+              "_tag": "PreviewAutomationUnavailableError",
+              "operation": "snapshot",
+              "failureCount": 1,
+              "message": "MCP credential does not grant the preview capability: browser preview tools are off for this thread. Do not retry them. To check a page, use a headless browser from the shell, such as Playwright, or curl. The user can turn on \"Agent browser access\" in Settings; it applies when the agent session next starts."
+            }
+          },
+          "isError": true
+        }
+      }
+    },
+    {
+      "name": "preview status without a host",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 31,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "No preview automation host is available for status in environment environment-golden. Preview tools run in a T3 Code desktop app that is open and connected to this environment; a headless server has no browser of its own. Do not retry. To check a page, use a headless browser from the shell, such as Playwright, or curl, or ask the user to open this thread in the T3 Code desktop app."
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "name": "preview snapshot without a host",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 32,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Preview snapshot failed: No preview automation host is available for snapshot in environment environment-golden. Preview tools run in a T3 Code desktop app that is open and connected to this environment; a headless server has no browser of its own. Do not retry. To check a page, use a headless browser from the shell, such as Playwright, or curl, or ask the user to open this thread in the T3 Code desktop app."
+            }
+          ],
+          "structuredContent": {
+            "error": {
+              "_tag": "PreviewAutomationNoAvailableHostError",
+              "operation": "snapshot",
+              "failureCount": 1,
+              "message": "No preview automation host is available for snapshot in environment environment-golden. Preview tools run in a T3 Code desktop app that is open and connected to this environment; a headless server has no browser of its own. Do not retry. To check a page, use a headless browser from the shell, such as Playwright, or curl, or ask the user to open this thread in the T3 Code desktop app."
+            }
+          },
+          "isError": true
+        }
+      }
+    },
+    {
+      "name": "preview click with an empty selector",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 33,
+        "error": {
+          "_tag": "Cause",
+          "code": -32602,
+          "message": "Invalid parameters for tool 'preview_click': Expected a value with a length of at least 1\n  at [\"selector\"]",
+          "data": [
+            {
+              "_tag": "Fail",
+              "error": {
+                "code": -32602,
+                "message": "Invalid parameters for tool 'preview_click': Expected a value with a length of at least 1\n  at [\"selector\"]"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "preview click without a target",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 34,
+        "error": {
+          "_tag": "Cause",
+          "code": -32602,
+          "message": "Invalid parameters for tool 'preview_click': Provide exactly one click target.",
+          "data": [
+            {
+              "_tag": "Fail",
+              "error": {
+                "code": -32602,
+                "message": "Invalid parameters for tool 'preview_click': Provide exactly one click target."
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "preview navigate with url and target",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 35,
+        "error": {
+          "_tag": "Cause",
+          "code": -32602,
+          "message": "Invalid parameters for tool 'preview_navigate': Provide exactly one of url or target.",
+          "data": [
+            {
+              "_tag": "Fail",
+              "error": {
+                "code": -32602,
+                "message": "Invalid parameters for tool 'preview_navigate': Provide exactly one of url or target."
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "preview resize fill with a preset",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 36,
+        "error": {
+          "_tag": "Cause",
+          "code": -32602,
+          "message": "Invalid parameters for tool 'preview_resize': Fill mode does not accept a preset, dimensions, or orientation.",
+          "data": [
+            {
+              "_tag": "Fail",
+              "error": {
+                "code": -32602,
+                "message": "Invalid parameters for tool 'preview_resize': Fill mode does not accept a preset, dimensions, or orientation."
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "preview open with tabId and no reuse",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 37,
+        "error": {
+          "_tag": "Cause",
+          "code": -32602,
+          "message": "Invalid parameters for tool 'preview_open': tabId cannot be combined with reuseExistingTab=false.",
+          "data": [
+            {
+              "_tag": "Fail",
+              "error": {
+                "code": -32602,
+                "message": "Invalid parameters for tool 'preview_open': tabId cannot be combined with reuseExistingTab=false."
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "preview evaluate with an empty expression",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 38,
+        "error": {
+          "_tag": "Cause",
+          "code": -32602,
+          "message": "Invalid parameters for tool 'preview_evaluate': Expected a string with no leading or trailing whitespace\n  at [\"expression\"]",
+          "data": [
+            {
+              "_tag": "Fail",
+              "error": {
+                "code": -32602,
+                "message": "Invalid parameters for tool 'preview_evaluate': Expected a string with no leading or trailing whitespace\n  at [\"expression\"]"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "preview snapshot with a string includeImage",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 39,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Preview snapshot failed: AiError."
+            }
+          ],
+          "structuredContent": {
+            "error": {
+              "_tag": "AiError",
+              "operation": "snapshot",
+              "failureCount": 1
+            }
+          },
+          "isError": true
+        }
+      }
+    },
+    {
+      "name": "delete without a session",
+      "status": 400,
+      "headers": {},
+      "body": null
+    },
+    {
+      "name": "delete an unknown session",
+      "status": 404,
+      "headers": {},
+      "body": null
+    },
+    {
+      "name": "delete the session",
+      "status": 204,
+      "headers": {},
+      "body": null
+    },
+    {
+      "name": "ping after delete",
+      "status": 404,
+      "headers": {},
+      "body": null
+    },
+    {
+      "name": "delete without a credential",
+      "status": 401,
+      "headers": {
+        "content-type": "application/json",
+        "www-authenticate": "Bearer",
+        "cache-control": "no-store"
+      },
+      "body": {
+        "error": "invalid_mcp_credential",
+        "message": "A valid provider-scoped MCP bearer credential is required."
+      }
+    }
+  ],
+  "commands": [
+    {
+      "type": "thread.pull-request.link",
+      "commandId": "server:mcp-pr-link:thread-golden:<uuid>",
+      "threadId": "thread-golden",
+      "host": "github.com",
+      "repository": "acme/widgets",
+      "number": 77,
+      "url": "https://github.com/Acme/Widgets/pull/77/files",
+      "source": "agent"
+    },
+    {
+      "type": "thread.pull-request.link",
+      "commandId": "server:mcp-pr-link:thread-golden:<uuid>",
+      "threadId": "thread-golden",
+      "host": "github.com",
+      "repository": "acme/other",
+      "number": 7,
+      "url": "https://github.com/acme/other/pull/7",
+      "source": "agent"
+    },
+    {
+      "type": "thread.pull-request.link",
+      "commandId": "server:mcp-pr-link:thread-golden:<uuid>",
+      "threadId": "thread-golden",
+      "host": "gitlab.example",
+      "repository": "group/project",
+      "number": 3,
+      "url": "https://gitlab.example/group/project/pull/3",
+      "source": "agent"
+    },
+    {
+      "type": "thread.pull-request.unlink",
+      "commandId": "server:mcp-pr-unlink:thread-golden:<uuid>",
+      "threadId": "thread-golden",
+      "host": "github.com",
+      "repository": "acme/widgets",
+      "number": 5
+    }
+  ],
+  "hostRequests": []
+}

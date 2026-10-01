@@ -47,6 +47,7 @@ import {
   FileSearchIcon,
   FolderIcon,
   FolderPlusIcon,
+  HistoryIcon,
   LinkIcon,
   MessageSquareIcon,
   MonitorIcon,
@@ -2036,6 +2037,18 @@ function OpenCommandPaletteDialog(props: {
     shortcutCommand: "usage.open",
     run: async () => {
       await navigate({ to: "/usage" });
+    },
+  });
+
+  // zenith: the per-session list (`zenith/SessionsPage.tsx`).
+  actionItems.push({
+    kind: "action",
+    value: "action:sessions",
+    searchTerms: ["sessions", "claude code", "codex", "resume", "history", "agents", "cost"],
+    title: "Open sessions",
+    icon: <HistoryIcon className={ITEM_ICON_CLASS} />,
+    run: async () => {
+      await navigate({ to: "/sessions" });
     },
   });
 

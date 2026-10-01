@@ -1,0 +1,485 @@
+[
+ {
+  "type": "table",
+  "name": "effect_sql_migrations",
+  "tbl_name": "effect_sql_migrations",
+  "rootpage": 2,
+  "sql": "CREATE TABLE \"effect_sql_migrations\" (\n  migration_id integer PRIMARY KEY NOT NULL,\n  created_at datetime NOT NULL DEFAULT current_timestamp,\n  name VARCHAR(255) NOT NULL\n)"
+ },
+ {
+  "type": "table",
+  "name": "orchestration_events",
+  "tbl_name": "orchestration_events",
+  "rootpage": 3,
+  "sql": "CREATE TABLE orchestration_events (\n      sequence INTEGER PRIMARY KEY AUTOINCREMENT,\n      event_id TEXT NOT NULL UNIQUE,\n      aggregate_kind TEXT NOT NULL,\n      stream_id TEXT NOT NULL,\n      stream_version INTEGER NOT NULL,\n      event_type TEXT NOT NULL,\n      occurred_at TEXT NOT NULL,\n      command_id TEXT,\n      causation_event_id TEXT,\n      correlation_id TEXT,\n      actor_kind TEXT NOT NULL,\n      payload_json TEXT NOT NULL,\n      metadata_json TEXT NOT NULL\n    )"
+ },
+ {
+  "type": "index",
+  "name": "sqlite_autoindex_orchestration_events_1",
+  "tbl_name": "orchestration_events",
+  "rootpage": 4,
+  "sql": null
+ },
+ {
+  "type": "table",
+  "name": "sqlite_sequence",
+  "tbl_name": "sqlite_sequence",
+  "rootpage": 5,
+  "sql": "CREATE TABLE sqlite_sequence(name,seq)"
+ },
+ {
+  "type": "index",
+  "name": "idx_orch_events_stream_version",
+  "tbl_name": "orchestration_events",
+  "rootpage": 6,
+  "sql": "CREATE UNIQUE INDEX idx_orch_events_stream_version\n    ON orchestration_events(aggregate_kind, stream_id, stream_version)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_orch_events_stream_sequence",
+  "tbl_name": "orchestration_events",
+  "rootpage": 7,
+  "sql": "CREATE INDEX idx_orch_events_stream_sequence\n    ON orchestration_events(aggregate_kind, stream_id, sequence)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_orch_events_command_id",
+  "tbl_name": "orchestration_events",
+  "rootpage": 8,
+  "sql": "CREATE INDEX idx_orch_events_command_id\n    ON orchestration_events(command_id)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_orch_events_correlation_id",
+  "tbl_name": "orchestration_events",
+  "rootpage": 9,
+  "sql": "CREATE INDEX idx_orch_events_correlation_id\n    ON orchestration_events(correlation_id)\n  "
+ },
+ {
+  "type": "table",
+  "name": "orchestration_command_receipts",
+  "tbl_name": "orchestration_command_receipts",
+  "rootpage": 10,
+  "sql": "CREATE TABLE orchestration_command_receipts (\n      command_id TEXT PRIMARY KEY,\n      aggregate_kind TEXT NOT NULL,\n      aggregate_id TEXT NOT NULL,\n      accepted_at TEXT NOT NULL,\n      result_sequence INTEGER NOT NULL,\n      status TEXT NOT NULL,\n      error TEXT\n    )"
+ },
+ {
+  "type": "index",
+  "name": "sqlite_autoindex_orchestration_command_receipts_1",
+  "tbl_name": "orchestration_command_receipts",
+  "rootpage": 11,
+  "sql": null
+ },
+ {
+  "type": "index",
+  "name": "idx_orch_command_receipts_aggregate",
+  "tbl_name": "orchestration_command_receipts",
+  "rootpage": 12,
+  "sql": "CREATE INDEX idx_orch_command_receipts_aggregate\n    ON orchestration_command_receipts(aggregate_kind, aggregate_id)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_orch_command_receipts_sequence",
+  "tbl_name": "orchestration_command_receipts",
+  "rootpage": 13,
+  "sql": "CREATE INDEX idx_orch_command_receipts_sequence\n    ON orchestration_command_receipts(result_sequence)\n  "
+ },
+ {
+  "type": "table",
+  "name": "checkpoint_diff_blobs",
+  "tbl_name": "checkpoint_diff_blobs",
+  "rootpage": 14,
+  "sql": "CREATE TABLE checkpoint_diff_blobs (\n      thread_id TEXT NOT NULL,\n      from_turn_count INTEGER NOT NULL,\n      to_turn_count INTEGER NOT NULL,\n      diff TEXT NOT NULL,\n      created_at TEXT NOT NULL,\n      UNIQUE (thread_id, from_turn_count, to_turn_count)\n    )"
+ },
+ {
+  "type": "index",
+  "name": "sqlite_autoindex_checkpoint_diff_blobs_1",
+  "tbl_name": "checkpoint_diff_blobs",
+  "rootpage": 15,
+  "sql": null
+ },
+ {
+  "type": "index",
+  "name": "idx_checkpoint_diff_blobs_thread_to_turn",
+  "tbl_name": "checkpoint_diff_blobs",
+  "rootpage": 16,
+  "sql": "CREATE INDEX idx_checkpoint_diff_blobs_thread_to_turn\n    ON checkpoint_diff_blobs(thread_id, to_turn_count)\n  "
+ },
+ {
+  "type": "table",
+  "name": "provider_session_runtime",
+  "tbl_name": "provider_session_runtime",
+  "rootpage": 17,
+  "sql": "CREATE TABLE provider_session_runtime (\n      thread_id TEXT PRIMARY KEY,\n      provider_name TEXT NOT NULL,\n      adapter_key TEXT NOT NULL,\n      runtime_mode TEXT NOT NULL DEFAULT 'full-access',\n      status TEXT NOT NULL,\n      last_seen_at TEXT NOT NULL,\n      resume_cursor_json TEXT,\n      runtime_payload_json TEXT\n    , provider_instance_id TEXT)"
+ },
+ {
+  "type": "index",
+  "name": "sqlite_autoindex_provider_session_runtime_1",
+  "tbl_name": "provider_session_runtime",
+  "rootpage": 18,
+  "sql": null
+ },
+ {
+  "type": "index",
+  "name": "idx_provider_session_runtime_status",
+  "tbl_name": "provider_session_runtime",
+  "rootpage": 19,
+  "sql": "CREATE INDEX idx_provider_session_runtime_status\n    ON provider_session_runtime(status)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_provider_session_runtime_provider",
+  "tbl_name": "provider_session_runtime",
+  "rootpage": 20,
+  "sql": "CREATE INDEX idx_provider_session_runtime_provider\n    ON provider_session_runtime(provider_name)\n  "
+ },
+ {
+  "type": "table",
+  "name": "projection_projects",
+  "tbl_name": "projection_projects",
+  "rootpage": 21,
+  "sql": "CREATE TABLE projection_projects (\n      project_id TEXT PRIMARY KEY,\n      title TEXT NOT NULL,\n      workspace_root TEXT NOT NULL,\n      scripts_json TEXT NOT NULL,\n      created_at TEXT NOT NULL,\n      updated_at TEXT NOT NULL,\n      deleted_at TEXT\n    , default_model_selection_json TEXT, default_thread_env_mode TEXT, favicon_path TEXT, auto_pull INTEGER NOT NULL DEFAULT 0, project_icon_json TEXT)"
+ },
+ {
+  "type": "index",
+  "name": "sqlite_autoindex_projection_projects_1",
+  "tbl_name": "projection_projects",
+  "rootpage": 22,
+  "sql": null
+ },
+ {
+  "type": "table",
+  "name": "projection_threads",
+  "tbl_name": "projection_threads",
+  "rootpage": 25,
+  "sql": "CREATE TABLE projection_threads (\n      thread_id TEXT PRIMARY KEY,\n      project_id TEXT NOT NULL,\n      title TEXT NOT NULL,\n      branch TEXT,\n      worktree_path TEXT,\n      latest_turn_id TEXT,\n      created_at TEXT NOT NULL,\n      updated_at TEXT NOT NULL,\n      deleted_at TEXT\n    , runtime_mode TEXT NOT NULL DEFAULT 'full-access', interaction_mode TEXT NOT NULL DEFAULT 'default', model_selection_json TEXT, archived_at TEXT, latest_user_message_at TEXT, pending_approval_count INTEGER NOT NULL DEFAULT 0, pending_user_input_count INTEGER NOT NULL DEFAULT 0, has_actionable_proposed_plan INTEGER NOT NULL DEFAULT 0, settled_override TEXT, settled_at TEXT, snoozed_until TEXT, snoozed_at TEXT, title_regeneration_request_id TEXT, title_regeneration_started_at TEXT, pinned_at TEXT, pin_order_key TEXT, linked_pull_request_json TEXT, unsettled_at TEXT, branch_pull_request_json TEXT, active_order_key TEXT, title_state_json TEXT, auto_settle_disabled_at TEXT)"
+ },
+ {
+  "type": "index",
+  "name": "sqlite_autoindex_projection_threads_1",
+  "tbl_name": "projection_threads",
+  "rootpage": 26,
+  "sql": null
+ },
+ {
+  "type": "table",
+  "name": "projection_thread_messages",
+  "tbl_name": "projection_thread_messages",
+  "rootpage": 27,
+  "sql": "CREATE TABLE projection_thread_messages (\n      message_id TEXT PRIMARY KEY,\n      thread_id TEXT NOT NULL,\n      turn_id TEXT,\n      role TEXT NOT NULL,\n      text TEXT NOT NULL,\n      is_streaming INTEGER NOT NULL,\n      created_at TEXT NOT NULL,\n      updated_at TEXT NOT NULL\n    , attachments_json TEXT, context_json TEXT)"
+ },
+ {
+  "type": "index",
+  "name": "sqlite_autoindex_projection_thread_messages_1",
+  "tbl_name": "projection_thread_messages",
+  "rootpage": 28,
+  "sql": null
+ },
+ {
+  "type": "table",
+  "name": "projection_thread_activities",
+  "tbl_name": "projection_thread_activities",
+  "rootpage": 29,
+  "sql": "CREATE TABLE projection_thread_activities (\n      activity_id TEXT PRIMARY KEY,\n      thread_id TEXT NOT NULL,\n      turn_id TEXT,\n      tone TEXT NOT NULL,\n      kind TEXT NOT NULL,\n      summary TEXT NOT NULL,\n      payload_json TEXT NOT NULL,\n      created_at TEXT NOT NULL\n    , sequence INTEGER)"
+ },
+ {
+  "type": "index",
+  "name": "sqlite_autoindex_projection_thread_activities_1",
+  "tbl_name": "projection_thread_activities",
+  "rootpage": 30,
+  "sql": null
+ },
+ {
+  "type": "table",
+  "name": "projection_thread_sessions",
+  "tbl_name": "projection_thread_sessions",
+  "rootpage": 31,
+  "sql": "CREATE TABLE projection_thread_sessions (\n      thread_id TEXT PRIMARY KEY,\n      status TEXT NOT NULL,\n      provider_name TEXT,\n      provider_session_id TEXT,\n      provider_thread_id TEXT,\n      active_turn_id TEXT,\n      last_error TEXT,\n      updated_at TEXT NOT NULL\n    , runtime_mode TEXT NOT NULL DEFAULT 'full-access', provider_instance_id TEXT)"
+ },
+ {
+  "type": "index",
+  "name": "sqlite_autoindex_projection_thread_sessions_1",
+  "tbl_name": "projection_thread_sessions",
+  "rootpage": 32,
+  "sql": null
+ },
+ {
+  "type": "table",
+  "name": "projection_turns",
+  "tbl_name": "projection_turns",
+  "rootpage": 33,
+  "sql": "CREATE TABLE projection_turns (\n      row_id INTEGER PRIMARY KEY AUTOINCREMENT,\n      thread_id TEXT NOT NULL,\n      turn_id TEXT,\n      pending_message_id TEXT,\n      assistant_message_id TEXT,\n      state TEXT NOT NULL,\n      requested_at TEXT NOT NULL,\n      started_at TEXT,\n      completed_at TEXT,\n      checkpoint_turn_count INTEGER,\n      checkpoint_ref TEXT,\n      checkpoint_status TEXT,\n      checkpoint_files_json TEXT NOT NULL, source_proposed_plan_thread_id TEXT, source_proposed_plan_id TEXT,\n      UNIQUE (thread_id, turn_id),\n      UNIQUE (thread_id, checkpoint_turn_count)\n    )"
+ },
+ {
+  "type": "index",
+  "name": "sqlite_autoindex_projection_turns_1",
+  "tbl_name": "projection_turns",
+  "rootpage": 34,
+  "sql": null
+ },
+ {
+  "type": "index",
+  "name": "sqlite_autoindex_projection_turns_2",
+  "tbl_name": "projection_turns",
+  "rootpage": 35,
+  "sql": null
+ },
+ {
+  "type": "table",
+  "name": "projection_pending_approvals",
+  "tbl_name": "projection_pending_approvals",
+  "rootpage": 36,
+  "sql": "CREATE TABLE projection_pending_approvals (\n      request_id TEXT PRIMARY KEY,\n      thread_id TEXT NOT NULL,\n      turn_id TEXT,\n      status TEXT NOT NULL,\n      decision TEXT,\n      created_at TEXT NOT NULL,\n      resolved_at TEXT\n    )"
+ },
+ {
+  "type": "index",
+  "name": "sqlite_autoindex_projection_pending_approvals_1",
+  "tbl_name": "projection_pending_approvals",
+  "rootpage": 37,
+  "sql": null
+ },
+ {
+  "type": "table",
+  "name": "projection_state",
+  "tbl_name": "projection_state",
+  "rootpage": 38,
+  "sql": "CREATE TABLE projection_state (\n      projector TEXT PRIMARY KEY,\n      last_applied_sequence INTEGER NOT NULL,\n      updated_at TEXT NOT NULL\n    )"
+ },
+ {
+  "type": "index",
+  "name": "sqlite_autoindex_projection_state_1",
+  "tbl_name": "projection_state",
+  "rootpage": 39,
+  "sql": null
+ },
+ {
+  "type": "index",
+  "name": "idx_projection_projects_updated_at",
+  "tbl_name": "projection_projects",
+  "rootpage": 40,
+  "sql": "CREATE INDEX idx_projection_projects_updated_at\n    ON projection_projects(updated_at)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_projection_threads_project_id",
+  "tbl_name": "projection_threads",
+  "rootpage": 41,
+  "sql": "CREATE INDEX idx_projection_threads_project_id\n    ON projection_threads(project_id)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_projection_thread_messages_thread_created",
+  "tbl_name": "projection_thread_messages",
+  "rootpage": 42,
+  "sql": "CREATE INDEX idx_projection_thread_messages_thread_created\n    ON projection_thread_messages(thread_id, created_at)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_projection_thread_activities_thread_created",
+  "tbl_name": "projection_thread_activities",
+  "rootpage": 43,
+  "sql": "CREATE INDEX idx_projection_thread_activities_thread_created\n    ON projection_thread_activities(thread_id, created_at)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_projection_thread_sessions_provider_session",
+  "tbl_name": "projection_thread_sessions",
+  "rootpage": 45,
+  "sql": "CREATE INDEX idx_projection_thread_sessions_provider_session\n    ON projection_thread_sessions(provider_session_id)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_projection_turns_thread_requested",
+  "tbl_name": "projection_turns",
+  "rootpage": 46,
+  "sql": "CREATE INDEX idx_projection_turns_thread_requested\n    ON projection_turns(thread_id, requested_at)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_projection_turns_thread_checkpoint_completed",
+  "tbl_name": "projection_turns",
+  "rootpage": 47,
+  "sql": "CREATE INDEX idx_projection_turns_thread_checkpoint_completed\n    ON projection_turns(thread_id, checkpoint_turn_count, completed_at)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_projection_pending_approvals_thread_status",
+  "tbl_name": "projection_pending_approvals",
+  "rootpage": 48,
+  "sql": "CREATE INDEX idx_projection_pending_approvals_thread_status\n    ON projection_pending_approvals(thread_id, status)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_projection_thread_activities_thread_sequence",
+  "tbl_name": "projection_thread_activities",
+  "rootpage": 49,
+  "sql": "CREATE INDEX idx_projection_thread_activities_thread_sequence\n    ON projection_thread_activities(thread_id, sequence)\n  "
+ },
+ {
+  "type": "table",
+  "name": "projection_thread_proposed_plans",
+  "tbl_name": "projection_thread_proposed_plans",
+  "rootpage": 50,
+  "sql": "CREATE TABLE projection_thread_proposed_plans (\n      plan_id TEXT PRIMARY KEY,\n      thread_id TEXT NOT NULL,\n      turn_id TEXT,\n      plan_markdown TEXT NOT NULL,\n      created_at TEXT NOT NULL,\n      updated_at TEXT NOT NULL\n    , implemented_at TEXT, implementation_thread_id TEXT)"
+ },
+ {
+  "type": "index",
+  "name": "sqlite_autoindex_projection_thread_proposed_plans_1",
+  "tbl_name": "projection_thread_proposed_plans",
+  "rootpage": 51,
+  "sql": null
+ },
+ {
+  "type": "index",
+  "name": "idx_projection_thread_proposed_plans_thread_created",
+  "tbl_name": "projection_thread_proposed_plans",
+  "rootpage": 52,
+  "sql": "CREATE INDEX idx_projection_thread_proposed_plans_thread_created\n    ON projection_thread_proposed_plans(thread_id, created_at)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_projection_threads_project_archived_at",
+  "tbl_name": "projection_threads",
+  "rootpage": 53,
+  "sql": "CREATE INDEX idx_projection_threads_project_archived_at\n    ON projection_threads(project_id, archived_at)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_projection_projects_workspace_root_deleted_at",
+  "tbl_name": "projection_projects",
+  "rootpage": 54,
+  "sql": "CREATE INDEX idx_projection_projects_workspace_root_deleted_at\n    ON projection_projects(workspace_root, deleted_at)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_projection_threads_project_deleted_created",
+  "tbl_name": "projection_threads",
+  "rootpage": 55,
+  "sql": "CREATE INDEX idx_projection_threads_project_deleted_created\n    ON projection_threads(project_id, deleted_at, created_at)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_provider_session_runtime_instance",
+  "tbl_name": "provider_session_runtime",
+  "rootpage": 64,
+  "sql": "CREATE INDEX idx_provider_session_runtime_instance\n    ON provider_session_runtime(provider_instance_id)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_projection_thread_sessions_instance",
+  "tbl_name": "projection_thread_sessions",
+  "rootpage": 65,
+  "sql": "CREATE INDEX idx_projection_thread_sessions_instance\n    ON projection_thread_sessions(provider_instance_id)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_projection_thread_activities_thread_sequence_created_id",
+  "tbl_name": "projection_thread_activities",
+  "rootpage": 66,
+  "sql": "CREATE INDEX idx_projection_thread_activities_thread_sequence_created_id\n    ON projection_thread_activities(thread_id, sequence, created_at, activity_id)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_projection_thread_messages_thread_created_id",
+  "tbl_name": "projection_thread_messages",
+  "rootpage": 67,
+  "sql": "CREATE INDEX idx_projection_thread_messages_thread_created_id\n    ON projection_thread_messages(thread_id, created_at, message_id)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_projection_threads_shell_active",
+  "tbl_name": "projection_threads",
+  "rootpage": 68,
+  "sql": "CREATE INDEX idx_projection_threads_shell_active\n    ON projection_threads(deleted_at, archived_at, project_id, created_at, thread_id)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_projection_threads_shell_archived",
+  "tbl_name": "projection_threads",
+  "rootpage": 69,
+  "sql": "CREATE INDEX idx_projection_threads_shell_archived\n    ON projection_threads(deleted_at, archived_at, project_id, thread_id)\n  "
+ },
+ {
+  "type": "table",
+  "name": "auth_pairing_links",
+  "tbl_name": "auth_pairing_links",
+  "rootpage": 56,
+  "sql": "CREATE TABLE auth_pairing_links (\n      id TEXT PRIMARY KEY,\n      credential TEXT NOT NULL UNIQUE,\n      method TEXT NOT NULL,\n      scopes TEXT NOT NULL,\n      subject TEXT NOT NULL,\n      label TEXT,\n      created_at TEXT NOT NULL,\n      expires_at TEXT NOT NULL,\n      consumed_at TEXT,\n      revoked_at TEXT\n    , proof_key_thumbprint TEXT)"
+ },
+ {
+  "type": "index",
+  "name": "sqlite_autoindex_auth_pairing_links_1",
+  "tbl_name": "auth_pairing_links",
+  "rootpage": 57,
+  "sql": null
+ },
+ {
+  "type": "index",
+  "name": "sqlite_autoindex_auth_pairing_links_2",
+  "tbl_name": "auth_pairing_links",
+  "rootpage": 58,
+  "sql": null
+ },
+ {
+  "type": "index",
+  "name": "idx_auth_pairing_links_active",
+  "tbl_name": "auth_pairing_links",
+  "rootpage": 60,
+  "sql": "CREATE INDEX idx_auth_pairing_links_active\n    ON auth_pairing_links(revoked_at, consumed_at, expires_at)\n  "
+ },
+ {
+  "type": "table",
+  "name": "auth_sessions",
+  "tbl_name": "auth_sessions",
+  "rootpage": 61,
+  "sql": "CREATE TABLE auth_sessions (\n      session_id TEXT PRIMARY KEY,\n      subject TEXT NOT NULL,\n      scopes TEXT NOT NULL,\n      method TEXT NOT NULL,\n      client_label TEXT,\n      client_ip_address TEXT,\n      client_user_agent TEXT,\n      client_device_type TEXT NOT NULL DEFAULT 'unknown',\n      client_os TEXT,\n      client_browser TEXT,\n      issued_at TEXT NOT NULL,\n      expires_at TEXT NOT NULL,\n      last_connected_at TEXT,\n      revoked_at TEXT\n    , client_surface TEXT, client_app_version TEXT)"
+ },
+ {
+  "type": "index",
+  "name": "sqlite_autoindex_auth_sessions_1",
+  "tbl_name": "auth_sessions",
+  "rootpage": 62,
+  "sql": null
+ },
+ {
+  "type": "index",
+  "name": "idx_auth_sessions_active",
+  "tbl_name": "auth_sessions",
+  "rootpage": 59,
+  "sql": "CREATE INDEX idx_auth_sessions_active\n    ON auth_sessions(revoked_at, expires_at, issued_at)\n  "
+ },
+ {
+  "type": "index",
+  "name": "idx_projection_turns_thread_keyset",
+  "tbl_name": "projection_turns",
+  "rootpage": 70,
+  "sql": "CREATE INDEX idx_projection_turns_thread_keyset\n    ON projection_turns(thread_id, requested_at, turn_id)\n  "
+ },
+ {
+  "type": "table",
+  "name": "projection_thread_pull_requests",
+  "tbl_name": "projection_thread_pull_requests",
+  "rootpage": 71,
+  "sql": "CREATE TABLE projection_thread_pull_requests (\n      thread_id TEXT NOT NULL,\n      host TEXT NOT NULL,\n      repository TEXT NOT NULL,\n      number INTEGER NOT NULL,\n      url TEXT NOT NULL,\n      source TEXT NOT NULL,\n      linked_at TEXT NOT NULL,\n      snapshot_json TEXT,\n      stack_json TEXT,\n      PRIMARY KEY (thread_id, host, repository, number)\n    )"
+ },
+ {
+  "type": "index",
+  "name": "sqlite_autoindex_projection_thread_pull_requests_1",
+  "tbl_name": "projection_thread_pull_requests",
+  "rootpage": 72,
+  "sql": null
+ },
+ {
+  "type": "index",
+  "name": "idx_projection_thread_pull_requests_pr",
+  "tbl_name": "projection_thread_pull_requests",
+  "rootpage": 73,
+  "sql": "CREATE INDEX idx_projection_thread_pull_requests_pr\n    ON projection_thread_pull_requests(host, repository, number)\n  "
+ },
+ {
+  "type": "table",
+  "name": "pull_request_files_viewed",
+  "tbl_name": "pull_request_files_viewed",
+  "rootpage": 74,
+  "sql": "CREATE TABLE pull_request_files_viewed (\n      provider TEXT NOT NULL,\n      host TEXT NOT NULL,\n      repository TEXT NOT NULL,\n      number INTEGER NOT NULL,\n      viewer TEXT NOT NULL,\n      path TEXT NOT NULL,\n      revision TEXT,\n      viewed_at TEXT NOT NULL,\n      PRIMARY KEY (provider, host, repository, number, viewer, path)\n    ) WITHOUT ROWID\n  "
+ }
+]

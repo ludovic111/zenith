@@ -1,0 +1,29 @@
+[package]
+name = "zc-provider-codex"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "zenith code in Rust: the Codex driver (codex app-server peer, session runtime, adapter, status probe, home layout, managed mode)"
+
+[dependencies]
+zc-codex-protocol = { path = "../zc-codex-protocol" }
+zc-contracts = { path = "../zc-contracts" }
+zc-core = { path = "../zc-core" }
+zc-ports = { path = "../zc-ports" }
+zc-providers = { path = "../zc-providers" }
+async-trait = { workspace = true }
+futures = { workspace = true }
+libc = "0.2"
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+url = "2"
+uuid = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"
+tokio = { workspace = true, features = ["test-util"] }

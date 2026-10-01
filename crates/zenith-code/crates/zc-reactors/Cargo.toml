@@ -1,0 +1,28 @@
+[package]
+name = "zc-reactors"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "zenith code in Rust: the orchestration reactors (provider runtime ingestion, provider command reactor, thread deletion and settlement)"
+
+[dependencies]
+zc-contracts = { path = "../zc-contracts" }
+zc-core = { path = "../zc-core" }
+zc-db = { path = "../zc-db" }
+zc-orchestration = { path = "../zc-orchestration" }
+zc-ports = { path = "../zc-ports" }
+zc-providers = { path = "../zc-providers" }
+zc-settings = { path = "../zc-settings" }
+async-trait = { workspace = true }
+futures = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tokio-util = { version = "0.7", features = ["rt"] }
+tracing = { workspace = true }
+url = "2"
+
+[dev-dependencies]
+tempfile = "3"
+tokio = { workspace = true, features = ["test-util"] }

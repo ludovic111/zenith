@@ -44,15 +44,12 @@ import {
   type ZenithThreadSection,
   type ZenithThreadStatus,
 } from "./embed";
+import { isTitleBarPress } from "./app";
 
 // Projects registered by zenith at startup may land a moment after the snapshot.
 const PROJECT_WAIT_MS = 10_000;
 // Coalesce bursts of shell events (a running turn updates its thread often).
 const SNAPSHOT_DEBOUNCE_MS = 250;
-
-/** What a press in the title bar must leave alone. */
-const DRAG_EXCLUDED =
-  "a,button,input,textarea,select,label,summary,[role=button],[role=link],[role=menuitem],[role=tab],[contenteditable],[data-slot=button],[data-slot$=trigger],[draggable=true]";
 
 /**
  * Mounted in the authenticated shell. Opens the project zenith asked for (via
@@ -128,11 +125,7 @@ export function ZenithEmbedCoordinator() {
     // The top bar is the window's title bar in zenith.app: a press there, off any
     // control, lets zenith move (or, double-clicked, zoom) the window.
     const onMouseDown = (event: MouseEvent) => {
-      const topbar =
-        parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--workspace-topbar-height")) || 52;
-      const target = event.target instanceof Element ? event.target : null;
-      if (event.button !== 0 || event.clientY > topbar || !target) return;
-      if (target.closest(DRAG_EXCLUDED)) return;
+      if (!isTitleBarPress(event)) return;
       postToZenith({ type: ZENITH_MESSAGE.drag, zoom: event.detail === 2 }, allowed);
     };
     void zenithParentOrigins().then((resolved) => {

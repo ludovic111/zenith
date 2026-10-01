@@ -1,0 +1,28 @@
+[package]
+name = "zc-workspace"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "zenith code in Rust: workspace search (fff), entries, file reads and writes, filesystem browse, and the external editor launcher"
+
+[dependencies]
+zc-contracts = { path = "../zc-contracts" }
+zc-core = { path = "../zc-core" }
+zc-rpc = { path = "../zc-rpc" }
+# The same Rust library @ff-labs/fff-node 0.9.4 wraps over FFI (crates/fff-core of the fff repo,
+# published as `fff-search`), pinned to the v0.9.4 tag so ranking stays identical.
+fff-search = { git = "https://github.com/dmtrKovalenko/fff", tag = "v0.9.4" }
+base64 = { workspace = true }
+futures = { workspace = true }
+icu_collator = "2"
+indexmap = "2"
+libc = "0.2"
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"
+tokio = { workspace = true, features = ["test-util"] }

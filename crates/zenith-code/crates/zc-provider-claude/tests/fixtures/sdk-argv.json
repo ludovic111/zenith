@@ -1,0 +1,698 @@
+[
+  {
+    "name": "minimal",
+    "sdkOptions": {
+      "pathToClaudeCodeExecutable": "/opt/test/claude",
+      "env": {
+        "HOME": "/home/test-user",
+        "PATH": "/usr/bin:/bin"
+      }
+    },
+    "command": "/opt/test/claude",
+    "args": [
+      "--output-format",
+      "stream-json",
+      "--verbose",
+      "--input-format",
+      "stream-json",
+      "--permission-mode",
+      "default"
+    ],
+    "cwd": null,
+    "env": {
+      "HOME": "/home/test-user",
+      "PATH": "/usr/bin:/bin",
+      "CLAUDE_CODE_ENTRYPOINT": "sdk-ts",
+      "CLAUDE_AGENT_SDK_VERSION": "0.3.276"
+    },
+    "initialize": {
+      "subtype": "initialize",
+      "systemPrompt": [
+        ""
+      ]
+    }
+  },
+  {
+    "name": "everything",
+    "sdkOptions": {
+      "cwd": "/work/project",
+      "model": "claude-test-1[1m]",
+      "pathToClaudeCodeExecutable": "/opt/test/claude",
+      "systemPrompt": {
+        "type": "preset",
+        "preset": "claude_code",
+        "append": "Be brief.\nAlways."
+      },
+      "settingSources": [
+        "user",
+        "project",
+        "local"
+      ],
+      "effort": "xhigh",
+      "thinking": {
+        "type": "adaptive",
+        "display": "summarized"
+      },
+      "maxTurns": 1,
+      "permissionMode": "bypassPermissions",
+      "allowDangerouslySkipPermissions": true,
+      "settings": {
+        "ultracode": true,
+        "autoCompactWindow": 300000,
+        "nested": {
+          "b": 1,
+          "a": [
+            1,
+            "two"
+          ]
+        }
+      },
+      "sessionId": "00000000-0000-4000-8000-000000000001",
+      "includePartialMessages": true,
+      "canUseTool": true,
+      "onUserDialog": true,
+      "supportedDialogKinds": [
+        "resume_return"
+      ],
+      "env": {
+        "CLAUDE_CODE_ENTRYPOINT": "",
+        "DEBUG": "1",
+        "NODE_OPTIONS": "--inspect",
+        "PATH": "/usr/bin"
+      },
+      "additionalDirectories": [
+        "/work/project",
+        "/data/attachments"
+      ],
+      "extraArgs": {
+        "thinking-display": "summarized",
+        "debug-to-stderr": null,
+        "append-flag": "-x",
+        "count": 3,
+        "dash": "-"
+      },
+      "mcpServers": {
+        "zenith-code": {
+          "type": "http",
+          "url": "http://127.0.0.1:4000/mcp",
+          "headers": {
+            "Authorization": "Bearer test-token"
+          }
+        }
+      },
+      "allowedTools": [
+        "Read",
+        "Grep"
+      ],
+      "disallowedTools": [
+        "Bash(rm:*)"
+      ]
+    },
+    "command": "/opt/test/claude",
+    "args": [
+      "--output-format",
+      "stream-json",
+      "--verbose",
+      "--input-format",
+      "stream-json",
+      "--thinking",
+      "adaptive",
+      "--thinking-display",
+      "summarized",
+      "--effort",
+      "xhigh",
+      "--max-turns",
+      "1",
+      "--model",
+      "claude-test-1[1m]",
+      "--permission-prompt-tool",
+      "stdio",
+      "--allowedTools",
+      "Read,Grep",
+      "--disallowedTools",
+      "Bash(rm:*)",
+      "--mcp-config",
+      "{\"mcpServers\":{\"zenith-code\":{\"type\":\"http\",\"url\":\"http://127.0.0.1:4000/mcp\",\"headers\":{\"Authorization\":\"Bearer test-token\"}}}}",
+      "--setting-sources=user,project,local",
+      "--permission-mode",
+      "bypassPermissions",
+      "--allow-dangerously-skip-permissions",
+      "--include-partial-messages",
+      "--add-dir",
+      "/work/project",
+      "--add-dir",
+      "/data/attachments",
+      "--session-id=00000000-0000-4000-8000-000000000001",
+      "--thinking-display",
+      "summarized",
+      "--debug-to-stderr",
+      "--append-flag=-x",
+      "--count",
+      "3",
+      "--dash",
+      "-",
+      "--settings",
+      "{\"ultracode\":true,\"autoCompactWindow\":300000,\"nested\":{\"b\":1,\"a\":[1,\"two\"]}}"
+    ],
+    "cwd": "/work/project",
+    "env": {
+      "CLAUDE_CODE_ENTRYPOINT": "sdk-ts",
+      "PATH": "/usr/bin",
+      "CLAUDE_AGENT_SDK_VERSION": "0.3.276"
+    },
+    "initialize": {
+      "subtype": "initialize",
+      "appendSystemPrompt": "Be brief.\nAlways.",
+      "supportedDialogKinds": [
+        "resume_return"
+      ]
+    }
+  },
+  {
+    "name": "resume-fork",
+    "sdkOptions": {
+      "pathToClaudeCodeExecutable": "/opt/test/claude",
+      "systemPrompt": "You are a test.",
+      "thinking": {
+        "type": "enabled",
+        "budgetTokens": 4096,
+        "display": "omitted"
+      },
+      "permissionMode": "plan",
+      "resume": "550e8400-e29b-41d4-a716-446655440000",
+      "resumeSessionAt": "assistant-uuid-9",
+      "forkSession": true,
+      "persistSession": false,
+      "env": {
+        "CLAUDE_CODE_ENTRYPOINT": "custom-entry",
+        "DEBUG": "x",
+        "DEBUG_CLAUDE_AGENT_SDK": "true"
+      }
+    },
+    "command": "/opt/test/claude",
+    "args": [
+      "--output-format",
+      "stream-json",
+      "--verbose",
+      "--input-format",
+      "stream-json",
+      "--max-thinking-tokens",
+      "4096",
+      "--thinking-display",
+      "omitted",
+      "--resume=550e8400-e29b-41d4-a716-446655440000",
+      "--permission-mode",
+      "plan",
+      "--fork-session",
+      "--resume-session-at=assistant-uuid-9",
+      "--no-session-persistence"
+    ],
+    "cwd": null,
+    "env": {
+      "CLAUDE_CODE_ENTRYPOINT": "custom-entry",
+      "DEBUG": "1",
+      "DEBUG_CLAUDE_AGENT_SDK": "true",
+      "CLAUDE_AGENT_SDK_VERSION": "0.3.276"
+    },
+    "initialize": {
+      "subtype": "initialize",
+      "systemPrompt": [
+        "You are a test."
+      ]
+    }
+  },
+  {
+    "name": "thinking-disabled",
+    "sdkOptions": {
+      "pathToClaudeCodeExecutable": "/opt/test/claude",
+      "systemPrompt": {
+        "type": "preset",
+        "preset": "claude_code"
+      },
+      "thinking": {
+        "type": "disabled"
+      },
+      "env": {
+        "HOME": "/home/test-user",
+        "PATH": "/usr/bin:/bin"
+      }
+    },
+    "command": "/opt/test/claude",
+    "args": [
+      "--output-format",
+      "stream-json",
+      "--verbose",
+      "--input-format",
+      "stream-json",
+      "--thinking",
+      "disabled",
+      "--permission-mode",
+      "default"
+    ],
+    "cwd": null,
+    "env": {
+      "HOME": "/home/test-user",
+      "PATH": "/usr/bin:/bin",
+      "CLAUDE_CODE_ENTRYPOINT": "sdk-ts",
+      "CLAUDE_AGENT_SDK_VERSION": "0.3.276"
+    },
+    "initialize": {
+      "subtype": "initialize"
+    }
+  },
+  {
+    "name": "thinking-enabled-no-budget",
+    "sdkOptions": {
+      "pathToClaudeCodeExecutable": "/opt/test/claude",
+      "thinking": {
+        "type": "enabled"
+      },
+      "env": {
+        "HOME": "/home/test-user",
+        "PATH": "/usr/bin:/bin"
+      }
+    },
+    "command": "/opt/test/claude",
+    "args": [
+      "--output-format",
+      "stream-json",
+      "--verbose",
+      "--input-format",
+      "stream-json",
+      "--thinking",
+      "adaptive",
+      "--permission-mode",
+      "default"
+    ],
+    "cwd": null,
+    "env": {
+      "HOME": "/home/test-user",
+      "PATH": "/usr/bin:/bin",
+      "CLAUDE_CODE_ENTRYPOINT": "sdk-ts",
+      "CLAUDE_AGENT_SDK_VERSION": "0.3.276"
+    },
+    "initialize": {
+      "subtype": "initialize",
+      "systemPrompt": [
+        ""
+      ]
+    }
+  },
+  {
+    "name": "js-entry-point",
+    "sdkOptions": {
+      "pathToClaudeCodeExecutable": "/opt/test/node_modules/claude/cli.js",
+      "executable": "bun",
+      "executableArgs": [
+        "--smol"
+      ],
+      "env": {
+        "HOME": "/home/test-user",
+        "PATH": "/usr/bin:/bin"
+      },
+      "mcpServers": {},
+      "strictMcpConfig": true
+    },
+    "command": "bun",
+    "args": [
+      "--smol",
+      "/opt/test/node_modules/claude/cli.js",
+      "--output-format",
+      "stream-json",
+      "--verbose",
+      "--input-format",
+      "stream-json",
+      "--strict-mcp-config",
+      "--permission-mode",
+      "default"
+    ],
+    "cwd": null,
+    "env": {
+      "HOME": "/home/test-user",
+      "PATH": "/usr/bin:/bin",
+      "CLAUDE_CODE_ENTRYPOINT": "sdk-ts",
+      "CLAUDE_AGENT_SDK_VERSION": "0.3.276"
+    },
+    "initialize": {
+      "subtype": "initialize",
+      "systemPrompt": [
+        ""
+      ]
+    }
+  },
+  {
+    "name": "mjs-default-runtime",
+    "sdkOptions": {
+      "pathToClaudeCodeExecutable": "/opt/test/cli.mjs",
+      "env": {
+        "HOME": "/home/test-user",
+        "PATH": "/usr/bin:/bin"
+      }
+    },
+    "command": "node",
+    "args": [
+      "/opt/test/cli.mjs",
+      "--output-format",
+      "stream-json",
+      "--verbose",
+      "--input-format",
+      "stream-json",
+      "--permission-mode",
+      "default"
+    ],
+    "cwd": null,
+    "env": {
+      "HOME": "/home/test-user",
+      "PATH": "/usr/bin:/bin",
+      "CLAUDE_CODE_ENTRYPOINT": "sdk-ts",
+      "CLAUDE_AGENT_SDK_VERSION": "0.3.276"
+    },
+    "initialize": {
+      "subtype": "initialize",
+      "systemPrompt": [
+        ""
+      ]
+    }
+  },
+  {
+    "name": "adapter-full-access",
+    "sdkOptions": {
+      "cwd": "/work/project",
+      "pathToClaudeCodeExecutable": "/opt/test/claude",
+      "systemPrompt": {
+        "type": "preset",
+        "preset": "claude_code",
+        "append": "<runtime_info>In case you're asked: you are running in zenith code through the Claude Code harness. No need to mention this otherwise. You can embed images and videos in your response using Markdown with absolute file paths.</runtime_info>\n\n<pull_request_linking>\nWhen the t3-code MCP server exposes link_pull_request, you must use it to register every pull request you create or work on for this thread. Call link_pull_request with the full PR URL immediately after creating a PR or starting work on an existing PR. For a stack, call it for every layer, not just the current branch or the top PR. This applies when creating or updating PRs through gh, gh stack, another CLI, or the host API: those operations do not register the PRs with this thread. Linking an already-linked PR is safe. Before finishing PR work, call list_thread_pull_requests and link any PR from your work that is missing. Do not link unrelated PRs mentioned only as background. If a linking call fails, report that failure instead of claiming the PR is linked.\n</pull_request_linking>"
+      },
+      "settingSources": [
+        "user",
+        "project",
+        "local"
+      ],
+      "thinking": {
+        "type": "adaptive",
+        "display": "summarized"
+      },
+      "permissionMode": "bypassPermissions",
+      "allowDangerouslySkipPermissions": true,
+      "settings": {
+        "showThinkingSummaries": true
+      },
+      "sessionId": "00000000-0000-4000-8000-000000000001",
+      "includePartialMessages": true,
+      "canUseTool": true,
+      "onUserDialog": true,
+      "supportedDialogKinds": [
+        "resume_return"
+      ],
+      "env": {
+        "HOME": "/home/test-user",
+        "PATH": "/usr/bin:/bin"
+      },
+      "additionalDirectories": [
+        "/work/project",
+        "/data/attachments"
+      ],
+      "extraArgs": {
+        "thinking-display": "summarized"
+      }
+    },
+    "command": "/opt/test/claude",
+    "args": [
+      "--output-format",
+      "stream-json",
+      "--verbose",
+      "--input-format",
+      "stream-json",
+      "--thinking",
+      "adaptive",
+      "--thinking-display",
+      "summarized",
+      "--permission-prompt-tool",
+      "stdio",
+      "--setting-sources=user,project,local",
+      "--permission-mode",
+      "bypassPermissions",
+      "--allow-dangerously-skip-permissions",
+      "--include-partial-messages",
+      "--add-dir",
+      "/work/project",
+      "--add-dir",
+      "/data/attachments",
+      "--session-id=00000000-0000-4000-8000-000000000001",
+      "--thinking-display",
+      "summarized",
+      "--settings",
+      "{\"showThinkingSummaries\":true}"
+    ],
+    "cwd": "/work/project",
+    "env": {
+      "HOME": "/home/test-user",
+      "PATH": "/usr/bin:/bin",
+      "CLAUDE_CODE_ENTRYPOINT": "sdk-ts",
+      "CLAUDE_AGENT_SDK_VERSION": "0.3.276"
+    },
+    "initialize": {
+      "subtype": "initialize",
+      "appendSystemPrompt": "<runtime_info>In case you're asked: you are running in zenith code through the Claude Code harness. No need to mention this otherwise. You can embed images and videos in your response using Markdown with absolute file paths.</runtime_info>\n\n<pull_request_linking>\nWhen the t3-code MCP server exposes link_pull_request, you must use it to register every pull request you create or work on for this thread. Call link_pull_request with the full PR URL immediately after creating a PR or starting work on an existing PR. For a stack, call it for every layer, not just the current branch or the top PR. This applies when creating or updating PRs through gh, gh stack, another CLI, or the host API: those operations do not register the PRs with this thread. Linking an already-linked PR is safe. Before finishing PR work, call list_thread_pull_requests and link any PR from your work that is missing. Do not link unrelated PRs mentioned only as background. If a linking call fails, report that failure instead of claiming the PR is linked.\n</pull_request_linking>",
+      "supportedDialogKinds": [
+        "resume_return"
+      ]
+    }
+  },
+  {
+    "name": "adapter-approval-resume-model",
+    "sdkOptions": {
+      "cwd": "/work/project",
+      "model": "claude-synthetic-capable[expanded]",
+      "pathToClaudeCodeExecutable": "/opt/test/claude",
+      "systemPrompt": {
+        "type": "preset",
+        "preset": "claude_code",
+        "append": "<runtime_info>In case you're asked: you are running in zenith code through the Claude Code harness. No need to mention this otherwise. You can embed images and videos in your response using Markdown with absolute file paths.</runtime_info>\n\n<pull_request_linking>\nWhen the t3-code MCP server exposes link_pull_request, you must use it to register every pull request you create or work on for this thread. Call link_pull_request with the full PR URL immediately after creating a PR or starting work on an existing PR. For a stack, call it for every layer, not just the current branch or the top PR. This applies when creating or updating PRs through gh, gh stack, another CLI, or the host API: those operations do not register the PRs with this thread. Linking an already-linked PR is safe. Before finishing PR work, call list_thread_pull_requests and link any PR from your work that is missing. Do not link unrelated PRs mentioned only as background. If a linking call fails, report that failure instead of claiming the PR is linked.\n</pull_request_linking>"
+      },
+      "settingSources": [
+        "user",
+        "project",
+        "local"
+      ],
+      "effort": "max",
+      "thinking": {
+        "type": "adaptive",
+        "display": "summarized"
+      },
+      "settings": {
+        "showThinkingSummaries": true
+      },
+      "resume": "550e8400-e29b-41d4-a716-446655440000",
+      "includePartialMessages": true,
+      "canUseTool": true,
+      "onUserDialog": true,
+      "supportedDialogKinds": [
+        "resume_return"
+      ],
+      "env": {
+        "CLAUDE_CONFIG_DIR": "/home/test-user/.claude-alt",
+        "HOME": "/home/test-user",
+        "PATH": "/usr/bin:/bin"
+      },
+      "additionalDirectories": [
+        "/work/project",
+        "/data/attachments"
+      ],
+      "extraArgs": {
+        "thinking-display": "summarized"
+      }
+    },
+    "command": "/opt/test/claude",
+    "args": [
+      "--output-format",
+      "stream-json",
+      "--verbose",
+      "--input-format",
+      "stream-json",
+      "--thinking",
+      "adaptive",
+      "--thinking-display",
+      "summarized",
+      "--effort",
+      "max",
+      "--model",
+      "claude-synthetic-capable[expanded]",
+      "--permission-prompt-tool",
+      "stdio",
+      "--resume=550e8400-e29b-41d4-a716-446655440000",
+      "--setting-sources=user,project,local",
+      "--permission-mode",
+      "default",
+      "--include-partial-messages",
+      "--add-dir",
+      "/work/project",
+      "--add-dir",
+      "/data/attachments",
+      "--thinking-display",
+      "summarized",
+      "--settings",
+      "{\"showThinkingSummaries\":true}"
+    ],
+    "cwd": "/work/project",
+    "env": {
+      "CLAUDE_CONFIG_DIR": "/home/test-user/.claude-alt",
+      "HOME": "/home/test-user",
+      "PATH": "/usr/bin:/bin",
+      "CLAUDE_CODE_ENTRYPOINT": "sdk-ts",
+      "CLAUDE_AGENT_SDK_VERSION": "0.3.276"
+    },
+    "initialize": {
+      "subtype": "initialize",
+      "appendSystemPrompt": "<runtime_info>In case you're asked: you are running in zenith code through the Claude Code harness. No need to mention this otherwise. You can embed images and videos in your response using Markdown with absolute file paths.</runtime_info>\n\n<pull_request_linking>\nWhen the t3-code MCP server exposes link_pull_request, you must use it to register every pull request you create or work on for this thread. Call link_pull_request with the full PR URL immediately after creating a PR or starting work on an existing PR. For a stack, call it for every layer, not just the current branch or the top PR. This applies when creating or updating PRs through gh, gh stack, another CLI, or the host API: those operations do not register the PRs with this thread. Linking an already-linked PR is safe. Before finishing PR work, call list_thread_pull_requests and link any PR from your work that is missing. Do not link unrelated PRs mentioned only as background. If a linking call fails, report that failure instead of claiming the PR is linked.\n</pull_request_linking>",
+      "supportedDialogKinds": [
+        "resume_return"
+      ]
+    }
+  },
+  {
+    "name": "adapter-auto-accept-launch-args",
+    "sdkOptions": {
+      "model": "claude-synthetic-thinking",
+      "pathToClaudeCodeExecutable": "/opt/test/claude",
+      "systemPrompt": {
+        "type": "preset",
+        "preset": "claude_code",
+        "append": "<runtime_info>In case you're asked: you are running in zenith code through the Claude Code harness. No need to mention this otherwise. You can embed images and videos in your response using Markdown with absolute file paths.</runtime_info>\n\n<pull_request_linking>\nWhen the t3-code MCP server exposes link_pull_request, you must use it to register every pull request you create or work on for this thread. Call link_pull_request with the full PR URL immediately after creating a PR or starting work on an existing PR. For a stack, call it for every layer, not just the current branch or the top PR. This applies when creating or updating PRs through gh, gh stack, another CLI, or the host API: those operations do not register the PRs with this thread. Linking an already-linked PR is safe. Before finishing PR work, call list_thread_pull_requests and link any PR from your work that is missing. Do not link unrelated PRs mentioned only as background. If a linking call fails, report that failure instead of claiming the PR is linked.\n</pull_request_linking>"
+      },
+      "settingSources": [
+        "user",
+        "project",
+        "local"
+      ],
+      "thinking": {
+        "type": "adaptive",
+        "display": "summarized"
+      },
+      "permissionMode": "acceptEdits",
+      "settings": {
+        "showThinkingSummaries": true
+      },
+      "sessionId": "00000000-0000-4000-8000-000000000001",
+      "includePartialMessages": true,
+      "canUseTool": true,
+      "onUserDialog": true,
+      "supportedDialogKinds": [
+        "resume_return"
+      ],
+      "env": {
+        "HOME": "/home/test-user",
+        "PATH": "/usr/bin:/bin"
+      },
+      "additionalDirectories": [
+        "/data/attachments"
+      ],
+      "extraArgs": {
+        "chrome": null,
+        "debug-file": "/tmp/x",
+        "thinking-display": "summarized"
+      }
+    },
+    "command": "/opt/test/claude",
+    "args": [
+      "--output-format",
+      "stream-json",
+      "--verbose",
+      "--input-format",
+      "stream-json",
+      "--thinking",
+      "adaptive",
+      "--thinking-display",
+      "summarized",
+      "--model",
+      "claude-synthetic-thinking",
+      "--permission-prompt-tool",
+      "stdio",
+      "--setting-sources=user,project,local",
+      "--permission-mode",
+      "acceptEdits",
+      "--include-partial-messages",
+      "--add-dir",
+      "/data/attachments",
+      "--session-id=00000000-0000-4000-8000-000000000001",
+      "--chrome",
+      "--debug-file",
+      "/tmp/x",
+      "--thinking-display",
+      "summarized",
+      "--settings",
+      "{\"showThinkingSummaries\":true}"
+    ],
+    "cwd": null,
+    "env": {
+      "HOME": "/home/test-user",
+      "PATH": "/usr/bin:/bin",
+      "CLAUDE_CODE_ENTRYPOINT": "sdk-ts",
+      "CLAUDE_AGENT_SDK_VERSION": "0.3.276"
+    },
+    "initialize": {
+      "subtype": "initialize",
+      "appendSystemPrompt": "<runtime_info>In case you're asked: you are running in zenith code through the Claude Code harness. No need to mention this otherwise. You can embed images and videos in your response using Markdown with absolute file paths.</runtime_info>\n\n<pull_request_linking>\nWhen the t3-code MCP server exposes link_pull_request, you must use it to register every pull request you create or work on for this thread. Call link_pull_request with the full PR URL immediately after creating a PR or starting work on an existing PR. For a stack, call it for every layer, not just the current branch or the top PR. This applies when creating or updating PRs through gh, gh stack, another CLI, or the host API: those operations do not register the PRs with this thread. Linking an already-linked PR is safe. Before finishing PR work, call list_thread_pull_requests and link any PR from your work that is missing. Do not link unrelated PRs mentioned only as background. If a linking call fails, report that failure instead of claiming the PR is linked.\n</pull_request_linking>",
+      "supportedDialogKinds": [
+        "resume_return"
+      ]
+    }
+  },
+  {
+    "name": "status-probe",
+    "sdkOptions": {
+      "cwd": "/work/project",
+      "pathToClaudeCodeExecutable": "/opt/test/claude",
+      "settingSources": [
+        "user",
+        "project",
+        "local"
+      ],
+      "settings": {
+        "disableAllHooks": true
+      },
+      "persistSession": false,
+      "env": {
+        "CLAUDE_CODE_AUTO_CONNECT_IDE": "0",
+        "CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL": "1",
+        "ENABLE_CLAUDEAI_MCP_SERVERS": "false",
+        "HOME": "/home/test-user",
+        "PATH": "/usr/bin:/bin"
+      },
+      "mcpServers": {},
+      "strictMcpConfig": true
+    },
+    "command": "/opt/test/claude",
+    "args": [
+      "--output-format",
+      "stream-json",
+      "--verbose",
+      "--input-format",
+      "stream-json",
+      "--setting-sources=user,project,local",
+      "--strict-mcp-config",
+      "--permission-mode",
+      "default",
+      "--no-session-persistence",
+      "--settings",
+      "{\"disableAllHooks\":true}"
+    ],
+    "cwd": "/work/project",
+    "env": {
+      "CLAUDE_CODE_AUTO_CONNECT_IDE": "0",
+      "CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL": "1",
+      "ENABLE_CLAUDEAI_MCP_SERVERS": "false",
+      "HOME": "/home/test-user",
+      "PATH": "/usr/bin:/bin",
+      "CLAUDE_CODE_ENTRYPOINT": "sdk-ts",
+      "CLAUDE_AGENT_SDK_VERSION": "0.3.276"
+    },
+    "initialize": {
+      "subtype": "initialize",
+      "systemPrompt": [
+        ""
+      ]
+    }
+  }
+]

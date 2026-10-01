@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-shell-drag"
+description = "Enables the shell_drag command without any pre-configured scope."
+commands.allow = ["shell_drag"]
+
+[[permission]]
+identifier = "deny-shell-drag"
+description = "Denies the shell_drag command without any pre-configured scope."
+commands.deny = ["shell_drag"]

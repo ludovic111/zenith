@@ -1,0 +1,40 @@
+[package]
+name = "zc-assets"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "zenith code in Rust: signed asset URLs, attachment uploads, media ranges, GitHub media, project favicons and macOS app icons"
+
+[dependencies]
+zc-auth = { path = "../zc-auth" }
+zc-contracts = { path = "../zc-contracts" }
+zc-core = { path = "../zc-core" }
+zc-orchestration = { path = "../zc-orchestration" }
+zc-ports = { path = "../zc-ports" }
+zc-rpc = { path = "../zc-rpc" }
+zc-workspace = { path = "../zc-workspace" }
+async-trait = { workspace = true }
+axum = { workspace = true }
+bytes = { workspace = true }
+futures = { workspace = true }
+http = "1"
+httpdate = "1"
+icns = "0.3"
+libc = "0.2"
+mime_guess = "2"
+plist = "1"
+regex = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+tokio = { workspace = true }
+tokio-util = { version = "0.7", features = ["io"] }
+tracing = { workspace = true }
+url = "2"
+
+[dev-dependencies]
+http-body-util = "0.1"
+tempfile = "3"
+tower = { version = "0.5", features = ["util"] }
+tokio = { workspace = true, features = ["test-util"] }

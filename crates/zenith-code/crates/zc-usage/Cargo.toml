@@ -1,0 +1,39 @@
+[package]
+name = "zc-usage"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "zenith code: token and cost reporting from the provider CLIs' own transcripts (usage/**): transcript readers with resume positions and the scan cache, the Claude, Codex, Grok, OpenCode, Antigravity and Cursor readers, LiteLLM pricing, aggregation, and the CLIProxyAPI usage-limit sources"
+
+[dependencies]
+zc-contracts = { path = "../zc-contracts" }
+zc-core = { path = "../zc-core" }
+zc-ports = { path = "../zc-ports" }
+zc-provider-claude = { path = "../zc-provider-claude" }
+zc-provider-codex = { path = "../zc-provider-codex" }
+zc-providers = { path = "../zc-providers" }
+zc-rpc = { path = "../zc-rpc" }
+zc-settings = { path = "../zc-settings" }
+async-trait = { workspace = true }
+base64 = { workspace = true }
+futures = { workspace = true }
+indexmap = "2"
+jiff = { workspace = true }
+memchr = "2"
+regex = { workspace = true }
+reqwest = { workspace = true }
+rusqlite = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha1 = "0.10"
+sha2 = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+url = "2"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+keyring = { version = "3", features = ["apple-native"] }
+
+[dev-dependencies]
+tempfile = "3"
+tokio = { workspace = true, features = ["test-util"] }

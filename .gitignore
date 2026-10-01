@@ -13,7 +13,10 @@
 # testing
 /coverage
 
-# next.js
+# the web app's build (npm run build), served by zenith's server
+/dist/
+
+# builds of the Next.js versions, still in older checkouts
 /.next/
 /.next-update/
 /.next-previous/
@@ -41,7 +44,6 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
 .data/
 
 # Compiled Mac app, publication staging
@@ -61,3 +63,8 @@ next-env.d.ts
 /code/.t3/
 /code/.vite-hooks/_/
 /.t3/
+
+# Rust builds
+/target/
+/crates/zenith-app/gen/
+/crates/zenith-app/Info.plist

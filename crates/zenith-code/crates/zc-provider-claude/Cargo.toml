@@ -1,0 +1,32 @@
+[package]
+name = "zc-provider-claude"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "zenith code in Rust: the Claude driver (claude CLI over stream-json and its control protocol, without the Node SDK)"
+
+[dependencies]
+zc-contracts = { path = "../zc-contracts" }
+zc-core = { path = "../zc-core" }
+zc-ports = { path = "../zc-ports" }
+zc-providers = { path = "../zc-providers" }
+async-trait = { workspace = true }
+base64 = { workspace = true }
+futures = { workspace = true }
+indexmap = "2"
+libc = "0.2"
+rand = { workspace = true }
+regex = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = "0.9"
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tokio-util = "0.7"
+tracing = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"
+tokio = { workspace = true, features = ["test-util"] }

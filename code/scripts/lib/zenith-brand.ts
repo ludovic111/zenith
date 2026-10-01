@@ -1,5 +1,5 @@
 /**
- * zenith code branding, applied at build time.
+ * zenith branding, applied at build time.
  *
  * Upstream T3 Code spells its name in ~150 user-facing strings. Rewriting them
  * in source would make every upstream sync conflict, so the web and server
@@ -7,7 +7,7 @@
  * modules (never node_modules) and in index.html. The brand lives here only.
  */
 
-export const ZENITH_BRAND_NAME = "zenith code";
+export const ZENITH_BRAND_NAME = "zenith";
 
 const UPSTREAM_BRAND_NAME = /T3 Code/g;
 const FIRST_PARTY_MODULE = /\.(?:[cm]?[jt]sx?)$/;

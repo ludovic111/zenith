@@ -1,0 +1,66 @@
+[package]
+name = "zenith-code"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "zenith code's server, in Rust: the coding workspace for Claude Code, Codex and others"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "zenith-code"
+path = "src/main.rs"
+
+[dependencies]
+zc-assets = { path = "crates/zc-assets" }
+zc-auth = { path = "crates/zc-auth" }
+zc-contracts = { path = "crates/zc-contracts" }
+zc-core = { path = "crates/zc-core" }
+zc-db = { path = "crates/zc-db" }
+zc-http = { path = "crates/zc-http" }
+zc-mcp = { path = "crates/zc-mcp" }
+zc-orchestration = { path = "crates/zc-orchestration" }
+zc-ports = { path = "crates/zc-ports" }
+zc-preview = { path = "crates/zc-preview" }
+zc-project = { path = "crates/zc-project" }
+zc-projections = { path = "crates/zc-projections" }
+zc-pullrequest = { path = "crates/zc-pullrequest" }
+zc-checkpoints = { path = "crates/zc-checkpoints" }
+zc-git = { path = "crates/zc-git" }
+zc-providers = { path = "crates/zc-providers" }
+zc-provider-claude = { path = "crates/zc-provider-claude" }
+zc-provider-codex = { path = "crates/zc-provider-codex" }
+zc-reactors = { path = "crates/zc-reactors" }
+zc-rpc = { path = "crates/zc-rpc" }
+zc-sessions = { path = "crates/zc-sessions" }
+zc-sourcecontrol = { path = "crates/zc-sourcecontrol" }
+zc-telemetry = { path = "crates/zc-telemetry" }
+zc-settings = { path = "crates/zc-settings" }
+zc-terminal = { path = "crates/zc-terminal" }
+zc-textgen = { path = "crates/zc-textgen" }
+zc-usage = { path = "crates/zc-usage" }
+zc-vcs = { path = "crates/zc-vcs" }
+zc-workspace = { path = "crates/zc-workspace" }
+clap = { version = "4", features = ["derive", "env"] }
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+axum = { workspace = true }
+futures = { workspace = true }
+libc = "0.2"
+reqwest = { workspace = true }
+tokio-stream = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tokio-util = { version = "0.7", features = ["rt"] }
+tower-http = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }
+tempfile = "3"
+tokio-tungstenite = "0.29"
+http = "1"
+http-body-util = "0.1"
+tower = { version = "0.5", features = ["util"] }

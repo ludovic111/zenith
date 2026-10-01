@@ -1,0 +1,12 @@
+{
+  // Plain Node tooling (sockets, child processes, timers), checked without the Effect
+  // language-service rules that apply to the rest of scripts/:
+  //   cd code/scripts && node_modules/.bin/tsc --noEmit -p compat
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "lib": ["ESNext", "esnext.disposable", "DOM"],
+    "plugins": [{ "name": "@effect/language-service", "diagnostics": false }]
+  },
+  "include": ["**/*.ts"]
+}

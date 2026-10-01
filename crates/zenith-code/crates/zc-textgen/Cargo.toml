@@ -1,0 +1,28 @@
+[package]
+name = "zc-textgen"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "zenith code in Rust: text generation (commit messages, change requests, branch names, thread titles) through one-shot agent CLI calls"
+
+[dependencies]
+zc-contracts = { path = "../zc-contracts" }
+zc-core = { path = "../zc-core" }
+zc-ports = { path = "../zc-ports" }
+zc-providers = { path = "../zc-providers" }
+zc-provider-claude = { path = "../zc-provider-claude" }
+zc-provider-codex = { path = "../zc-provider-codex" }
+zc-sourcecontrol = { path = "../zc-sourcecontrol" }
+async-trait = { workspace = true }
+futures = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tempfile = "3"
+tokio = { workspace = true }
+tracing = { workspace = true }
+url = "2"
+
+[dev-dependencies]
+zc-reactors = { path = "../zc-reactors" }
+tokio = { workspace = true, features = ["test-util"] }

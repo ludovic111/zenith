@@ -3,118 +3,53 @@
 Part of [lsuite](https://lsuite.xyz), the free, open-source creative suite your AI can drive.
 Website: **[lsuite.xyz/zenith](https://lsuite.xyz/zenith)**.
 
-**Your projects and your day, at a glance.** zenith is a local dashboard for people who build many things at once: every project's health, deploys, code and AI agents, your calendar, mail, money and news — plus **zenith code**, a full coding workspace for Claude Code and Codex, built in.
+**A Mac app for coding with agents.** zenith runs Claude Code, Codex and other coding agents in your projects: threads you can follow and steer, approvals, plans, diffs, terminals, worktrees, git and pull requests — and what it all costs. [Version française](README.fr.md).
 
-And it acts. **Ask zenith** anything in one sentence (⌘J): an AI agent starts on it at once, in the right project or across your whole life, with everything zenith knows. The **Now** list shows what is waiting for you — a failing payment, buyers to answer, a broken CI, a birthday — and hands each one to an agent in one tap. It prepares; you approve.
-
-It runs on your machine, answers only on `127.0.0.1`, and never sends your data anywhere. [Version française](README.fr.md).
+It runs on your machine: the server answers only on `127.0.0.1`, uses your own Claude and ChatGPT subscriptions, and sends your code nowhere else.
 
 ## What you get
 
-| Page | What it shows |
+| | |
 | --- | --- |
-| **Ask zenith** | One box, everywhere (home, project pages, ⌘J, ⌘K): say what you want, an agent does it and opens as a thread. Routes to the project you name, else to your life agent. Most pages also offer one-click agent actions on what they show (draft a reply, fix a CI, review subscriptions…) |
-| **Now** | What is waiting for you, most pressing first, each with a one-tap *Hand off* to an agent, *done* and *later*. Plus routines: agents that run on their own at a set time, or as soon as something new is waiting |
-| **Autonomy** | Agents learn from you every night (and improve how they learn), look around every few hours to prepare what's coming, keep your projects' dependencies up to date, and improve zenith itself — each project decides how much they may do there. zenith updates itself from GitHub |
-| **Three spaces** | One switcher at the top of the sidebar (⌘1 ⌘2 ⌘3): **Overview** (your day, projects, money), **Team** (talk to your agents), **Code** (zenith code, sessions) |
-| **Team** | Your agent and its bots: first names, faces, a role, their own personality (SOUL.md), memory and shared skills, each on your Claude or ChatGPT (Codex) subscription. `@name` to talk to one; they talk to each other and act on the Mac, the web and any MCP server. Reachable from Telegram |
-| Home | Today in one line, Ask zenith, Now, every project in one table (status, latency, key numbers, commits), money, agents at work, six months of commits, a live feed |
-| My day | Weather, air quality, UV and pollen, calendar (14 days, holidays, birthdays), what's waiting for you, now playing, screen time, spending, work rhythm |
-| Projects | One page per project: uptime, latency, HTTP traffic and deploys (Railway), CI, issues and PRs (GitHub), releases and downloads, App Store rating and reviews, RevenueCat MRR, agent sessions, Obsidian notes, identity card |
-| **Code** | **zenith code**: chat with Claude Code, Codex and other agents inside any of your projects — diffs, terminals, worktrees, approvals. Its threads live in zenith's sidebar, under their project |
-| Watch | Who talks about your projects (Hacker News, GitHub), notifications, new stars, contributions, news, markets, the state of your Mac |
-| Sessions (Code) | Every Claude Code and Codex session: live, cost, lines written, PRs, the command to resume it; plan limits |
-| Team | Your agents, recent conversations (theirs with each other too), routines and skills |
-| Subscriptions | Everything you pay for, monthly total in your currency, next charges, failing payments, Claude / ChatGPT plan gauges |
-| Directory | Every project's names, handles, domains (registrar, renewal, certificate, email), stores and services |
-| Settings | One place for zenith (configuration, zenith code, the agent, connecting your AI tools, the Mac app, data sources and keys) and zenith code (providers, projects, source control, keybindings…) |
+| **Threads** | One conversation per task, with Claude Code or Codex. Approvals, plan mode, interrupts, follow-ups while it works, images in your messages |
+| **Code** | Diffs per turn and per thread, checkpoints you can revert to, a worktree per thread, file search, integrated terminals |
+| **Git & PRs** | Commit, push and open a pull request in one step (messages written for you), review pull requests from GitHub, GitLab, Azure DevOps, Forgejo or Bitbucket |
+| **Sessions & costs** | Every Claude Code and Codex session, in zenith or in your terminal: cost and tokens, spending by day and by model, your plan limits |
+| **Agents can drive it** | Each thread hands its agent zenith's MCP server (`/mcp`), so it can link the pull requests it opens to its thread |
+| **Mac app** | A native window: translucent sidebar, traffic lights in the title bar, light and dark appearance, menus, notifications |
 
-Press **⌘J** to ask zenith, **⌘K** to jump (pages, projects, threads, settings — or type a sentence to ask), **⌘B** to hide the sidebar, **⌘,** for settings. zenith follows your system's light or dark appearance.
+## Install
 
-## Quick start
-
-Requirements: macOS or Linux, Node.js 22.16+ (24+ recommended), git. Optional: the [GitHub CLI](https://cli.github.com) logged in, Claude Code and/or Codex.
+Requirements: macOS, [Rust](https://rustup.rs), Node.js 22.16+ (24+ recommended, to build the interface), git. Optional: the [GitHub CLI](https://cli.github.com) logged in, Claude Code and/or Codex.
 
 ```bash
 git clone https://github.com/ludovic111/zenith.git
 cd zenith
 npm install
-npm run dev          # http://127.0.0.1:4748
-```
-
-To build zenith code (the coding workspace) once:
-
-```bash
-npm run code:build
-```
-
-The first launch opens a **welcome** in six short steps: your language, your name and city (weather, holidays, currency), your projects (found in your code folder, with their GitHub repository and description), your agent and its team (first names, faces, each on your Claude or ChatGPT subscription — from templates or your own), and their routines. Everything is saved as you go and applies at once; change any of it later in **Settings → General, Team, Projects**. No file to edit.
-
-### Mac app
-
-```bash
 npm run mac:install
 ```
 
-Builds everything, installs **zenith.app** and keeps the server running in the background (a LaunchAgent on `127.0.0.1:4747`). Run it again after pulling changes; `npm run mac:uninstall` removes it. zenith.app is a native Mac window: translucent sidebar, traffic lights in a unified title bar you can drag and double-click, light and dark appearance, native menus (⌘, settings, ⌃⌘S sidebar, ⌘[ ⌘] back and forward), notifications and a Dock badge when a service goes down. The app also reads Calendar, Reminders, Contacts (birthdays only), Mail, Music/Spotify and screen time — read-only, after macOS asks you.
+This builds zenith, installs **zenith.app** and keeps its server running in the background (a LaunchAgent on `127.0.0.1:4747`), so agents keep working when the window is closed. Run it again after pulling changes; `npm run mac:uninstall` removes it. Your threads and settings live in `~/.zenith/code`.
 
-## Configuration
+The server is the Rust one. `ZENITH_SERVER=node npm run mac:install` installs the original TypeScript server instead; both read and write the same data, so you can switch back and forth.
 
-Everything about you lives in **`zenith.config.json`** — at the root or in `perso/`, both git-ignored. The welcome and the settings write it for you (each change is validated, the previous file is kept in `.data/config-backups/`, and zenith reloads it without a restart). You can also edit it by hand: `zenith.schema.json` gives your editor autocompletion. See [docs/configuration.md](docs/configuration.md) for every field.
+## How it is built
 
-```jsonc
-{
-  "locale": "en-US",            // or "fr-FR", "fr-CH"… — French or English interface
-  "currency": "USD",            // totals are converted to it
-  "location": { "name": "New York", "latitude": 40.71, "longitude": -74.0, "country": "US" },
-  "projects": [
-    {
-      "id": "my-app",
-      "name": "My App",
-      "dir": "my-app",                      // folder next to zenith/, or an absolute path
-      "repo": "me/my-app",                  // GitHub
-      "site": "https://my-app.com",
-      "probes": [{ "label": "API", "url": "https://api.my-app.com/health" }],
-      "releases": true,                     // count GitHub release downloads
-      "appStore": { "id": "1234567890" },   // ratings and reviews
-      "revenuecat": { "projectId": "1a2b3c4d" }
-    }
-  ]
-}
+- `crates/zenith-code` — the server, in Rust: the WebSocket RPC and HTTP API the interface talks to, the event-sourced SQLite store, the Claude Code and Codex drivers, git, worktrees, checkpoints, terminals, pull requests, usage, MCP. It is a port of zenith code's TypeScript server, checked against it ([plan](docs/zenith-code-rust-plan.md), [verification](docs/zenith-code/verification.md)).
+- `crates/zenith-app` — zenith.app, a [Tauri](https://tauri.app) window around the interface.
+- `code/` — zenith code, a fork of [T3 Code](https://github.com/pingdotgg/t3code) (MIT): the web interface (`code/apps/web`, React) and the TypeScript server the Rust one is tested against. See [code/ZENITH.md](code/ZENITH.md).
+
+```bash
+cargo test --workspace                  # the Rust server and app
+cargo clippy --workspace --all-targets
 ```
-
-API keys are pasted from **Settings → Data sources** (`/reglages/sources`): they're written to `.env.local` (git-ignored) and applied without a restart. See `.env.example`. Without any key, zenith still shows your local repos, agent sessions, weather, news and more.
-
-## For AI agents
-
-Every 10 minutes zenith writes a Markdown brief of everything it knows (`context/brief.md`, one file per project, `vie.md`, `argent.md`…), also into your Obsidian vault. Give it to your agents with:
-
-- **MCP**: `claude mcp add zenith --scope user -- node /path/to/zenith/scripts/mcp/zenith-mcp.mjs` (Codex: `codex mcp add zenith -- node …`). To read: `zenith_brief`, `zenith_project`, `zenith_document`, `zenith_search_notes`, `zenith_read_note`. To act (zenith running): `zenith_now`, `zenith_delegate` (start another agent in a project), `zenith_agent`, `zenith_done`.
-- **HTTP**: `http://127.0.0.1:4747/api/context[/<doc>]` and `/llms.txt`.
-
-## The zenith agent
-
-Ask zenith, Now and routines run through zenith code, with your Claude Code or Codex subscription and your usual permissions. Life requests run in the agent's own folder (`~/.zenith/life`), where zenith writes its instructions (who you are, where everything is, what it must ask before doing) and plugs its MCP server in; it reaches your mail and calendar through your Claude connectors. It drafts, branches and proposes; it asks before sending, paying, deleting or deploying. See [docs/agent.md](docs/agent.md).
-
-## zenith code
-
-`code/` holds zenith code, a fork of [T3 Code](https://github.com/pingdotgg/t3code) (MIT) rebranded, themed and wired into zenith: it starts with zenith, knows your projects, pairs itself inside the dashboard, and shares zenith's sidebar, ⌘K and URLs (`/code/<environment>/<thread>`): one app, not an app in an app. It keeps its own state in `~/.zenith/code`. See [code/ZENITH.md](code/ZENITH.md) for what changed and how to sync with upstream.
-
-## Extending
-
-Built-in integrations (GitHub, Railway, RevenueCat, App Store, Obsidian, Claude Code, Codex…) switch on from the config. For anything specific to your projects — your own database, your own API, whole pages — write an extension in `perso/` (git-ignored, plugged in automatically when it exists): see [docs/extensions.md](docs/extensions.md). Keep `perso/` in its own private repository if you want it backed up.
 
 ## Privacy
 
-- The server listens on `127.0.0.1` only and rejects any other `Host` header (DNS rebinding).
-- Keys stay server-side in `.env.local`; nothing is sent to a third party except the API calls you configured.
-- `perso/`, `zenith.config.json`, `.env.local`, `.data/` and `context/` are git-ignored.
-- `npm run privacy` scans every tracked file for your config's identifying values (names, emails, domains, ids…) and for secrets; `npm run privacy -- --install` runs it before each `git push`. Useful when you contribute back.
-
-## Stack
-
-Next.js 16, React 19, Tailwind 4, Motion, cmdk, NumberFlow; the system font. zenith.app: AppKit and WebKit. zenith code: Effect, Vite, TanStack Router.
+- The server listens on `127.0.0.1` only; the interface signs in with a one-time pairing token the app mints itself.
+- Agents run with your own CLIs and subscriptions (`claude`, `codex`).
+- `npm run privacy -- --install` checks every push for secrets.
 
 ## License
 
-MIT. zenith code is based on T3 Code by T3 Tools Inc. (MIT).
+MIT. Based on T3 Code by T3 Tools Inc. (MIT).

@@ -1,0 +1,29 @@
+[package]
+name = "zc-sourcecontrol"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "zenith code in Rust: source control providers (gh, glab, az, fj/tea, Bitbucket REST), discovery, the provider registry, the repository service and their RPCs"
+
+[dependencies]
+zc-contracts = { path = "../zc-contracts" }
+zc-core = { path = "../zc-core" }
+zc-ports = { path = "../zc-ports" }
+zc-rpc = { path = "../zc-rpc" }
+zc-vcs = { path = "../zc-vcs" }
+async-trait = { workspace = true }
+base64 = { workspace = true }
+futures = { workspace = true }
+jiff = { workspace = true }
+regex = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+url = "2"
+
+[dev-dependencies]
+tempfile = "3"
+tokio = { workspace = true, features = ["test-util"] }

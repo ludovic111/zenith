@@ -1,0 +1,28 @@
+[package]
+name = "zc-orchestration"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "zenith code's orchestration core: decider, projector, the serialized command engine, the normalizer and the attachment store"
+
+[dependencies]
+zc-contracts = { path = "../zc-contracts" }
+zc-core = { path = "../zc-core" }
+zc-db = { path = "../zc-db" }
+zc-ports = { path = "../zc-ports" }
+async-trait = { workspace = true }
+base64 = { workspace = true }
+futures = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+unicode-segmentation = "1"
+url = "2"
+
+[dev-dependencies]
+rusqlite = { workspace = true }
+tempfile = "3"
+tokio = { workspace = true, features = ["test-util"] }

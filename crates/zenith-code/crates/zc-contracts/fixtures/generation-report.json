@@ -1,0 +1,27 @@
+{
+  "summary": {
+    "exports": 1067,
+    "items": 1661,
+    "struct": 1168,
+    "newtype": 21,
+    "alias": 54,
+    "strEnum": 285,
+    "union": 133,
+    "literalTypes": 424,
+    "exportAliases": 8,
+    "rpcs": 148,
+    "streams": 25,
+    "endpoints": 24,
+    "schemaIds": 1574,
+    "unsampled": 2
+  },
+  "unsampled": [
+    "ChatImageAttachment",
+    "ProjectFaviconPath"
+  ],
+  "deviations": [
+    "ModelSelection: also decodes legacy shapes in TS (Objects → Objects); Rust accepts the canonical shape only",
+    "ProjectSettingsOverridesTextGenerationModelSelection: also decodes legacy shapes in TS (Objects → Objects); Rust accepts the canonical shape only",
+    "ProviderOptionSelectionsVariant2: also decodes legacy shapes in TS (Objects → Arrays); Rust accepts the canonical shape only"
+  ]
+}

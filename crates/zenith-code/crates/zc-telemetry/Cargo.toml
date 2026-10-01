@@ -1,0 +1,28 @@
+[package]
+name = "zc-telemetry"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "zenith code in Rust: resource telemetry (in-process process-tree sampling), host resources, process and trace diagnostics, the trace NDJSON writer and the opt-in OTLP export"
+
+[dependencies]
+zc-contracts = { path = "../zc-contracts" }
+zc-rpc = { path = "../zc-rpc" }
+async-trait = { workspace = true }
+futures = { workspace = true }
+libc = "0.2"
+percent-encoding = "2"
+rand = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sysinfo = { version = "0.39", default-features = false, features = ["system"] }
+tokio = { workspace = true }
+tokio-stream = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "registry", "fmt"] }
+url = "2"
+
+[dev-dependencies]
+tempfile = "3"
+tokio = { workspace = true, features = ["test-util"] }

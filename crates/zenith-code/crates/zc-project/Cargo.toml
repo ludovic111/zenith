@@ -1,0 +1,33 @@
+[package]
+name = "zc-project"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "zenith code in Rust: repository identities, project clones (tracker, progress, clone guard), t3.json, and the import of external Claude/Codex sessions"
+
+[dependencies]
+zc-contracts = { path = "../zc-contracts" }
+zc-core = { path = "../zc-core" }
+zc-db = { path = "../zc-db" }
+zc-ports = { path = "../zc-ports" }
+zc-projections = { path = "../zc-projections" }
+zc-providers = { path = "../zc-providers" }
+zc-rpc = { path = "../zc-rpc" }
+zc-settings = { path = "../zc-settings" }
+zc-sourcecontrol = { path = "../zc-sourcecontrol" }
+zc-vcs = { path = "../zc-vcs" }
+async-trait = { workspace = true }
+futures = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tokio-util = { version = "0.7", features = ["rt"] }
+tracing = { workspace = true }
+url = "2"
+uuid = { workspace = true }
+
+[dev-dependencies]
+zc-orchestration = { path = "../zc-orchestration" }
+tempfile = "3"
+tokio = { workspace = true, features = ["test-util"] }

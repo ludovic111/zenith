@@ -1,0 +1,4437 @@
+{
+  "tools": [
+    {
+      "name": "preview_status",
+      "title": "Get preview status",
+      "description": "Report whether a collaborative browser tab is automation-capable, including its URL, title, visibility, loading state, viewport mode, and measured CSS-pixel size. Pass tabId to inspect a specific tab; omit it to use this agent session's current tab.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tabId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Exact collaborative browser tab to target. Omit to use this agent session's current tab."
+          }
+        },
+        "additionalProperties": true
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "visible": {
+            "type": "boolean"
+          },
+          "tabId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "loading": {
+            "type": "boolean"
+          },
+          "viewportSetting": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "fill"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "freeform"
+                        ]
+                      },
+                      "width": {
+                        "type": "integer",
+                        "minimum": 240,
+                        "maximum": 3840
+                      },
+                      "height": {
+                        "type": "integer",
+                        "minimum": 240,
+                        "maximum": 3840
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "width",
+                      "height"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "preset"
+                        ]
+                      },
+                      "width": {
+                        "type": "integer",
+                        "minimum": 240,
+                        "maximum": 3840
+                      },
+                      "height": {
+                        "type": "integer",
+                        "minimum": 240,
+                        "maximum": 3840
+                      },
+                      "presetId": {
+                        "type": "string",
+                        "enum": [
+                          "iphone-se",
+                          "iphone-xr",
+                          "iphone-12-pro",
+                          "iphone-14-pro-max",
+                          "pixel-7",
+                          "samsung-galaxy-s8-plus",
+                          "samsung-galaxy-s20-ultra",
+                          "ipad-mini",
+                          "ipad-air",
+                          "ipad-pro",
+                          "surface-pro-7",
+                          "surface-duo",
+                          "galaxy-z-fold-5",
+                          "asus-zenbook-fold",
+                          "samsung-galaxy-a51-71",
+                          "nest-hub",
+                          "nest-hub-max",
+                          "desktop-1920x1080",
+                          "desktop-1440x900",
+                          "laptop-1366x768",
+                          "laptop-1280x800",
+                          "ipad-pro-11",
+                          "iphone-15-pro",
+                          "pixel-8",
+                          "galaxy-s24"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "width",
+                      "height",
+                      "presetId"
+                    ],
+                    "additionalProperties": true
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "viewport": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "width": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0
+                  },
+                  "height": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0
+                  }
+                },
+                "required": [
+                  "width",
+                  "height"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "available",
+          "visible",
+          "tabId",
+          "url",
+          "title",
+          "loading"
+        ],
+        "additionalProperties": true
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "preview_open",
+      "title": "Open browser preview",
+      "description": "Initialize a collaborative browser tab and open its thread-bound inline preview by default. Set open=false for background-only automation. Pass tabId to reuse a specific existing tab, set reuseExistingTab=false to create another tab, or omit both to use this agent session's current tab.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tabId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Exact collaborative browser tab to target. Omit to use this agent session's current tab."
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\S[\\s\\S]*\\S$|^\\S$|^$",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional initial page URL. Absolute http(s) URL or a schemeless host such as t3.chat or localhost:5173. Schemeless public hosts use https; loopback hosts use http. Omit to open a blank tab."
+          },
+          "open": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Whether to open the thread-bound inline preview for the human. Defaults to true; set false for background-only automation."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "show": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Deprecated alias for open. Whether to reveal the thread-bound inline preview to the human."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reuseExistingTab": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Reuse tabId when supplied, otherwise this agent session's current tab. Defaults to true; set false to create a new tab."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": true
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "visible": {
+            "type": "boolean"
+          },
+          "tabId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "loading": {
+            "type": "boolean"
+          },
+          "viewportSetting": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "fill"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "freeform"
+                        ]
+                      },
+                      "width": {
+                        "type": "integer",
+                        "minimum": 240,
+                        "maximum": 3840
+                      },
+                      "height": {
+                        "type": "integer",
+                        "minimum": 240,
+                        "maximum": 3840
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "width",
+                      "height"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "preset"
+                        ]
+                      },
+                      "width": {
+                        "type": "integer",
+                        "minimum": 240,
+                        "maximum": 3840
+                      },
+                      "height": {
+                        "type": "integer",
+                        "minimum": 240,
+                        "maximum": 3840
+                      },
+                      "presetId": {
+                        "type": "string",
+                        "enum": [
+                          "iphone-se",
+                          "iphone-xr",
+                          "iphone-12-pro",
+                          "iphone-14-pro-max",
+                          "pixel-7",
+                          "samsung-galaxy-s8-plus",
+                          "samsung-galaxy-s20-ultra",
+                          "ipad-mini",
+                          "ipad-air",
+                          "ipad-pro",
+                          "surface-pro-7",
+                          "surface-duo",
+                          "galaxy-z-fold-5",
+                          "asus-zenbook-fold",
+                          "samsung-galaxy-a51-71",
+                          "nest-hub",
+                          "nest-hub-max",
+                          "desktop-1920x1080",
+                          "desktop-1440x900",
+                          "laptop-1366x768",
+                          "laptop-1280x800",
+                          "ipad-pro-11",
+                          "iphone-15-pro",
+                          "pixel-8",
+                          "galaxy-s24"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "width",
+                      "height",
+                      "presetId"
+                    ],
+                    "additionalProperties": true
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "viewport": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "width": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0
+                  },
+                  "height": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0
+                  }
+                },
+                "required": [
+                  "width",
+                  "height"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "available",
+          "visible",
+          "tabId",
+          "url",
+          "title",
+          "loading"
+        ],
+        "additionalProperties": true
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "preview_navigate",
+      "title": "Navigate browser preview",
+      "description": "Navigate a collaborative browser tab. Pass tabId to target a specific tab, plus {url:'https://t3.chat'} for a website or {target:{kind:'environment-port',port:5173}} for a dev server. Exactly one of url or target is required.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tabId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Exact collaborative browser tab to target. Omit to use this agent session's current tab."
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\S[\\s\\S]*\\S$|^\\S$|^$",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Website URL. Absolute http(s) URL or a schemeless host such as t3.chat or localhost:5173. Schemeless public hosts use https; loopback hosts use http. Use this for public pages and directly reachable URLs."
+          },
+          "target": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "url"
+                        ],
+                        "description": "Selects direct URL navigation."
+                      },
+                      "url": {
+                        "type": "string",
+                        "pattern": "^\\S[\\s\\S]*\\S$|^\\S$|^$",
+                        "minLength": 1,
+                        "maxLength": 2048,
+                        "description": "Direct website URL. Absolute http(s) URL or a schemeless host such as t3.chat or localhost:5173. Schemeless public hosts use https; loopback hosts use http."
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "url"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "environment-port"
+                        ],
+                        "description": "Selects a dev-server port relative to the current execution environment."
+                      },
+                      "port": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "exclusiveMaximum": 65536,
+                        "description": "Dev-server TCP port inside the current environment."
+                      },
+                      "protocol": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "http",
+                              "https"
+                            ],
+                            "description": "Dev-server protocol. Defaults to http."
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "path": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "description": "Optional path, query, and fragment, for example /settings?tab=account."
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "port"
+                    ],
+                    "additionalProperties": true
+                  }
+                ],
+                "description": "Environment-relative target. Prefer {kind:'environment-port',port:5173} for a dev server in the current environment."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Environment-relative target. Prefer {kind:'environment-port',port:5173} for a dev server in the current environment."
+          },
+          "readiness": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "load",
+                  "domContentLoaded",
+                  "none"
+                ],
+                "description": "Readiness milestone before returning. 'load' waits for loading to stop (default), 'domContentLoaded' waits for an interactive document, and 'none' returns immediately."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Readiness milestone before returning. 'load' is the default; use 'none' only when a later wait call will verify the page."
+          },
+          "timeoutMs": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 60000,
+                "description": "Maximum wait in milliseconds. Defaults to 15000; maximum 60000."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Maximum wait in milliseconds. Defaults to 15000; maximum 60000."
+          }
+        },
+        "additionalProperties": true
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "visible": {
+            "type": "boolean"
+          },
+          "tabId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "loading": {
+            "type": "boolean"
+          },
+          "viewportSetting": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "fill"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "freeform"
+                        ]
+                      },
+                      "width": {
+                        "type": "integer",
+                        "minimum": 240,
+                        "maximum": 3840
+                      },
+                      "height": {
+                        "type": "integer",
+                        "minimum": 240,
+                        "maximum": 3840
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "width",
+                      "height"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "preset"
+                        ]
+                      },
+                      "width": {
+                        "type": "integer",
+                        "minimum": 240,
+                        "maximum": 3840
+                      },
+                      "height": {
+                        "type": "integer",
+                        "minimum": 240,
+                        "maximum": 3840
+                      },
+                      "presetId": {
+                        "type": "string",
+                        "enum": [
+                          "iphone-se",
+                          "iphone-xr",
+                          "iphone-12-pro",
+                          "iphone-14-pro-max",
+                          "pixel-7",
+                          "samsung-galaxy-s8-plus",
+                          "samsung-galaxy-s20-ultra",
+                          "ipad-mini",
+                          "ipad-air",
+                          "ipad-pro",
+                          "surface-pro-7",
+                          "surface-duo",
+                          "galaxy-z-fold-5",
+                          "asus-zenbook-fold",
+                          "samsung-galaxy-a51-71",
+                          "nest-hub",
+                          "nest-hub-max",
+                          "desktop-1920x1080",
+                          "desktop-1440x900",
+                          "laptop-1366x768",
+                          "laptop-1280x800",
+                          "ipad-pro-11",
+                          "iphone-15-pro",
+                          "pixel-8",
+                          "galaxy-s24"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "width",
+                      "height",
+                      "presetId"
+                    ],
+                    "additionalProperties": true
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "viewport": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "width": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0
+                  },
+                  "height": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0
+                  }
+                },
+                "required": [
+                  "width",
+                  "height"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "available",
+          "visible",
+          "tabId",
+          "url",
+          "title",
+          "loading"
+        ],
+        "additionalProperties": true
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "preview_resize",
+      "title": "Resize browser viewport",
+      "description": "Resize a collaborative browser tab, optionally selected by tabId. Use {mode:'fill'}, {mode:'freeform',width:1024,height:768}, or {mode:'preset',preset:'iphone-12-pro',orientation:'portrait'}. This changes CSS layout breakpoints without changing the desktop browser user agent.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tabId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Exact collaborative browser tab to target. Omit to use this agent session's current tab."
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "fill",
+              "freeform",
+              "preset"
+            ],
+            "description": "Viewport mode: fill follows the preview panel, freeform uses exact independently resizable dimensions, and preset uses a named device size."
+          },
+          "preset": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "iphone-se",
+                  "iphone-xr",
+                  "iphone-12-pro",
+                  "iphone-14-pro-max",
+                  "pixel-7",
+                  "samsung-galaxy-s8-plus",
+                  "samsung-galaxy-s20-ultra",
+                  "ipad-mini",
+                  "ipad-air",
+                  "ipad-pro",
+                  "surface-pro-7",
+                  "surface-duo",
+                  "galaxy-z-fold-5",
+                  "asus-zenbook-fold",
+                  "samsung-galaxy-a51-71",
+                  "nest-hub",
+                  "nest-hub-max"
+                ],
+                "description": "Named viewport from Chrome DevTools' standard device catalog."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Named device size. Required only when mode is preset."
+          },
+          "width": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 240,
+                "maximum": 3840,
+                "description": "Freeform viewport width in CSS pixels. Required only in freeform mode."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Freeform viewport width in CSS pixels. Required only in freeform mode."
+          },
+          "height": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 240,
+                "maximum": 3840,
+                "description": "Freeform viewport height in CSS pixels. Required only in freeform mode."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Freeform viewport height in CSS pixels. Required only in freeform mode."
+          },
+          "orientation": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "portrait",
+                  "landscape"
+                ],
+                "description": "Orientation for a fixed device preset. Defaults to the preset's native orientation."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Orientation for a named device preset. It is not accepted in fill or freeform mode."
+          },
+          "timeoutMs": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 60000,
+                "description": "Maximum wait in milliseconds. Defaults to 15000; maximum 60000."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Maximum wait in milliseconds. Defaults to 15000; maximum 60000."
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "additionalProperties": true
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "tabId": {
+            "type": "string"
+          },
+          "setting": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "_tag": {
+                    "type": "string",
+                    "enum": [
+                      "fill"
+                    ]
+                  }
+                },
+                "required": [
+                  "_tag"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "_tag": {
+                    "type": "string",
+                    "enum": [
+                      "freeform"
+                    ]
+                  },
+                  "width": {
+                    "type": "integer",
+                    "minimum": 240,
+                    "maximum": 3840
+                  },
+                  "height": {
+                    "type": "integer",
+                    "minimum": 240,
+                    "maximum": 3840
+                  }
+                },
+                "required": [
+                  "_tag",
+                  "width",
+                  "height"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "_tag": {
+                    "type": "string",
+                    "enum": [
+                      "preset"
+                    ]
+                  },
+                  "width": {
+                    "type": "integer",
+                    "minimum": 240,
+                    "maximum": 3840
+                  },
+                  "height": {
+                    "type": "integer",
+                    "minimum": 240,
+                    "maximum": 3840
+                  },
+                  "presetId": {
+                    "type": "string",
+                    "enum": [
+                      "iphone-se",
+                      "iphone-xr",
+                      "iphone-12-pro",
+                      "iphone-14-pro-max",
+                      "pixel-7",
+                      "samsung-galaxy-s8-plus",
+                      "samsung-galaxy-s20-ultra",
+                      "ipad-mini",
+                      "ipad-air",
+                      "ipad-pro",
+                      "surface-pro-7",
+                      "surface-duo",
+                      "galaxy-z-fold-5",
+                      "asus-zenbook-fold",
+                      "samsung-galaxy-a51-71",
+                      "nest-hub",
+                      "nest-hub-max",
+                      "desktop-1920x1080",
+                      "desktop-1440x900",
+                      "laptop-1366x768",
+                      "laptop-1280x800",
+                      "ipad-pro-11",
+                      "iphone-15-pro",
+                      "pixel-8",
+                      "galaxy-s24"
+                    ]
+                  }
+                },
+                "required": [
+                  "_tag",
+                  "width",
+                  "height",
+                  "presetId"
+                ],
+                "additionalProperties": true
+              }
+            ]
+          },
+          "viewport": {
+            "type": "object",
+            "properties": {
+              "width": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              "height": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              }
+            },
+            "required": [
+              "width",
+              "height"
+            ],
+            "additionalProperties": true
+          },
+          "toolIcon": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "website"
+                        ]
+                      },
+                      "pageUrl": {
+                        "type": "string"
+                      },
+                      "faviconUrl": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "faviconUrlDark": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "pageUrl"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "native-app"
+                        ]
+                      },
+                      "app": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "_tag": {
+                                "type": "string",
+                                "enum": [
+                                  "app-id"
+                                ]
+                              },
+                              "appId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "_tag",
+                              "appId"
+                            ],
+                            "additionalProperties": true
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "_tag": {
+                                "type": "string",
+                                "enum": [
+                                  "display-name"
+                                ]
+                              },
+                              "displayName": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "_tag",
+                              "displayName"
+                            ],
+                            "additionalProperties": true
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "app"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "themed-logo"
+                        ]
+                      },
+                      "logoUrl": {
+                        "type": "string"
+                      },
+                      "logoUrlDark": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "logoUrl"
+                    ],
+                    "additionalProperties": true
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "tabId",
+          "setting",
+          "viewport"
+        ],
+        "additionalProperties": true
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "preview_set_appearance",
+      "title": "Set preview appearance",
+      "description": "Emulate prefers-color-scheme in a collaborative browser tab, optionally selected by tabId. Use {colorScheme:'dark'} or {colorScheme:'light'} to preview the page in that appearance, and {colorScheme:'system'} to clear the override and follow the OS appearance.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tabId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Exact collaborative browser tab to target. Omit to use this agent session's current tab."
+          },
+          "colorScheme": {
+            "type": "string",
+            "enum": [
+              "system",
+              "light",
+              "dark"
+            ],
+            "description": "Emulated prefers-color-scheme for the page: light, dark, or system to follow the OS appearance."
+          }
+        },
+        "required": [
+          "colorScheme"
+        ],
+        "additionalProperties": true,
+        "description": "Emulates prefers-color-scheme in the active browser tab without changing the OS or app theme."
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "tabId": {
+            "type": "string"
+          },
+          "colorScheme": {
+            "type": "string",
+            "enum": [
+              "system",
+              "light",
+              "dark"
+            ]
+          },
+          "toolIcon": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "website"
+                        ]
+                      },
+                      "pageUrl": {
+                        "type": "string"
+                      },
+                      "faviconUrl": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "faviconUrlDark": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "pageUrl"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "native-app"
+                        ]
+                      },
+                      "app": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "_tag": {
+                                "type": "string",
+                                "enum": [
+                                  "app-id"
+                                ]
+                              },
+                              "appId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "_tag",
+                              "appId"
+                            ],
+                            "additionalProperties": true
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "_tag": {
+                                "type": "string",
+                                "enum": [
+                                  "display-name"
+                                ]
+                              },
+                              "displayName": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "_tag",
+                              "displayName"
+                            ],
+                            "additionalProperties": true
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "app"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "themed-logo"
+                        ]
+                      },
+                      "logoUrl": {
+                        "type": "string"
+                      },
+                      "logoUrlDark": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "logoUrl"
+                    ],
+                    "additionalProperties": true
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "tabId",
+          "colorScheme"
+        ],
+        "additionalProperties": true
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "preview_click",
+      "title": "Click preview page",
+      "description": "Click exactly one target in the tab selected by tabId, or this agent session's current tab when omitted. Prefer a Playwright locator; selector accepts legacy CSS; x and y must be supplied together.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tabId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Exact collaborative browser tab to target. Omit to use this agent session's current tab."
+          },
+          "selector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Legacy CSS selector such as button[type='submit']. Prefer locator for resilient role/text targeting."
+          },
+          "locator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Playwright selector, preferably role/text based, for example role=button[name='Send'] or text=Continue. Use snapshot first to inspect the page."
+          },
+          "x": {
+            "anyOf": [
+              {
+                "type": "number",
+                "description": "Viewport-relative X coordinate in CSS pixels. Must be paired with y."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "y": {
+            "anyOf": [
+              {
+                "type": "number",
+                "description": "Viewport-relative Y coordinate in CSS pixels. Must be paired with x."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "timeoutMs": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 60000,
+                "description": "Maximum wait in milliseconds. Defaults to 15000; maximum 60000."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Maximum wait in milliseconds. Defaults to 15000; maximum 60000."
+          }
+        },
+        "additionalProperties": true
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "toolIcon": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "website"
+                        ]
+                      },
+                      "pageUrl": {
+                        "type": "string"
+                      },
+                      "faviconUrl": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "faviconUrlDark": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "pageUrl"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "native-app"
+                        ]
+                      },
+                      "app": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "_tag": {
+                                "type": "string",
+                                "enum": [
+                                  "app-id"
+                                ]
+                              },
+                              "appId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "_tag",
+                              "appId"
+                            ],
+                            "additionalProperties": true
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "_tag": {
+                                "type": "string",
+                                "enum": [
+                                  "display-name"
+                                ]
+                              },
+                              "displayName": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "_tag",
+                              "displayName"
+                            ],
+                            "additionalProperties": true
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "app"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "themed-logo"
+                        ]
+                      },
+                      "logoUrl": {
+                        "type": "string"
+                      },
+                      "logoUrlDark": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "logoUrl"
+                    ],
+                    "additionalProperties": true
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": true,
+        "description": "The preview action completed successfully."
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "preview_type",
+      "title": "Type into preview page",
+      "description": "Insert literal text into one input in the tab selected by tabId, or this agent session's current tab when omitted. Prefer a Playwright locator; set clear=true to replace existing text.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tabId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Exact collaborative browser tab to target. Omit to use this agent session's current tab."
+          },
+          "text": {
+            "type": "string",
+            "description": "Literal text to insert."
+          },
+          "selector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Legacy CSS selector for the input. Prefer locator."
+          },
+          "locator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Playwright selector for the input, for example role=textbox[name='Message'] or textarea[placeholder*='Message']."
+          },
+          "clear": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Clear the existing input value before inserting text. Defaults to false."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "timeoutMs": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 60000,
+                "description": "Maximum wait in milliseconds. Defaults to 15000; maximum 60000."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Maximum wait in milliseconds. Defaults to 15000; maximum 60000."
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": true
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "toolIcon": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "website"
+                        ]
+                      },
+                      "pageUrl": {
+                        "type": "string"
+                      },
+                      "faviconUrl": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "faviconUrlDark": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "pageUrl"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "native-app"
+                        ]
+                      },
+                      "app": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "_tag": {
+                                "type": "string",
+                                "enum": [
+                                  "app-id"
+                                ]
+                              },
+                              "appId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "_tag",
+                              "appId"
+                            ],
+                            "additionalProperties": true
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "_tag": {
+                                "type": "string",
+                                "enum": [
+                                  "display-name"
+                                ]
+                              },
+                              "displayName": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "_tag",
+                              "displayName"
+                            ],
+                            "additionalProperties": true
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "app"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "themed-logo"
+                        ]
+                      },
+                      "logoUrl": {
+                        "type": "string"
+                      },
+                      "logoUrlDark": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "logoUrl"
+                    ],
+                    "additionalProperties": true
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": true,
+        "description": "The preview action completed successfully."
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "preview_press",
+      "title": "Press key in preview page",
+      "description": "Press one keyboard key in the tab selected by tabId, or this agent session's current tab when omitted. Examples: {key:'Enter'}, {key:'Escape'}, or {key:'a',modifiers:['Meta']}.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tabId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Exact collaborative browser tab to target. Omit to use this agent session's current tab."
+          },
+          "key": {
+            "type": "string",
+            "pattern": "^\\S[\\s\\S]*\\S$|^\\S$|^$",
+            "minLength": 1,
+            "description": "Keyboard key name such as Enter, Escape, Tab, ArrowDown, Backspace, or a single character.",
+            "allOf": [
+              {
+                "description": "Keyboard key name such as Enter, Escape, Tab, ArrowDown, Backspace, or a single character."
+              }
+            ]
+          },
+          "modifiers": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "Alt",
+                    "Control",
+                    "Meta",
+                    "Shift"
+                  ]
+                },
+                "description": "Modifier keys held while pressing key."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "additionalProperties": true,
+        "description": "Presses one keyboard key in the active browser tab."
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "toolIcon": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "website"
+                        ]
+                      },
+                      "pageUrl": {
+                        "type": "string"
+                      },
+                      "faviconUrl": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "faviconUrlDark": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "pageUrl"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "native-app"
+                        ]
+                      },
+                      "app": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "_tag": {
+                                "type": "string",
+                                "enum": [
+                                  "app-id"
+                                ]
+                              },
+                              "appId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "_tag",
+                              "appId"
+                            ],
+                            "additionalProperties": true
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "_tag": {
+                                "type": "string",
+                                "enum": [
+                                  "display-name"
+                                ]
+                              },
+                              "displayName": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "_tag",
+                              "displayName"
+                            ],
+                            "additionalProperties": true
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "app"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "themed-logo"
+                        ]
+                      },
+                      "logoUrl": {
+                        "type": "string"
+                      },
+                      "logoUrlDark": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "logoUrl"
+                    ],
+                    "additionalProperties": true
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": true,
+        "description": "The preview action completed successfully."
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "preview_scroll",
+      "title": "Scroll preview page",
+      "description": "Scroll the tab selected by tabId, or this agent session's current tab when omitted. Positive deltaY scrolls down and positive deltaX scrolls right; a locator/selector targets a container.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tabId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Exact collaborative browser tab to target. Omit to use this agent session's current tab."
+          },
+          "deltaX": {
+            "anyOf": [
+              {
+                "type": "number",
+                "description": "Horizontal scroll delta in CSS pixels. Positive scrolls right. Defaults to 0."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "deltaY": {
+            "anyOf": [
+              {
+                "type": "number",
+                "description": "Vertical scroll delta in CSS pixels. Positive scrolls down. Defaults to 0."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "selector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Legacy CSS selector for a scrollable container. Omit to scroll the viewport."
+          },
+          "locator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Playwright selector for a scrollable container. Omit to scroll the viewport."
+          }
+        },
+        "additionalProperties": true
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "toolIcon": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "website"
+                        ]
+                      },
+                      "pageUrl": {
+                        "type": "string"
+                      },
+                      "faviconUrl": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "faviconUrlDark": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "pageUrl"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "native-app"
+                        ]
+                      },
+                      "app": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "_tag": {
+                                "type": "string",
+                                "enum": [
+                                  "app-id"
+                                ]
+                              },
+                              "appId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "_tag",
+                              "appId"
+                            ],
+                            "additionalProperties": true
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "_tag": {
+                                "type": "string",
+                                "enum": [
+                                  "display-name"
+                                ]
+                              },
+                              "displayName": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "_tag",
+                              "displayName"
+                            ],
+                            "additionalProperties": true
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "app"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "themed-logo"
+                        ]
+                      },
+                      "logoUrl": {
+                        "type": "string"
+                      },
+                      "logoUrlDark": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "logoUrl"
+                    ],
+                    "additionalProperties": true
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": true,
+        "description": "The preview action completed successfully."
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "preview_evaluate",
+      "title": "Evaluate JavaScript in preview",
+      "description": "Evaluate JavaScript in the tab selected by tabId, or this agent session's current tab when omitted. Returns {value} with a serializable result up to 64 KB; the expression may mutate page state.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tabId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Exact collaborative browser tab to target. Omit to use this agent session's current tab."
+          },
+          "expression": {
+            "type": "string",
+            "pattern": "^\\S[\\s\\S]*\\S$|^\\S$|^$",
+            "minLength": 1,
+            "description": "JavaScript expression evaluated in the page's main frame, for example document.title or (() => ({href: location.href}))().",
+            "maxLength": 64000,
+            "allOf": [
+              {
+                "description": "JavaScript expression evaluated in the page's main frame, for example document.title or (() => ({href: location.href}))()."
+              }
+            ]
+          },
+          "awaitPromise": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Await a returned Promise. Defaults to true."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "returnByValue": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Serialize and return the value instead of a remote object reference. Defaults to true."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "expression"
+        ],
+        "additionalProperties": true,
+        "description": "Evaluates JavaScript in the page. Prefer snapshot and semantic actions; use evaluate for inspection or unsupported interactions."
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "toolIcon": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "website"
+                        ]
+                      },
+                      "pageUrl": {
+                        "type": "string"
+                      },
+                      "faviconUrl": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "faviconUrlDark": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "pageUrl"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "native-app"
+                        ]
+                      },
+                      "app": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "_tag": {
+                                "type": "string",
+                                "enum": [
+                                  "app-id"
+                                ]
+                              },
+                              "appId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "_tag",
+                              "appId"
+                            ],
+                            "additionalProperties": true
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "_tag": {
+                                "type": "string",
+                                "enum": [
+                                  "display-name"
+                                ]
+                              },
+                              "displayName": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "_tag",
+                              "displayName"
+                            ],
+                            "additionalProperties": true
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "app"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "themed-logo"
+                        ]
+                      },
+                      "logoUrl": {
+                        "type": "string"
+                      },
+                      "logoUrlDark": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "logoUrl"
+                    ],
+                    "additionalProperties": true
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "value": {}
+        },
+        "required": [
+          "value"
+        ],
+        "additionalProperties": true,
+        "description": "The evaluated expression result."
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "preview_wait_for",
+      "title": "Wait for preview page condition",
+      "description": "Wait in the tab selected by tabId, or this agent session's current tab when omitted, until all supplied locator, selector, text, and URL conditions match.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tabId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Exact collaborative browser tab to target. Omit to use this agent session's current tab."
+          },
+          "selector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Legacy CSS selector that must match an element. Prefer locator."
+          },
+          "locator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Playwright selector that must match an element, for example role=button[name='Send']."
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Case-sensitive substring that must appear in visible document text."
+          },
+          "urlIncludes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Substring that must appear in the current absolute URL."
+          },
+          "timeoutMs": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 60000,
+                "description": "Maximum wait in milliseconds. Defaults to 15000; maximum 60000."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Maximum wait in milliseconds. Defaults to 15000; maximum 60000."
+          }
+        },
+        "additionalProperties": true
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "toolIcon": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "website"
+                        ]
+                      },
+                      "pageUrl": {
+                        "type": "string"
+                      },
+                      "faviconUrl": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "faviconUrlDark": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "pageUrl"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "native-app"
+                        ]
+                      },
+                      "app": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "_tag": {
+                                "type": "string",
+                                "enum": [
+                                  "app-id"
+                                ]
+                              },
+                              "appId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "_tag",
+                              "appId"
+                            ],
+                            "additionalProperties": true
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "_tag": {
+                                "type": "string",
+                                "enum": [
+                                  "display-name"
+                                ]
+                              },
+                              "displayName": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "_tag",
+                              "displayName"
+                            ],
+                            "additionalProperties": true
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "app"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "themed-logo"
+                        ]
+                      },
+                      "logoUrl": {
+                        "type": "string"
+                      },
+                      "logoUrlDark": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "logoUrl"
+                    ],
+                    "additionalProperties": true
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": true,
+        "description": "The preview action completed successfully."
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "preview_recording_start",
+      "title": "Start browser recording",
+      "description": "Start recording the collaborative browser tab selected by tabId, or this agent session's current tab when omitted.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tabId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Exact collaborative browser tab to target. Omit to use this agent session's current tab."
+          }
+        },
+        "additionalProperties": true
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "tabId": {
+            "type": "string"
+          },
+          "recording": {
+            "type": "boolean"
+          },
+          "startedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "toolIcon": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "website"
+                        ]
+                      },
+                      "pageUrl": {
+                        "type": "string"
+                      },
+                      "faviconUrl": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "faviconUrlDark": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "pageUrl"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "native-app"
+                        ]
+                      },
+                      "app": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "_tag": {
+                                "type": "string",
+                                "enum": [
+                                  "app-id"
+                                ]
+                              },
+                              "appId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "_tag",
+                              "appId"
+                            ],
+                            "additionalProperties": true
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "_tag": {
+                                "type": "string",
+                                "enum": [
+                                  "display-name"
+                                ]
+                              },
+                              "displayName": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "_tag",
+                              "displayName"
+                            ],
+                            "additionalProperties": true
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "app"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "themed-logo"
+                        ]
+                      },
+                      "logoUrl": {
+                        "type": "string"
+                      },
+                      "logoUrlDark": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "logoUrl"
+                    ],
+                    "additionalProperties": true
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "tabId",
+          "recording",
+          "startedAt"
+        ],
+        "additionalProperties": true
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "preview_recording_stop",
+      "title": "Stop browser recording",
+      "description": "Stop recording the collaborative browser tab selected by tabId, or this agent session's current tab when omitted, and transfer the compressed recording once (up to 50 MiB) to an evidence file readable in this agent's environment. Returns its environment-local path after transfer succeeds.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tabId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Exact collaborative browser tab to target. Omit to use this agent session's current tab."
+          }
+        },
+        "additionalProperties": true
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "tabId": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "toolIcon": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "website"
+                        ]
+                      },
+                      "pageUrl": {
+                        "type": "string"
+                      },
+                      "faviconUrl": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "faviconUrlDark": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "pageUrl"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "native-app"
+                        ]
+                      },
+                      "app": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "_tag": {
+                                "type": "string",
+                                "enum": [
+                                  "app-id"
+                                ]
+                              },
+                              "appId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "_tag",
+                              "appId"
+                            ],
+                            "additionalProperties": true
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "_tag": {
+                                "type": "string",
+                                "enum": [
+                                  "display-name"
+                                ]
+                              },
+                              "displayName": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "_tag",
+                              "displayName"
+                            ],
+                            "additionalProperties": true
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "app"
+                    ],
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "_tag": {
+                        "type": "string",
+                        "enum": [
+                          "themed-logo"
+                        ]
+                      },
+                      "logoUrl": {
+                        "type": "string"
+                      },
+                      "logoUrlDark": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_tag",
+                      "logoUrl"
+                    ],
+                    "additionalProperties": true
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tabId",
+          "path",
+          "mimeType",
+          "sizeBytes",
+          "createdAt"
+        ],
+        "additionalProperties": true
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "preview_snapshot",
+      "title": "Inspect browser page",
+      "description": "Inspect a page before interacting. Pass tabId to inspect a specific tab; omit it to use this agent session's current tab. Returns page state, semantic elements, diagnostics, action history, and a PNG screenshot. The text is capped near 20 KB and lists what it omitted; use preview_evaluate to read more. Set includeImage=false for text-only output with the same page metadata. Set save=true to also write the PNG to disk and get screenshotPath back; with includeImage=false, save=true returns only the url and screenshotPath. Embed that path in your reply as ![alt](screenshotPath) so the user sees it. This is the only way to show the user a screenshot; the image in the tool result is not saved anywhere.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tabId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Exact collaborative browser tab to target. Omit to use this agent session's current tab."
+          },
+          "includeImage": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Include the PNG image in the tool response. Defaults to true. Set false for text-only output."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "save": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Write the screenshot PNG to disk and return its absolute path as screenshotPath. With includeImage=false, return only the url and screenshotPath. Defaults to false."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": true
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "link_pull_request",
+      "title": "Link pull request to thread",
+      "description": "Register every pull request you open for this thread, including each layer of a stack, right after creating it. Links a pull request to this thread so T3 Code tracks it, shows its status beside the thread, and settles the thread when it merges. Pass the URL, or repository plus number. Linking an already-linked pull request succeeds with alreadyLinked=true.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "repository": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Pull request number. Required with repository when url is omitted."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "host": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": true
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string"
+          },
+          "repository": {
+            "type": "string"
+          },
+          "number": {
+            "type": "integer"
+          },
+          "url": {
+            "type": "string"
+          },
+          "alreadyLinked": {
+            "type": "boolean",
+            "description": "True when the pull request was linked to this thread before the call."
+          }
+        },
+        "required": [
+          "host",
+          "repository",
+          "number",
+          "url",
+          "alreadyLinked"
+        ],
+        "additionalProperties": true
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "unlink_pull_request",
+      "title": "Unlink pull request from thread",
+      "description": "Remove a pull request link from this thread, for example after closing a pull request you opened by mistake. Pass the URL, or repository plus number. Unlinking a pull request that is not linked succeeds with wasLinked=false.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "repository": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Pull request number. Required with repository when url is omitted."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "host": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": true
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string"
+          },
+          "repository": {
+            "type": "string"
+          },
+          "number": {
+            "type": "integer"
+          },
+          "wasLinked": {
+            "type": "boolean",
+            "description": "False when the pull request was not linked to this thread to begin with."
+          }
+        },
+        "required": [
+          "host",
+          "repository",
+          "number",
+          "wasLinked"
+        ],
+        "additionalProperties": true
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "list_thread_pull_requests",
+      "title": "List thread pull requests",
+      "description": "List the pull requests linked to this thread with their last known host state, and how they chain into stacks (bottom to top). Register every pull request you open for this thread, including each layer of a stack, right after creating it.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "pullRequests": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "host": {
+                  "type": "string"
+                },
+                "repository": {
+                  "type": "string"
+                },
+                "number": {
+                  "type": "integer"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string",
+                  "enum": [
+                    "manual",
+                    "created",
+                    "agent",
+                    "stack",
+                    "stack-dismissed"
+                  ]
+                },
+                "state": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "open",
+                        "closed",
+                        "merged"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "title": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "headBranch": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "baseBranch": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "isDraft": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "stack": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "native",
+                            "derived"
+                          ]
+                        },
+                        "position": {
+                          "type": "integer"
+                        },
+                        "size": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "position",
+                        "size"
+                      ],
+                      "additionalProperties": true
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "host",
+                "repository",
+                "number",
+                "url",
+                "source",
+                "state",
+                "title",
+                "headBranch",
+                "baseBranch",
+                "isDraft",
+                "stack"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "chains": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "native",
+                    "derived"
+                  ]
+                },
+                "numbers": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "required": [
+                "kind",
+                "numbers"
+              ],
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": [
+          "pullRequests",
+          "chains"
+        ],
+        "additionalProperties": true
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "device_list",
+      "title": "List devices",
+      "description": "List iOS Simulators and Android Emulators on this environment's device hosts, which platforms each host can run, and which devices are already open in this thread's Device panel. Call this before device_open when you do not know a device id.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "hostId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Limit to one device host. Defaults to all hosts."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": true
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "hostStatuses": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "disabled",
+                    "idle",
+                    "installing",
+                    "starting",
+                    "ready",
+                    "failed"
+                  ]
+                },
+                "detail": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "status"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "hosts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "local",
+                    "ssh"
+                  ]
+                },
+                "label": {
+                  "type": "string"
+                },
+                "platforms": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "platform": {
+                        "type": "string",
+                        "enum": [
+                          "ios",
+                          "android"
+                        ]
+                      },
+                      "available": {
+                        "type": "boolean"
+                      },
+                      "reason": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "platform",
+                      "available"
+                    ],
+                    "additionalProperties": true
+                  }
+                },
+                "tools": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "hub": {
+                          "type": "object",
+                          "properties": {
+                            "requiredVersion": {
+                              "type": "string"
+                            },
+                            "installedVersions": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "runningVersion": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requiredVersion",
+                            "installedVersions",
+                            "runningVersion"
+                          ],
+                          "additionalProperties": true
+                        },
+                        "agent": {
+                          "type": "object",
+                          "properties": {
+                            "requiredVersion": {
+                              "type": "string"
+                            },
+                            "installedVersions": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "runningVersion": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requiredVersion",
+                            "installedVersions",
+                            "runningVersion"
+                          ],
+                          "additionalProperties": true
+                        }
+                      },
+                      "required": [
+                        "hub",
+                        "agent"
+                      ],
+                      "additionalProperties": true
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "toolInspectionError": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "hubInstalled": {
+                  "type": "boolean"
+                },
+                "agentDeviceInstalled": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "kind",
+                "label",
+                "platforms",
+                "hubInstalled",
+                "agentDeviceInstalled"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "devices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "hostId": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "platform": {
+                  "type": "string",
+                  "enum": [
+                    "ios",
+                    "android"
+                  ]
+                },
+                "name": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                },
+                "booted": {
+                  "type": "boolean"
+                },
+                "physical": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "hostId",
+                "id",
+                "platform",
+                "name",
+                "version",
+                "booted",
+                "physical"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "open": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "hostId": {
+                  "type": "string"
+                },
+                "deviceId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "hostId",
+                "deviceId"
+              ],
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": [
+          "hostStatuses",
+          "hosts",
+          "devices",
+          "open"
+        ],
+        "additionalProperties": true
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "device_open",
+      "title": "Open device",
+      "description": "Open a simulator or emulator for this thread: boots it if needed, starts its live stream, and shows it in the user's Device panel so they can watch. Returns the agent-device CLI invocation pinned to the device; drive the device with that CLI afterwards.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "platform": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ios",
+                  "android"
+                ],
+                "description": "Required when deviceId is omitted and both platforms are available."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hostId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": true,
+        "description": "Boots the device if needed, starts its live stream, and opens the Device panel so the user can watch. Returns how to drive it with the agent-device CLI."
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "device": {
+            "type": "object",
+            "properties": {
+              "hostId": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              },
+              "platform": {
+                "type": "string",
+                "enum": [
+                  "ios",
+                  "android"
+                ]
+              },
+              "name": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              },
+              "booted": {
+                "type": "boolean"
+              },
+              "physical": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "hostId",
+              "id",
+              "platform",
+              "name",
+              "version",
+              "booted",
+              "physical"
+            ],
+            "additionalProperties": true
+          },
+          "agentDevice": {
+            "type": "object",
+            "properties": {
+              "command": {
+                "type": "string"
+              },
+              "targetArgs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "command",
+              "targetArgs"
+            ],
+            "additionalProperties": true
+          },
+          "quickStart": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "device",
+          "agentDevice",
+          "quickStart"
+        ],
+        "additionalProperties": true
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "device_close",
+      "title": "Close device",
+      "description": "Remove a device from this thread's Device panel. Pass shutdown=true to also power the simulator or emulator off.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hostId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "shutdown": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Also power the simulator or emulator off. Defaults to false."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": true
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "The device was closed."
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "device_screenshot",
+      "title": "Screenshot device",
+      "description": "Capture the current screen of an open device as a PNG image. Use it to see what the user sees; for taps and text use the agent-device CLI.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hostId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": true
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    }
+  ],
+  "successSchemas": {
+    "preview_snapshot": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "loading": {
+          "type": "boolean"
+        },
+        "visibleText": {
+          "type": "string"
+        },
+        "interactiveElements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tag": {
+                "type": "string"
+              },
+              "role": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "name": {
+                "type": "string"
+              },
+              "selector": {
+                "type": "string"
+              },
+              "x": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "Infinity",
+                      "-Infinity",
+                      "NaN"
+                    ]
+                  }
+                ]
+              },
+              "y": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "Infinity",
+                      "-Infinity",
+                      "NaN"
+                    ]
+                  }
+                ]
+              },
+              "width": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "Infinity",
+                      "-Infinity",
+                      "NaN"
+                    ]
+                  }
+                ]
+              },
+              "height": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "Infinity",
+                      "-Infinity",
+                      "NaN"
+                    ]
+                  }
+                ]
+              }
+            },
+            "required": [
+              "tag",
+              "role",
+              "name",
+              "selector",
+              "x",
+              "y",
+              "width",
+              "height"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "accessibilityTree": {},
+        "consoleEntries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "level": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "timestamp": {
+                "type": "string"
+              },
+              "source": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "level",
+              "text",
+              "timestamp"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "networkEntries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string"
+              },
+              "method": {
+                "type": "string"
+              },
+              "status": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "Infinity",
+                          "-Infinity",
+                          "NaN"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "failed": {
+                "type": "boolean"
+              },
+              "errorText": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "timestamp": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "url",
+              "method",
+              "status",
+              "failed",
+              "timestamp"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "actionTimeline": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "action": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "running",
+                  "succeeded",
+                  "failed",
+                  "interrupted"
+                ]
+              },
+              "startedAt": {
+                "type": "string"
+              },
+              "completedAt": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "action",
+              "status",
+              "startedAt"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "screenshot": {
+          "type": "object",
+          "properties": {
+            "mimeType": {
+              "type": "string",
+              "enum": [
+                "image/png"
+              ]
+            },
+            "data": {
+              "type": "string"
+            },
+            "width": {
+              "type": "integer"
+            },
+            "height": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "mimeType",
+            "data",
+            "width",
+            "height"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "url",
+        "title",
+        "loading",
+        "visibleText",
+        "interactiveElements",
+        "accessibilityTree",
+        "consoleEntries",
+        "networkEntries",
+        "actionTimeline",
+        "screenshot"
+      ],
+      "additionalProperties": true
+    },
+    "device_screenshot": {
+      "type": "object",
+      "properties": {
+        "device": {
+          "type": "object",
+          "properties": {
+            "hostId": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "platform": {
+              "type": "string",
+              "enum": [
+                "ios",
+                "android"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            },
+            "booted": {
+              "type": "boolean"
+            },
+            "physical": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "hostId",
+            "id",
+            "platform",
+            "name",
+            "version",
+            "booted",
+            "physical"
+          ],
+          "additionalProperties": true
+        },
+        "screenshot": {
+          "type": "object",
+          "properties": {
+            "mimeType": {
+              "type": "string",
+              "enum": [
+                "image/png"
+              ]
+            },
+            "data": {
+              "type": "string"
+            },
+            "width": {
+              "type": "integer"
+            },
+            "height": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "mimeType",
+            "data",
+            "width",
+            "height"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "device",
+        "screenshot"
+      ],
+      "additionalProperties": true
+    }
+  }
+}

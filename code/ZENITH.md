@@ -1,98 +1,86 @@
-# zenith code
+# zenith (code/)
 
-`code/` is **zenith code**, the coding workspace of zenith: a fork of
-[T3 Code](https://github.com/pingdotgg/t3code) (MIT, © T3 Tools Inc.), rebranded,
-themed and wired into the dashboard. The upstream commit it is based on is in
-[`UPSTREAM`](UPSTREAM). Everything else in this folder is upstream's code and docs.
+`code/` is **zenith**: the coding workspace for Claude Code, Codex and other agents, its
+server and web app, shown in zenith.app (`crates/zenith-app`). It is a fork of
+[T3 Code](https://github.com/pingdotgg/t3code) (MIT, © T3 Tools Inc.), rebranded and
+themed. The upstream commit it is based on is in [`UPSTREAM`](UPSTREAM). Everything else
+in this folder is upstream's code and docs. (It used to be "zenith code", one part of a
+personal dashboard; the dashboard is gone and this is the whole product.)
+
+The server is being rewritten in Rust (`crates/zenith-code`, plan in
+`docs/zenith-code-rust-plan.md`). Until it is ready, this TypeScript server runs.
 
 ## Build and run
 
-Requirements: Node 22.16+ or 24 (the version zenith runs on), network access for the
-first install. pnpm is not needed globally: the scripts call `npx -y pnpm@11.10.0`.
+Requirements: Node 22.16+ or 24, network access for the first install. pnpm is not
+needed globally: the scripts call `npx -y pnpm@11.10.0`.
 
 ```bash
 npm run code:build     # from zenith's root: install + build (≈1 min the first time)
 ```
 
 This produces `apps/server/dist/bin.mjs` with the web client in `apps/server/dist/client`.
-`scripts/mac/install.sh` runs it too (and skips it gracefully if it fails).
 
-You never start it by hand: when zenith starts (`src/instrumentation.ts`) it spawns
+On a Mac, `npm run mac:install` (`scripts/mac/install.sh`) builds it, builds zenith.app,
+and runs the server as a LaunchAgent (label `dev.zenith.app`, or `ZENITH_BUNDLE_ID`):
 
 ```
-node code/apps/server/dist/bin.mjs serve --host 127.0.0.1 --port <code.port> --base-dir <code.home>
+node code/apps/server/dist/bin.mjs serve --host 127.0.0.1 --port 4747 --base-dir ~/.zenith/code
 ```
 
-restarts it with backoff if it crashes, reuses one left over by a previous zenith
-process, and stops it when zenith exits. The dashboard shows it at `/code`
-(`/code?project=<id>` opens a project, `zenith` is the dashboard itself).
+with `ZENITH_NO_STARTUP_TOKEN=1` (see below). Logs: `~/Library/Logs/Zenith/server.log`.
+State (database, settings, worktrees) lives in `~/.zenith/code` (`ZENITH_CODE_HOME` at
+install), never `~/.t3`, so an upstream T3 Code install is left alone.
 
-It is part of zenith, not an app beside it: one iframe, mounted once in zenith's root
-layout (`src/components/code/code-host.tsx`), lives across page changes and shows
-full-bleed on `/code/*`. zenith's URL mirrors the app's (`/code/<environment>/<thread>`,
-`/code/settings/…`), so reloads, links, back and forward land on the same thread.
-zenith's sidebar lists every thread under its project (matched by folder), ⌘K searches
-them, project pages show theirs, and on desktop widths the app hides its own sidebar,
-settings included: zenith's sidebar has one Settings list, zenith's sections then the
-app's (`/code/settings/*`). On narrow screens the app keeps its own sidebar.
-
-| `zenith.config.json` | default | |
-| --- | --- | --- |
-| `code.enabled` | `true` | start zenith code with zenith |
-| `code.port` | `4749` | always bound to `127.0.0.1` |
-| `code.home` | `~/.zenith/code` | state: database, settings, worktrees. Never `~/.t3`, so an upstream T3 Code install is left alone |
-
-Logs: `.data/code.log` in zenith's folder (pairing tokens are redacted).
-Status: `GET /api/code`. Restart: the ↻ in the sidebar's Code heading, or ⌘K.
-
-On start, zenith registers the dashboard and every configured project folder as
-zenith code projects, once each (`<code.home>/zenith-projects.json` remembers them, so
-a project you remove in zenith code stays removed).
+The command line is spelled in two places only: `SERVER` in `scripts/mac/install.sh` and
+`server_command()` in `crates/zenith-app/src/server.rs` (the app runs the CLI to mint
+pairing tokens). The Rust server takes the same arguments, so switching to it is one line
+in each: `SERVER=("$ROOT/target/release/zenith-code")` and
+`Command::new(root().join("target/release/zenith-code"))`.
 
 Development: `npm run code:dev` runs upstream's dev runner (Vite + server) with its
 own state in `~/.zenith/code-dev`.
 
-## Embedding and pairing
+## zenith.app
 
-zenith code requires pairing even on loopback. Inside the dashboard it happens
-without user action:
+zenith.app (Tauri) shows `http://127.0.0.1:4747` (`ZENITH_URL` and `ZENITH_CODE_HOME`
+override the server and its state dir for a development build), a waiting page while the
+server starts, and reconnects when it restarts.
 
-1. `/code` renders an iframe of `http://127.0.0.1:<port>/`. Unpaired, the app lands on
-   `/pair` and posts `{ type: "zenith-code:pair-request" }` to its parent.
-2. The `/code` page (only for messages from its own iframe and the code origin) calls
-   `POST /api/code/pair`, a same-origin-only route that mints a one-time owner token
-   with `bin.mjs auth pairing create --admin --ttl 2m`.
-3. It answers `{ type: "zenith-code:pair-token", token }` (or `zenith-code:pair-error`);
-   the app submits it and gets its 30-day session cookie. `127.0.0.1:4747` and
-   `127.0.0.1:<port>` are same-site, so the cookie works in the iframe.
+**Pairing.** The server requires pairing even on loopback. zenith.app does it without
+user action:
 
-The app only talks to parents listed by `ZENITH_CODE_PARENT_ORIGINS` (server env,
-default `http://127.0.0.1:4747,http://127.0.0.1:4748`), which it reads from
-`GET /zenith/embed.json`. The same list feeds a `Content-Security-Policy:
-frame-ancestors 'self' …` header on every HTML page, so no other site can frame it.
+1. Unpaired, the web app redirects to `/pair`. The app's init script (`PAIRING` in
+   `crates/zenith-app/src/main.rs`) notices it and invokes the app's `pairing_token`
+   command (allowed for `http://127.0.0.1:*` by `capabilities/main.json`; the command
+   also checks the page is the server's own origin).
+2. The app runs `auth pairing create --ttl 2m --admin --label zenith --json --base-dir
+   <state dir>` and returns `credential`, never logged.
+3. The script puts it in the URL (`location.replace(…#token=…)`); the pairing screen takes
+   it on `hashchange` (`zenith/useEmbeddedPairing.ts`), or on mount if it was already
+   there, submits it and gets its 30-day session cookie.
 
-Project focus: `?zenithProject=<absolute path>` on first load (kept in sessionStorage
-across the pairing redirect), or `{ type: "zenith-code:open-project", path }` from the
-parent later, opens that project's latest thread, or a new draft. The app posts
-`{ type: "zenith-code:ready" }` once signed in.
+Open in Browser (⌥⌘O) mints a token the same way and opens `/pair#token=…`.
 
-Shared sidebar (`apps/web/src/zenith/embed.ts` has the types):
+**Title bar.** The traffic lights sit over the web app's top bar. `zenith/app.ts`
+recognizes zenith.app (`window.__TAURI_INTERNALS__`), marks `<html data-zenith-app>` so
+`index.css` gives `--workspace-controls-left` room for the lights (none when the app marks
+`data-fullscreen`), and sends presses in the top bar, off its controls, to the app's
+`shell_drag` / `shell_zoom` commands: the window moves, or zooms on a double-click, as
+with any title bar. The app's menu opens pages with a `zenith:navigate` event
+(Settings… → `/settings/general`).
 
-- app → parent `zenith-code:sidebar` `{ snapshot }`: projects, threads (the app's own
-  sidebar order and status: approval, input, working, plan, completed, failed…), the open
-  thread and the app's path. Debounced, sent only when it changes.
-- parent → app `zenith-code:navigate` `{ request }`: a thread, a new thread in a project,
-  an in-app path (validated: same-origin paths only, never `/pair`), or the command palette.
-- parent → app `zenith-code:chrome` `{ ownSidebar, insetLeft }`, and `?zenithChrome=bare|full`
-  on first load: whether the app draws its own sidebar (threads and settings), and room to
-  leave on the left of its title bar for zenith.app's traffic lights (`--workspace-controls-left`).
-- app → parent `zenith-code:drag` `{ zoom }`: a press in the app's top bar, off its controls.
-  In zenith.app the dashboard hands it to the native window, which moves (or zooms) as with
-  any title bar.
+**Startup token.** `serve` normally prints a startup pairing token, URL and QR code. With
+`ZENITH_NO_STARTUP_TOKEN=1` (the LaunchAgent sets it) it prints only that the server is
+ready: its output is a log file, and zenith.app mints its own tokens.
 
-"Open in its own window" goes through `GET /api/code/open`, which mints a token and
-redirects to `/pair#token=…`, only for navigations started by the user or zenith
-(`Sec-Fetch-Site: none | same-origin`).
+## Embedding (dormant)
+
+When zenith was a dashboard, it showed this app in an iframe, and the app talked to its
+parent page: pairing tokens, project focus, navigation requests, a sidebar snapshot,
+title-bar presses (`zenith/embed.ts`, `ZenithEmbedCoordinator.tsx`, `/zenith/embed.json`,
+`ZENITH_CODE_PARENT_ORIGINS`, the `frame-ancestors` policy). Nothing frames it any more;
+the code only acts when the app is framed by an allowed parent and can be removed.
 
 ## What changed from upstream, and why
 
@@ -107,7 +95,7 @@ root `package.json` loses the desktop/mobile/marketing/release scripts and its
 `pnpm-lock.yaml` is regenerated.
 
 **Brand.** The product name lives in one place, `scripts/lib/zenith-brand.ts`
-(`"zenith code"`). Upstream spells "T3 Code" in ~150 user-facing strings, so rather
+(`"zenith"`). Upstream spells "T3 Code" in ~150 user-facing strings, so rather
 than rewrite them (and conflict on every sync), a build plugin swaps the name in
 first-party modules and `index.html` for both the web and server builds. Direct edits
 are limited to: `apps/web/src/branding.ts` (no "Alpha" suffix), `index.html` (title),
@@ -124,8 +112,7 @@ never installs the `t3` binary on your PATH (it runs `bin.mjs` directly), so it
 cannot shadow an upstream install.
 
 **Theme.** The default is upstream's stock palette following the system's light or dark
-appearance (`hooks/useTheme.ts`, mirrored in the `index.html` boot script), the same
-palette the zenith dashboard uses, so both read as one app. The boot script drops a stored
+appearance (`hooks/useTheme.ts`, mirrored in the `index.html` boot script). The boot script drops a stored
 `zenith` theme once (it used to be the default). That older dark theme stays selectable
 (`packages/shared/src/zenithTheme.ts`, registered in `themePalettes.ts`; its Geist /
 JetBrains Mono fonts are self-hosted via `@fontsource-variable/*` in `apps/web/src/index.css`).
@@ -136,7 +123,7 @@ JetBrains Mono fonts are self-hosted via `@fontsource-variable/*` in `apps/web/s
   (`telemetry/AnalyticsService.ts`).
 - The `update`, `service`, `uninstall`, `app` and `triage` commands are removed from
   the CLI (`bin.ts`): they install upstream npm/GitHub releases, drive the upstream
-  desktop app or file upstream issues. zenith builds, runs and updates zenith code.
+  desktop app or file upstream issues. zenith builds, runs and updates itself.
 - T3 Connect (relay, Clerk sign-in) only exists in builds made with its public keys;
   ours has none, so it stays inert.
 - Still reaching the network, on purpose: the provider model manifest (refreshed from
@@ -147,14 +134,27 @@ JetBrains Mono fonts are self-hosted via `@fontsource-variable/*` in `apps/web/s
 **Server additions:** `apps/server/src/zenith/embed.ts` (`/zenith/embed.json`, the
 frame-ancestors policy, registered in `server.ts` and `http.ts`); `auth pairing create
 --admin` (`cli/auth.ts`); default state dir `~/.zenith/code` (`os-jank.ts`, and
-`~/.zenith/code-dev` in `scripts/dev-runner.ts`).
+`~/.zenith/code-dev` in `scripts/dev-runner.ts`); `ZENITH_NO_STARTUP_TOKEN`
+(`serverRuntimeStartup.ts`).
 
-**Web additions:** `apps/web/src/zenith/` (embed messaging, embedded pairing hook used
-by `components/auth/PairingRouteSurface.tsx`, the coordinator mounted in
-`routes/__root.tsx` that focuses projects, follows navigation requests, publishes the
-sidebar snapshot and forwards title-bar presses, `?zenithProject=` / `?zenithChrome=`
-captured in `main.tsx`), and `components/AppSidebarLayout.tsx` skipping its sidebar
-(settings nav included) when zenith draws it.
+**Web additions:** `apps/web/src/zenith/`: `app.ts` (zenith.app's title bar and menu
+navigation, installed in `main.tsx`, its traffic-light room in `index.css`), the pairing
+hook used by `components/auth/PairingRouteSurface.tsx` (zenith.app's `#token=`, and the
+dormant iframe pairing), and the dormant embedding (the coordinator mounted in
+`routes/__root.tsx`, `?zenithProject=` / `?zenithChrome=` captured in `main.tsx`,
+`components/AppSidebarLayout.tsx` skipping its sidebar when a parent draws it).
+
+**Sessions page** (`/sessions`, next to Usage): every Claude Code and Codex session of
+the Mac (live state, cost, tokens, lines, PRs, subagents, model, branch, project, the
+command that resumes it), with totals for today, the week, per day and per project.
+Costs and limits stay on Usage. The data comes from `GET /api/zenith/sessions`, which
+only zenith code's Rust server has (`crates/zenith-code/crates/zc-sessions`); against
+the TypeScript server the page says "Sessions are available with zenith's Rust server".
+Files: `apps/web/src/zenith/SessionsPage.tsx` and `sessions.ts` (fetch, types, tests),
+`routes/sessions.tsx` (and the regenerated `routeTree.gen.ts`); one-line edits in
+`components/sidebar/SidebarChrome.tsx` (the sidebar button after Usage),
+`components/sidebar/mainAppLocation.ts` (a utility page, like Usage) and
+`components/CommandPalette.tsx` ("Open sessions").
 
 Edits inside upstream files are marked with a `zenith:` comment where the format
 allows (`grep -rn "zenith:" code`); `git log -p -- code` after the import commit shows
@@ -170,7 +170,7 @@ The script (zenith's `scripts/code-sync.sh`) needs a clean `code/`. It clones
 pingdotgg/t3code, diffs `UPSTREAM..main` without the removed folders and the
 lockfile, applies it with `git apply -3 --directory=code`, updates `UPSTREAM`, lists
 conflicts (fix the `<<<<<<<` markers), and on a clean apply reinstalls to regenerate
-the lockfile. Then `npm run code:build`, check `/code`, and commit.
+the lockfile. Then `npm run code:build`, check the app, and commit.
 
 Where conflicts usually land: the files listed above, and binary icons if upstream
 redraws them (keep ours). If upstream adds user-facing text with "T3" alone (not
@@ -178,5 +178,5 @@ redraws them (keep ours). If upstream adds user-facing text with "T3" alone (not
 
 ## License
 
-MIT. `LICENSE` keeps T3 Tools Inc.'s notice and adds one for the zenith code
+MIT. `LICENSE` keeps T3 Tools Inc.'s notice and adds one for zenith's
 modifications; `NOTICE` credits T3 Code as the base.

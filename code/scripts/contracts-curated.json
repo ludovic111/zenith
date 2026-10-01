@@ -1,0 +1,100 @@
+[
+  {
+    "note": "image attachment: the mime type is pattern-checked, the sampler cannot produce one",
+    "schema": "ChatImageAttachment",
+    "value": {
+      "type": "image",
+      "id": "att-1",
+      "name": "shot.png",
+      "mimeType": "image/png",
+      "sizeBytes": 1234
+    }
+  },
+  {
+    "note": "pattern-checked path",
+    "schema": "ProjectFaviconPath",
+    "value": "public/favicon.ico"
+  },
+  {
+    "note": "optionalKey(NullOr(X)): null clears the setting",
+    "schema": "ServerSettingsPatch",
+    "value": { "worktreeCleanup": null }
+  },
+  {
+    "note": "optionalKey(NullOr(X)): a value",
+    "schema": "ServerSettingsPatch",
+    "value": {
+      "worktreeCleanup": {
+        "mode": "custom",
+        "rules": { "worktreeAfterDays": 7, "worktreeOnMerge": true }
+      }
+    }
+  },
+  {
+    "note": "optionalKey: absent keeps the setting",
+    "schema": "ServerSettingsPatch",
+    "value": {}
+  },
+  {
+    "note": "the decoded defaults (withDecodingDefault everywhere)",
+    "schema": "ServerSettings",
+    "fromExport": "DEFAULT_SERVER_SETTINGS"
+  },
+  {
+    "note": "the decoded defaults",
+    "schema": "ClientSettingsSchema",
+    "fromExport": "DEFAULT_CLIENT_SETTINGS"
+  },
+  {
+    "note": "missing keys decode to their defaults, then encode",
+    "schema": "ServerSettings",
+    "value": {}
+  },
+  {
+    "note": "unrefined Schema.Number: NaN is a string",
+    "schema": "AuthOtherClientSessionsRevokeResult",
+    "value": { "revokedCount": "NaN" }
+  },
+  {
+    "schema": "AuthOtherClientSessionsRevokeResult",
+    "value": { "revokedCount": "-Infinity" }
+  },
+  {
+    "schema": "AuthOtherClientSessionsRevokeResult",
+    "value": { "revokedCount": 2.5 }
+  },
+  {
+    "note": "DateTimeUtc: an offset date re-encodes as UTC with milliseconds",
+    "schema": "AuthWebSocketTicketResult",
+    "value": { "ticket": "t-1", "expiresAt": "2026-10-01T14:00:00+02:00" }
+  },
+  {
+    "note": "DateTimeUtc at the edge of the Date range",
+    "schema": "AuthWebSocketTicketResult",
+    "value": { "ticket": "t-2", "expiresAt": "+275760-09-13T00:00:00.000Z" }
+  },
+  {
+    "note": "Effect Option: Some and None",
+    "schema": "ResourceTelemetrySourceHealth",
+    "value": {
+      "status": "healthy",
+      "lastSampleAt": { "_tag": "Some", "value": "2026-10-01T12:00:00.000Z" },
+      "lastError": { "_tag": "None" }
+    }
+  },
+  {
+    "note": "TrimmedString: TS trims on decode and encode",
+    "schema": "AuthBrowserSessionRequest",
+    "value": { "credential": "  abc  " }
+  },
+  {
+    "note": "a stream item with the snapshot marker",
+    "schema": "OrchestrationShellStreamItem",
+    "value": { "kind": "synchronized" }
+  },
+  {
+    "note": "RPC with Void success",
+    "schema": "rpc:pullRequests.setFilesViewed:success",
+    "value": null
+  }
+]

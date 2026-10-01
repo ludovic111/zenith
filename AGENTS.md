@@ -1,9 +1,3 @@
-<!-- BEGIN:nextjs-agent-rules -->
+# zenith
 
-# This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
-
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
-
-<!-- END:nextjs-agent-rules -->
+zenith is a Mac app for coding with agents. The interface is zenith code's web app (`code/apps/web`, React; a T3 Code fork, see `code/ZENITH.md`). Its server is being rewritten in Rust in `crates/zenith-code` (plan: `docs/zenith-code-rust-plan.md`; until it is done, `code/apps/server` runs). `crates/zenith-app` is the Tauri window. Rust code: `cargo clippy --workspace`, `cargo test --workspace`, rustfmt (root `rustfmt.toml`). Tests use made-up names; `npm run privacy` must pass.

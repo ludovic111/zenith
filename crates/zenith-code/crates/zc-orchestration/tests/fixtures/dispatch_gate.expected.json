@@ -1,0 +1,1928 @@
+{
+ "results": [
+  {
+   "sequence": 1
+  },
+  {
+   "sequence": 2
+  },
+  {
+   "sequence": 3
+  },
+  {
+   "sequence": 5
+  },
+  {
+   "sequence": 6
+  },
+  {
+   "sequence": 7
+  },
+  {
+   "sequence": 8
+  },
+  {
+   "sequence": 9
+  },
+  {
+   "sequence": 10
+  },
+  {
+   "sequence": 11
+  },
+  {
+   "sequence": 12
+  },
+  {
+   "sequence": 13
+  },
+  {
+   "sequence": 14
+  },
+  {
+   "sequence": 15
+  },
+  {
+   "sequence": 16
+  },
+  {
+   "sequence": 17
+  },
+  {
+   "sequence": 18
+  },
+  {
+   "sequence": 19
+  },
+  {
+   "sequence": 20
+  },
+  {
+   "sequence": 21
+  },
+  {
+   "sequence": 23
+  },
+  {
+   "sequence": 26
+  },
+  {
+   "sequence": 27
+  },
+  {
+   "sequence": 28
+  },
+  {
+   "sequence": 29
+  },
+  {
+   "sequence": 30
+  },
+  {
+   "error": {
+    "_tag": "OrchestrationCommandInvariantError",
+    "message": "Orchestration command invariant failed (thread.settle): Thread 'gate-thread-2' is already archived and cannot handle command 'thread.settle'."
+   }
+  },
+  {
+   "error": {
+    "_tag": "OrchestrationCommandPreviouslyRejectedError",
+    "message": "Command previously rejected (gate-settle-archived): Orchestration command invariant failed (thread.settle): Thread 'gate-thread-2' is already archived and cannot handle command 'thread.settle'."
+   }
+  },
+  {
+   "sequence": 3
+  },
+  {
+   "error": {
+    "_tag": "OrchestrationCommandIdConflictError",
+    "message": "Command id 'gate-thread-create-1' already used for thread 'gate-thread-1'; refusing to replay its receipt for thread 'gate-thread-2'."
+   }
+  },
+  {
+   "sequence": 31
+  },
+  {
+   "sequence": 32
+  },
+  {
+   "error": {
+    "_tag": "OrchestrationCommandInvariantError",
+    "message": "Orchestration command invariant failed (thread.pull-request.link): pull request github.com/acme/widgets#7 is already linked to thread gate-thread-1"
+   }
+  },
+  {
+   "sequence": 33
+  },
+  {
+   "sequence": 34
+  },
+  {
+   "sequence": 35
+  },
+  {
+   "sequence": 36
+  },
+  {
+   "sequence": 37
+  },
+  {
+   "sequence": 38
+  },
+  {
+   "sequence": 39
+  },
+  {
+   "sequence": 40
+  },
+  {
+   "sequence": 41
+  },
+  {
+   "sequence": 44
+  },
+  {
+   "sequence": 45
+  },
+  {
+   "sequence": 47
+  },
+  {
+   "sequence": 48
+  },
+  {
+   "sequence": 49
+  },
+  {
+   "sequence": 50
+  },
+  {
+   "sequence": 51
+  },
+  {
+   "sequence": 52
+  },
+  {
+   "sequence": 53
+  },
+  {
+   "error": {
+    "_tag": "OrchestrationCommandInvariantError",
+    "message": "Orchestration command invariant failed (thread.active.reorder): thread gate-thread-3 is not active and cannot be reordered"
+   }
+  },
+  {
+   "sequence": 54
+  },
+  {
+   "sequence": 55
+  },
+  {
+   "sequence": 56
+  },
+  {
+   "sequence": 57
+  },
+  {
+   "sequence": 58
+  },
+  {
+   "sequence": 59
+  },
+  {
+   "sequence": 60
+  },
+  {
+   "error": {
+    "_tag": "OrchestrationCommandInvariantError",
+    "message": "Orchestration command invariant failed (thread.auto-settle): thread gate-thread-2 changed before automatic settlement"
+   }
+  },
+  {
+   "error": {
+    "_tag": "OrchestrationCommandInvariantError",
+    "message": "Orchestration command invariant failed (thread.pull-request.sync): thread gate-thread-2 was recreated before pull request discovery"
+   }
+  },
+  {
+   "sequence": 61
+  },
+  {
+   "error": {
+    "_tag": "OrchestrationCommandInvariantError",
+    "message": "Orchestration command invariant failed (thread.session.stop): thread gate-thread-1 was re-engaged after settle; skipping session stop"
+   }
+  },
+  {
+   "error": {
+    "_tag": "OrchestrationCommandInvariantError",
+    "message": "Orchestration command invariant failed (project.meta.update): Project monograms must contain at most two characters."
+   }
+  },
+  {
+   "sequence": 62
+  },
+  {
+   "error": {
+    "_tag": "OrchestrationCommandInvariantError",
+    "message": "Orchestration command invariant failed (project.create): Active project 'gate-project' already exists for workspace root '/tmp/zc-gate/project'."
+   }
+  },
+  {
+   "sequence": 64
+  },
+  {
+   "sequence": 65
+  },
+  {
+   "error": {
+    "_tag": "OrchestrationCommandInvariantError",
+    "message": "Orchestration command invariant failed (project.meta.update): Project monograms must contain at most two characters."
+   }
+  },
+  {
+   "sequence": 66
+  },
+  {
+   "error": {
+    "_tag": "OrchestrationCommandInvariantError",
+    "message": "Orchestration command invariant failed (project.delete): Project 'gate-project' is not empty and cannot be deleted without force=true."
+   }
+  },
+  {
+   "sequence": 69
+  }
+ ],
+ "events": [
+  {
+   "sequence": 1,
+   "eventId": "52cbbbf5-3092-430d-b60c-996b47d59a0a",
+   "type": "project.created",
+   "aggregateKind": "project",
+   "aggregateId": "gate-project",
+   "occurredAt": "2026-07-01T10:00:00.000Z",
+   "commandId": "gate-project-create",
+   "causationEventId": null,
+   "correlationId": "gate-project-create",
+   "payload": {
+    "projectId": "gate-project",
+    "title": "Gate project",
+    "workspaceRoot": "/tmp/zc-gate/project",
+    "defaultModelSelection": null,
+    "faviconPath": null,
+    "projectIcon": null,
+    "scripts": [],
+    "createdAt": "2026-07-01T10:00:00.000Z",
+    "updatedAt": "2026-07-01T10:00:00.000Z"
+   },
+   "metadata": {
+    "origin": {
+     "surface": "web",
+     "appVersion": "1.2.3"
+    }
+   },
+   "streamVersion": 0,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 2,
+   "eventId": "44f8a7a3-5464-4ffd-a8f3-18b15855018f",
+   "type": "project.meta-updated",
+   "aggregateKind": "project",
+   "aggregateId": "gate-project",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-project-meta",
+   "causationEventId": null,
+   "correlationId": "gate-project-meta",
+   "payload": {
+    "projectId": "gate-project",
+    "title": "Gate project renamed",
+    "defaultModelSelection": {
+     "instanceId": "codex",
+     "model": "gpt-5.4"
+    },
+    "scripts": [
+     {
+      "id": "lint",
+      "name": "Lint",
+      "command": "npm run lint",
+      "icon": "lint",
+      "runOnWorktreeCreate": false
+     }
+    ],
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 1,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 3,
+   "eventId": "6495b662-6da9-4782-b08a-e55d5309d607",
+   "type": "thread.created",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:00:30.000Z",
+   "commandId": "gate-thread-create-1",
+   "causationEventId": null,
+   "correlationId": "gate-thread-create-1",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "projectId": "gate-project",
+    "title": "First thread",
+    "modelSelection": {
+     "instanceId": "codex",
+     "model": "gpt-5.4"
+    },
+    "runtimeMode": "full-access",
+    "interactionMode": "default",
+    "branch": null,
+    "worktreePath": null,
+    "createdAt": "2026-07-01T10:00:30.000Z",
+    "updatedAt": "2026-07-01T10:00:30.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 0,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 4,
+   "eventId": "2541d600-e89d-4646-a8ff-3e3d435d765c",
+   "type": "thread.message-sent",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:01:00.000Z",
+   "commandId": "gate-turn-start-1",
+   "causationEventId": null,
+   "correlationId": "gate-turn-start-1",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "messageId": "gate-message-1",
+    "role": "user",
+    "text": "Hello there",
+    "attachments": [],
+    "turnId": null,
+    "streaming": false,
+    "createdAt": "2026-07-01T10:01:00.000Z",
+    "updatedAt": "2026-07-01T10:01:00.000Z"
+   },
+   "metadata": {
+    "origin": {
+     "surface": "desktop"
+    }
+   },
+   "streamVersion": 1,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 5,
+   "eventId": "540792e7-40f9-4f60-bde7-8ca922e79f4d",
+   "type": "thread.turn-start-requested",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:01:00.000Z",
+   "commandId": "gate-turn-start-1",
+   "causationEventId": "2541d600-e89d-4646-a8ff-3e3d435d765c",
+   "correlationId": "gate-turn-start-1",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "messageId": "gate-message-1",
+    "titleSeed": "Hello there",
+    "runtimeMode": "full-access",
+    "interactionMode": "default",
+    "createdAt": "2026-07-01T10:01:00.000Z"
+   },
+   "metadata": {
+    "origin": {
+     "surface": "desktop"
+    }
+   },
+   "streamVersion": 2,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 6,
+   "eventId": "e509ba9a-8b94-4d2c-9b89-1137666b03a2",
+   "type": "thread.session-set",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:01:05.000Z",
+   "commandId": "provider:gate-runtime-1:session-set:0001",
+   "causationEventId": null,
+   "correlationId": "provider:gate-runtime-1:session-set:0001",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "session": {
+     "threadId": "gate-thread-1",
+     "status": "running",
+     "providerName": "codex",
+     "runtimeMode": "full-access",
+     "activeTurnId": "gate-turn-1",
+     "lastError": null,
+     "updatedAt": "2026-07-01T10:01:05.000Z"
+    }
+   },
+   "metadata": {},
+   "streamVersion": 3,
+   "actorKind": "provider"
+  },
+  {
+   "sequence": 7,
+   "eventId": "aefb95fa-1761-4148-bab1-dabe591f7871",
+   "type": "thread.message-sent",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:01:06.000Z",
+   "commandId": "provider:gate-runtime-2:assistant-delta:0001",
+   "causationEventId": null,
+   "correlationId": "provider:gate-runtime-2:assistant-delta:0001",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "messageId": "gate-assistant-1",
+    "role": "assistant",
+    "text": "Hi! ",
+    "turnId": "gate-turn-1",
+    "streaming": true,
+    "createdAt": "2026-07-01T10:01:06.000Z",
+    "updatedAt": "2026-07-01T10:01:06.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 4,
+   "actorKind": "provider"
+  },
+  {
+   "sequence": 8,
+   "eventId": "1fac6c9c-6a00-4e50-8fe9-46ecec9892d8",
+   "type": "thread.message-sent",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:01:07.000Z",
+   "commandId": "provider:gate-runtime-3:assistant-delta:0002",
+   "causationEventId": null,
+   "correlationId": "provider:gate-runtime-3:assistant-delta:0002",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "messageId": "gate-assistant-1",
+    "role": "assistant",
+    "text": "How can I help?",
+    "turnId": "gate-turn-1",
+    "streaming": true,
+    "createdAt": "2026-07-01T10:01:07.000Z",
+    "updatedAt": "2026-07-01T10:01:07.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 5,
+   "actorKind": "provider"
+  },
+  {
+   "sequence": 9,
+   "eventId": "388b394b-d226-4a21-862e-5d9acb0c37c8",
+   "type": "thread.message-sent",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:01:08.000Z",
+   "commandId": "provider:gate-runtime-4:assistant-complete:0001",
+   "causationEventId": null,
+   "correlationId": "provider:gate-runtime-4:assistant-complete:0001",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "messageId": "gate-assistant-1",
+    "role": "assistant",
+    "text": "",
+    "turnId": "gate-turn-1",
+    "streaming": false,
+    "createdAt": "2026-07-01T10:01:08.000Z",
+    "updatedAt": "2026-07-01T10:01:08.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 6,
+   "actorKind": "provider"
+  },
+  {
+   "sequence": 10,
+   "eventId": "f6d99b52-038a-463e-949a-32c0986d5f34",
+   "type": "thread.activity-appended",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:01:08.500Z",
+   "commandId": "provider:gate-runtime-5:activity:0001",
+   "causationEventId": null,
+   "correlationId": "provider:gate-runtime-5:activity:0001",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "activity": {
+     "id": "gate-activity-1",
+     "tone": "tool",
+     "kind": "tool.started",
+     "summary": "Ran a command",
+     "payload": {
+      "itemType": "command_execution",
+      "detail": "ls"
+     },
+     "turnId": "gate-turn-1",
+     "createdAt": "2026-07-01T10:01:08.500Z"
+    }
+   },
+   "metadata": {},
+   "streamVersion": 7,
+   "actorKind": "provider"
+  },
+  {
+   "sequence": 11,
+   "eventId": "04493c6c-a86d-445b-8f7b-cac0254a257b",
+   "type": "thread.turn-diff-completed",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:01:09.000Z",
+   "commandId": "server:checkpoint-capture:0001",
+   "causationEventId": null,
+   "correlationId": "server:checkpoint-capture:0001",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "turnId": "gate-turn-1",
+    "checkpointTurnCount": 1,
+    "checkpointRef": "refs/t3/checkpoints/Z2F0ZQ/turn/1",
+    "status": "ready",
+    "files": [
+     {
+      "path": "README.md",
+      "kind": "modified",
+      "additions": 1,
+      "deletions": 0
+     }
+    ],
+    "assistantMessageId": "gate-assistant-1",
+    "completedAt": "2026-07-01T10:01:09.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 8,
+   "actorKind": "server"
+  },
+  {
+   "sequence": 12,
+   "eventId": "e1f50fc5-da13-4b3b-81c5-28fb23c4cc8e",
+   "type": "thread.session-set",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:01:10.000Z",
+   "commandId": "provider:gate-runtime-6:session-set:0002",
+   "causationEventId": null,
+   "correlationId": "provider:gate-runtime-6:session-set:0002",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "session": {
+     "threadId": "gate-thread-1",
+     "status": "ready",
+     "providerName": "codex",
+     "runtimeMode": "full-access",
+     "activeTurnId": null,
+     "lastError": null,
+     "updatedAt": "2026-07-01T10:01:10.000Z"
+    }
+   },
+   "metadata": {},
+   "streamVersion": 9,
+   "actorKind": "provider"
+  },
+  {
+   "sequence": 13,
+   "eventId": "c46790a7-ebdb-44eb-a974-4b5dbfe78f1e",
+   "type": "thread.settled",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-settle-1",
+   "causationEventId": null,
+   "correlationId": "gate-settle-1",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "settledAt": "2026-08-01T12:00:00.000Z",
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {
+    "origin": {
+     "surface": "web",
+     "appVersion": "1.2.3"
+    }
+   },
+   "streamVersion": 10,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 14,
+   "eventId": "2e5d807c-349d-4548-9199-6b4e2c75a7ee",
+   "type": "thread.settled",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-settle-2",
+   "causationEventId": null,
+   "correlationId": "gate-settle-2",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "settledAt": "2026-08-01T12:00:00.000Z",
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 11,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 15,
+   "eventId": "bbe38a3d-19c6-4563-a7ea-a9bde0f23433",
+   "type": "thread.unsettled",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-unsettle",
+   "causationEventId": null,
+   "correlationId": "gate-unsettle",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "reason": "user",
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 12,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 16,
+   "eventId": "89262be6-6d9c-4f6c-9474-e9bec6d9c160",
+   "type": "thread.pinned",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-pin",
+   "causationEventId": null,
+   "correlationId": "gate-pin",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "pinnedAt": "2026-08-01T12:00:00.000Z",
+    "pinOrderKey": "a0",
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 13,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 17,
+   "eventId": "b6a88bb9-7d38-45e3-af67-81b9088515e0",
+   "type": "thread.pin-reordered",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-pin-reorder",
+   "causationEventId": null,
+   "correlationId": "gate-pin-reorder",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "orderKey": "a1",
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 14,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 18,
+   "eventId": "9c4c2811-97fd-447f-aac8-280dab34e36d",
+   "type": "thread.snoozed",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-snooze",
+   "causationEventId": null,
+   "correlationId": "gate-snooze",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "snoozedUntil": "2026-09-01T00:00:00.000Z",
+    "snoozedAt": "2026-08-01T12:00:00.000Z",
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 15,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 19,
+   "eventId": "1e2ce7f7-75a3-4fb0-8ff7-d1f73a37f33e",
+   "type": "thread.unsnoozed",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-unsnooze",
+   "causationEventId": null,
+   "correlationId": "gate-unsnooze",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "reason": "user",
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 16,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 20,
+   "eventId": "42dfffb7-028d-48dc-b642-286ffb906f9d",
+   "type": "thread.auto-settle-set",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-auto-settle-off",
+   "causationEventId": null,
+   "correlationId": "gate-auto-settle-off",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "autoSettleDisabledAt": "2026-08-01T12:00:00.000Z",
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 17,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 21,
+   "eventId": "63a752cf-e808-4796-8a0c-03e16bc88b05",
+   "type": "thread.meta-updated",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "server:thread-title:0001",
+   "causationEventId": null,
+   "correlationId": "server:thread-title:0001",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "title": "Renamed thread",
+    "titleState": {
+     "source": "manual",
+     "version": "server:thread-title:0001",
+     "needsRefinement": false
+    },
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 18,
+   "actorKind": "server"
+  },
+  {
+   "sequence": 22,
+   "eventId": "6f2d6746-30cc-477d-af8f-6d1547294bb2",
+   "type": "thread.unsettled",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:02:00.000Z",
+   "commandId": "provider:gate-runtime-7:activity:0002",
+   "causationEventId": null,
+   "correlationId": "provider:gate-runtime-7:activity:0002",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "reason": "activity",
+    "updatedAt": "2026-07-01T10:02:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 19,
+   "actorKind": "provider"
+  },
+  {
+   "sequence": 23,
+   "eventId": "329e3cdd-3b82-4ff7-ab9d-9732fe1524a0",
+   "type": "thread.activity-appended",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:02:00.000Z",
+   "commandId": "provider:gate-runtime-7:activity:0002",
+   "causationEventId": null,
+   "correlationId": "provider:gate-runtime-7:activity:0002",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "activity": {
+     "id": "gate-question-1",
+     "tone": "info",
+     "kind": "user-input.requested",
+     "summary": "User input requested",
+     "payload": {
+      "requestId": "gate-request-1",
+      "responseMode": "message",
+      "questions": [
+       {
+        "id": "q1",
+        "header": "Choice",
+        "question": "Which option?",
+        "options": [
+         {
+          "label": "A",
+          "description": "First"
+         },
+         {
+          "label": "B",
+          "description": "Second"
+         }
+        ]
+       }
+      ]
+     },
+     "turnId": "gate-turn-1",
+     "createdAt": "2026-07-01T10:02:00.000Z"
+    }
+   },
+   "metadata": {
+    "requestId": "gate-request-1"
+   },
+   "streamVersion": 20,
+   "actorKind": "provider"
+  },
+  {
+   "sequence": 24,
+   "eventId": "05efe5ce-abda-4b78-8d1b-250e077ee672",
+   "type": "thread.activity-appended",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:02:10.000Z",
+   "commandId": "gate-respond",
+   "causationEventId": null,
+   "correlationId": "gate-respond",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "activity": {
+     "id": "async-answer:gate-request-1",
+     "kind": "user-input.resolved",
+     "summary": "User input submitted",
+     "tone": "info",
+     "turnId": "gate-turn-1",
+     "createdAt": "2026-07-01T10:02:10.000Z",
+     "payload": {
+      "requestId": "gate-request-1",
+      "responseMode": "message",
+      "answers": {
+       "q1": "A"
+      }
+     }
+    }
+   },
+   "metadata": {
+    "requestId": "gate-request-1",
+    "origin": {
+     "surface": "web"
+    }
+   },
+   "streamVersion": 21,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 25,
+   "eventId": "2d717086-eb65-4e75-a925-ddb92324365b",
+   "type": "thread.message-sent",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:02:10.000Z",
+   "commandId": "gate-respond",
+   "causationEventId": null,
+   "correlationId": "gate-respond",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "messageId": "async-answer:gate-request-1",
+    "role": "user",
+    "text": "Which option?\nA",
+    "attachments": [],
+    "turnId": null,
+    "streaming": false,
+    "createdAt": "2026-07-01T10:02:10.000Z",
+    "updatedAt": "2026-07-01T10:02:10.000Z"
+   },
+   "metadata": {
+    "origin": {
+     "surface": "web"
+    }
+   },
+   "streamVersion": 22,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 26,
+   "eventId": "8aa550fc-8bd8-408b-840d-cd8bec9de059",
+   "type": "thread.turn-start-requested",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:02:10.000Z",
+   "commandId": "gate-respond",
+   "causationEventId": "2d717086-eb65-4e75-a925-ddb92324365b",
+   "correlationId": "gate-respond",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "messageId": "async-answer:gate-request-1",
+    "runtimeMode": "full-access",
+    "interactionMode": "default",
+    "createdAt": "2026-07-01T10:02:10.000Z"
+   },
+   "metadata": {
+    "origin": {
+     "surface": "web"
+    }
+   },
+   "streamVersion": 23,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 27,
+   "eventId": "f23561e0-9028-4727-bd02-1129cd5ecc14",
+   "type": "thread.activity-appended",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:03:00.000Z",
+   "commandId": "provider:gate-runtime-8:activity:0003",
+   "causationEventId": null,
+   "correlationId": "provider:gate-runtime-8:activity:0003",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "activity": {
+     "id": "gate-question-2",
+     "tone": "info",
+     "kind": "user-input.requested",
+     "summary": "User input requested",
+     "payload": {
+      "requestId": "gate-request-2",
+      "responseMode": "message",
+      "questions": [
+       {
+        "id": "q2",
+        "header": "Go?",
+        "question": "Continue?",
+        "options": []
+       }
+      ]
+     },
+     "turnId": "gate-turn-1",
+     "createdAt": "2026-07-01T10:03:00.000Z"
+    }
+   },
+   "metadata": {
+    "requestId": "gate-request-2"
+   },
+   "streamVersion": 24,
+   "actorKind": "provider"
+  },
+  {
+   "sequence": 28,
+   "eventId": "35810b61-e70a-47c3-94ae-8d5742d570ae",
+   "type": "thread.activity-appended",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:03:10.000Z",
+   "commandId": "gate-dismiss",
+   "causationEventId": null,
+   "correlationId": "gate-dismiss",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "activity": {
+     "id": "async-dismiss:gate-request-2",
+     "kind": "user-input.resolved",
+     "summary": "User input dismissed",
+     "tone": "info",
+     "turnId": "gate-turn-1",
+     "createdAt": "2026-07-01T10:03:10.000Z",
+     "payload": {
+      "requestId": "gate-request-2",
+      "responseMode": "message"
+     }
+    }
+   },
+   "metadata": {},
+   "streamVersion": 25,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 29,
+   "eventId": "5563ce3e-3aab-45e7-9e39-20b02fd6db5b",
+   "type": "thread.created",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-2",
+   "occurredAt": "2026-07-01T10:04:00.000Z",
+   "commandId": "gate-thread-create-2",
+   "causationEventId": null,
+   "correlationId": "gate-thread-create-2",
+   "payload": {
+    "threadId": "gate-thread-2",
+    "projectId": "gate-project",
+    "title": "Second thread",
+    "modelSelection": {
+     "instanceId": "claudeAgent",
+     "model": "claude-sonnet"
+    },
+    "runtimeMode": "approval-required",
+    "interactionMode": "plan",
+    "branch": "feature/gate",
+    "worktreePath": "/tmp/zc-gate/worktree",
+    "createdAt": "2026-07-01T10:04:00.000Z",
+    "updatedAt": "2026-07-01T10:04:00.000Z"
+   },
+   "metadata": {
+    "origin": {
+     "surface": "cli",
+     "appVersion": "0.0.43"
+    }
+   },
+   "streamVersion": 0,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 30,
+   "eventId": "ed31a8a9-320e-4a63-8d82-83b2420d96c3",
+   "type": "thread.archived",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-2",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-archive-2",
+   "causationEventId": null,
+   "correlationId": "gate-archive-2",
+   "payload": {
+    "threadId": "gate-thread-2",
+    "archivedAt": "2026-08-01T12:00:00.000Z",
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 1,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 31,
+   "eventId": "cbce3f6d-9d73-4d63-af07-a610c33dc912",
+   "type": "thread.unarchived",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-2",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-unarchive-2",
+   "causationEventId": null,
+   "correlationId": "gate-unarchive-2",
+   "payload": {
+    "threadId": "gate-thread-2",
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 2,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 32,
+   "eventId": "1b3c0b8e-0e99-44bb-8c3f-81a78b7f7c82",
+   "type": "thread.pull-request-linked",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-pr-link",
+   "causationEventId": null,
+   "correlationId": "gate-pr-link",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "link": {
+     "host": "github.com",
+     "repository": "acme/widgets",
+     "number": 7,
+     "url": "https://github.com/acme/widgets/pull/7",
+     "source": "manual",
+     "linkedAt": "2026-08-01T12:00:00.000Z",
+     "snapshot": null,
+     "stack": null
+    },
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 26,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 33,
+   "eventId": "7673ef77-b7ae-47e2-927e-03cde571fc9f",
+   "type": "thread.pull-request-unlinked",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-pr-unlink",
+   "causationEventId": null,
+   "correlationId": "gate-pr-unlink",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "host": "github.com",
+    "repository": "acme/widgets",
+    "number": 7,
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 27,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 34,
+   "eventId": "74e7e573-d9b8-43c4-b982-ca62a5e9c7ea",
+   "type": "thread.runtime-mode-set",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-runtime-mode",
+   "causationEventId": null,
+   "correlationId": "gate-runtime-mode",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "runtimeMode": "approval-required",
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 28,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 35,
+   "eventId": "5c2c50ca-0cbb-45a3-9247-149e3a6b2bed",
+   "type": "thread.interaction-mode-set",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-interaction-mode",
+   "causationEventId": null,
+   "correlationId": "gate-interaction-mode",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "interactionMode": "plan",
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 29,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 36,
+   "eventId": "26a6b041-3ea1-432c-89f5-a2135235e723",
+   "type": "thread.turn-interrupt-requested",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:05:02.000Z",
+   "commandId": "gate-interrupt",
+   "causationEventId": null,
+   "correlationId": "gate-interrupt",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "turnId": "gate-turn-1",
+    "createdAt": "2026-07-01T10:05:02.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 30,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 37,
+   "eventId": "b664298c-eba9-48d7-b11b-c3d811ed565f",
+   "type": "thread.approval-response-requested",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:05:03.000Z",
+   "commandId": "gate-approval",
+   "causationEventId": null,
+   "correlationId": "gate-approval",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "requestId": "gate-approval-1",
+    "decision": "accept",
+    "createdAt": "2026-07-01T10:05:03.000Z"
+   },
+   "metadata": {
+    "requestId": "gate-approval-1"
+   },
+   "streamVersion": 31,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 38,
+   "eventId": "924f60b1-829b-443b-a786-82fb9d5eb18e",
+   "type": "thread.checkpoint-revert-requested",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:05:04.000Z",
+   "commandId": "gate-revert",
+   "causationEventId": null,
+   "correlationId": "gate-revert",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "turnCount": 0,
+    "createdAt": "2026-07-01T10:05:04.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 32,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 39,
+   "eventId": "25eaf8d8-5615-4b91-8251-b91987845f87",
+   "type": "thread.reverted",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:05:05.000Z",
+   "commandId": "server:checkpoint-revert:0001",
+   "causationEventId": null,
+   "correlationId": "server:checkpoint-revert:0001",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "turnCount": 0
+   },
+   "metadata": {},
+   "streamVersion": 33,
+   "actorKind": "server"
+  },
+  {
+   "sequence": 40,
+   "eventId": "38b2b5ab-a85b-4028-a0ad-c93d0abf0a59",
+   "type": "thread.session-stop-requested",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-2",
+   "occurredAt": "2026-07-01T10:05:06.000Z",
+   "commandId": "session-stop-for-archive:gate-archive-2",
+   "causationEventId": null,
+   "correlationId": "session-stop-for-archive:gate-archive-2",
+   "payload": {
+    "threadId": "gate-thread-2",
+    "createdAt": "2026-07-01T10:05:06.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 3,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 41,
+   "eventId": "b4381a76-41f2-4158-800c-0c291d0a4068",
+   "type": "thread.created",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-3",
+   "occurredAt": "2026-07-01T10:06:00.000Z",
+   "commandId": "gate-thread-create-3",
+   "causationEventId": null,
+   "correlationId": "gate-thread-create-3",
+   "payload": {
+    "threadId": "gate-thread-3",
+    "projectId": "gate-project",
+    "title": "Imported thread",
+    "modelSelection": {
+     "instanceId": "codex",
+     "model": "gpt-5.4"
+    },
+    "runtimeMode": "full-access",
+    "interactionMode": "default",
+    "branch": null,
+    "worktreePath": null,
+    "createdAt": "2026-07-01T10:06:00.000Z",
+    "updatedAt": "2026-07-01T10:06:00.000Z"
+   },
+   "metadata": {
+    "historyImport": true
+   },
+   "streamVersion": 0,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 42,
+   "eventId": "1e43b7ec-f5c7-458b-9a04-ff2860c25f8d",
+   "type": "thread.message-sent",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-3",
+   "occurredAt": "2026-06-01T09:00:00.000Z",
+   "commandId": "gate-history-import",
+   "causationEventId": null,
+   "correlationId": "gate-history-import",
+   "payload": {
+    "threadId": "gate-thread-3",
+    "messageId": "import:gate-1",
+    "role": "user",
+    "text": "Old question",
+    "turnId": null,
+    "streaming": false,
+    "createdAt": "2026-06-01T09:00:00.000Z",
+    "updatedAt": "2026-06-01T09:00:00.000Z"
+   },
+   "metadata": {
+    "historyImport": true
+   },
+   "streamVersion": 1,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 43,
+   "eventId": "bd1d9d3d-0cf6-43bd-a378-93712af608f3",
+   "type": "thread.message-sent",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-3",
+   "occurredAt": "2026-06-01T09:00:05.000Z",
+   "commandId": "gate-history-import",
+   "causationEventId": null,
+   "correlationId": "gate-history-import",
+   "payload": {
+    "threadId": "gate-thread-3",
+    "messageId": "import:gate-2",
+    "role": "assistant",
+    "text": "Old answer",
+    "turnId": null,
+    "streaming": false,
+    "createdAt": "2026-06-01T09:00:05.000Z",
+    "updatedAt": "2026-06-01T09:00:05.000Z"
+   },
+   "metadata": {
+    "historyImport": true
+   },
+   "streamVersion": 2,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 44,
+   "eventId": "9cb9f8a5-e4b3-4bc1-8caa-a3e1347316f2",
+   "type": "thread.settled",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-3",
+   "occurredAt": "2026-06-01T09:00:05.000Z",
+   "commandId": "gate-history-import",
+   "causationEventId": null,
+   "correlationId": "gate-history-import",
+   "payload": {
+    "threadId": "gate-thread-3",
+    "settledAt": "2026-06-01T09:00:05.000Z",
+    "updatedAt": "2026-06-01T09:00:05.000Z"
+   },
+   "metadata": {
+    "historyImport": true
+   },
+   "streamVersion": 3,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 45,
+   "eventId": "b6d3a7a9-7651-40bf-8994-9baaedd24402",
+   "type": "thread.proposed-plan-upserted",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:06:10.000Z",
+   "commandId": "provider:gate-runtime-9:proposed-plan:0001",
+   "causationEventId": null,
+   "correlationId": "provider:gate-runtime-9:proposed-plan:0001",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "proposedPlan": {
+     "id": "gate-plan-1",
+     "turnId": "gate-turn-1",
+     "planMarkdown": "# Plan\n- one step",
+     "implementedAt": null,
+     "implementationThreadId": null,
+     "createdAt": "2026-07-01T10:06:10.000Z",
+     "updatedAt": "2026-07-01T10:06:10.000Z"
+    }
+   },
+   "metadata": {},
+   "streamVersion": 34,
+   "actorKind": "provider"
+  },
+  {
+   "sequence": 46,
+   "eventId": "00243f91-ed4a-4348-9e1e-59aeb52e9446",
+   "type": "thread.message-sent",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:06:20.000Z",
+   "commandId": "gate-turn-start-2",
+   "causationEventId": null,
+   "correlationId": "gate-turn-start-2",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "messageId": "gate-message-2",
+    "role": "user",
+    "text": "Implement the plan",
+    "attachments": [],
+    "turnId": null,
+    "streaming": false,
+    "createdAt": "2026-07-01T10:06:20.000Z",
+    "updatedAt": "2026-07-01T10:06:20.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 35,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 47,
+   "eventId": "b0e66607-ac2b-401b-8248-0e01377a3053",
+   "type": "thread.turn-start-requested",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:06:20.000Z",
+   "commandId": "gate-turn-start-2",
+   "causationEventId": "00243f91-ed4a-4348-9e1e-59aeb52e9446",
+   "correlationId": "gate-turn-start-2",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "messageId": "gate-message-2",
+    "modelSelection": {
+     "instanceId": "codex",
+     "model": "gpt-5.4"
+    },
+    "runtimeMode": "approval-required",
+    "interactionMode": "plan",
+    "sourceProposedPlan": {
+     "threadId": "gate-thread-1",
+     "planId": "gate-plan-1"
+    },
+    "createdAt": "2026-07-01T10:06:20.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 36,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 48,
+   "eventId": "0e11a34d-b0d0-440f-b947-5162cd18fefe",
+   "type": "thread.message-sent",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:06:21.000Z",
+   "commandId": "provider:gate-runtime-10:reasoning-delta:0001",
+   "causationEventId": null,
+   "correlationId": "provider:gate-runtime-10:reasoning-delta:0001",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "messageId": "gate-reasoning-1",
+    "role": "reasoning",
+    "text": "Thinking",
+    "turnId": "gate-turn-2",
+    "streaming": true,
+    "createdAt": "2026-07-01T10:06:21.000Z",
+    "updatedAt": "2026-07-01T10:06:21.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 37,
+   "actorKind": "provider"
+  },
+  {
+   "sequence": 49,
+   "eventId": "51be1d55-1406-48f6-a49f-dc078f4fc2b5",
+   "type": "thread.message-sent",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-07-01T10:06:22.000Z",
+   "commandId": "provider:gate-runtime-11:reasoning-complete:0001",
+   "causationEventId": null,
+   "correlationId": "provider:gate-runtime-11:reasoning-complete:0001",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "messageId": "gate-reasoning-1",
+    "role": "reasoning",
+    "text": "",
+    "turnId": "gate-turn-2",
+    "streaming": false,
+    "createdAt": "2026-07-01T10:06:22.000Z",
+    "updatedAt": "2026-07-01T10:06:22.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 38,
+   "actorKind": "provider"
+  },
+  {
+   "sequence": 50,
+   "eventId": "6deca3aa-09d2-4d13-b69a-e74efedef3de",
+   "type": "thread.meta-updated",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-3",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "server:thread-title:0002",
+   "causationEventId": null,
+   "correlationId": "server:thread-title:0002",
+   "payload": {
+    "threadId": "gate-thread-3",
+    "title": "Generated title",
+    "titleState": {
+     "source": "generated",
+     "version": "server:thread-title:0002",
+     "needsRefinement": true
+    },
+    "updatedAt": "2026-06-01T09:00:05.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 4,
+   "actorKind": "server"
+  },
+  {
+   "sequence": 51,
+   "eventId": "56aedc9a-eee5-4d5e-835c-fd4044f2e08a",
+   "type": "thread.meta-updated",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-3",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "server:thread-title:0003",
+   "causationEventId": null,
+   "correlationId": "server:thread-title:0003",
+   "payload": {
+    "threadId": "gate-thread-3",
+    "updatedAt": "2026-06-01T09:00:05.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 5,
+   "actorKind": "server"
+  },
+  {
+   "sequence": 52,
+   "eventId": "53425181-c8f6-457f-a24f-488fc6aa3c24",
+   "type": "thread.meta-updated",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-3",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-regenerate",
+   "causationEventId": null,
+   "correlationId": "gate-regenerate",
+   "payload": {
+    "threadId": "gate-thread-3",
+    "titleState": {
+     "source": "generated",
+     "version": "gate-regenerate",
+     "needsRefinement": false
+    },
+    "regenerateTitle": true,
+    "previousTitle": "Generated title",
+    "titleRegeneration": {
+     "requestId": "gate-regenerate",
+     "startedAt": "2026-08-01T12:00:00.000Z"
+    },
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 6,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 53,
+   "eventId": "fcb0d472-83c9-45d3-9574-73278efac940",
+   "type": "thread.meta-updated",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-3",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "server:thread-title:0004",
+   "causationEventId": null,
+   "correlationId": "server:thread-title:0004",
+   "payload": {
+    "threadId": "gate-thread-3",
+    "title": "Regenerated title",
+    "titleRegeneration": null,
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 7,
+   "actorKind": "server"
+  },
+  {
+   "sequence": 54,
+   "eventId": "d6f8f0e5-620f-44ec-8afa-42260296e430",
+   "type": "thread.meta-updated",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-2",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-active-reorder-2",
+   "causationEventId": null,
+   "correlationId": "gate-active-reorder-2",
+   "payload": {
+    "threadId": "gate-thread-2",
+    "activeOrderKey": "b1",
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 4,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 55,
+   "eventId": "316c2f9c-4c40-42f8-b066-c07d9caefd6f",
+   "type": "thread.message-sent",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-2",
+   "occurredAt": "2026-07-01T10:07:00.000Z",
+   "commandId": "gate-user-append",
+   "causationEventId": null,
+   "correlationId": "gate-user-append",
+   "payload": {
+    "threadId": "gate-thread-2",
+    "messageId": "gate-deferred-1",
+    "role": "user",
+    "text": "Queued message",
+    "attachments": [],
+    "turnId": null,
+    "streaming": false,
+    "createdAt": "2026-07-01T10:07:00.000Z",
+    "updatedAt": "2026-07-01T10:07:00.000Z"
+   },
+   "metadata": {
+    "deferredTurn": true
+   },
+   "streamVersion": 5,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 56,
+   "eventId": "75f36ab5-45cf-437c-b68f-3680e0485473",
+   "type": "thread.turn-start-requested",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-2",
+   "occurredAt": "2026-07-01T10:07:05.000Z",
+   "commandId": "gate-turn-start-3",
+   "causationEventId": null,
+   "correlationId": "gate-turn-start-3",
+   "payload": {
+    "threadId": "gate-thread-2",
+    "messageId": "gate-deferred-1",
+    "runtimeMode": "approval-required",
+    "interactionMode": "plan",
+    "createdAt": "2026-07-01T10:07:05.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 6,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 57,
+   "eventId": "e5169850-b86e-46bd-b1d6-0cfb23e4c129",
+   "type": "thread.pull-request-linked",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-2",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-pr-link-created",
+   "causationEventId": null,
+   "correlationId": "gate-pr-link-created",
+   "payload": {
+    "threadId": "gate-thread-2",
+    "link": {
+     "host": "github.com",
+     "repository": "acme/widgets",
+     "number": 9,
+     "url": "https://github.com/acme/widgets/pull/9",
+     "source": "created",
+     "linkedAt": "2026-08-01T12:00:00.000Z",
+     "snapshot": null,
+     "stack": null
+    },
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 7,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 58,
+   "eventId": "35d7be5e-140c-4df2-bf3d-bb2abadd7b40",
+   "type": "thread.pull-request-synced",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-2",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "server:pr-sync:gate-thread-2:0001",
+   "causationEventId": null,
+   "correlationId": "server:pr-sync:gate-thread-2:0001",
+   "payload": {
+    "threadId": "gate-thread-2",
+    "host": "github.com",
+    "repository": "acme/widgets",
+    "number": 9,
+    "snapshot": {
+     "state": "open",
+     "title": "Add widgets",
+     "headBranch": "feature/gate",
+     "baseBranch": "main",
+     "isDraft": false,
+     "updatedAt": null,
+     "syncedAt": "2026-07-01T10:07:10.000Z"
+    },
+    "stack": null,
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 8,
+   "actorKind": "server"
+  },
+  {
+   "sequence": 59,
+   "eventId": "f80bf23f-c2e2-467c-b68a-4b03cff51b6d",
+   "type": "thread.pull-request-linked",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-2",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-legacy-link",
+   "causationEventId": null,
+   "correlationId": "gate-legacy-link",
+   "payload": {
+    "threadId": "gate-thread-2",
+    "link": {
+     "host": "github.com",
+     "repository": "acme/widgets",
+     "number": 11,
+     "url": "https://github.com/acme/widgets/pull/11",
+     "source": "manual",
+     "linkedAt": "2026-08-01T12:00:00.000Z",
+     "snapshot": null,
+     "stack": null
+    },
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 9,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 60,
+   "eventId": "2a099d7a-5d90-4b0e-8c8a-ac29e29302b5",
+   "type": "thread.meta-updated",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-2",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-legacy-unlink",
+   "causationEventId": null,
+   "correlationId": "gate-legacy-unlink",
+   "payload": {
+    "threadId": "gate-thread-2",
+    "branch": "feature/other",
+    "linkedPullRequest": null,
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 10,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 61,
+   "eventId": "a298b1f4-90ee-4e86-8bf1-0eb7aee07fbe",
+   "type": "thread.checkpoint-revert-requested",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-2",
+   "occurredAt": "2026-07-01T10:07:30.000Z",
+   "commandId": "gate-conversation-revert",
+   "causationEventId": null,
+   "correlationId": "gate-conversation-revert",
+   "payload": {
+    "threadId": "gate-thread-2",
+    "turnCount": 0,
+    "restoreFiles": false,
+    "createdAt": "2026-07-01T10:07:30.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 11,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 62,
+   "eventId": "6c5221b4-ae39-4547-8401-24daa11ff09f",
+   "type": "project.meta-updated",
+   "aggregateKind": "project",
+   "aggregateId": "gate-project",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-project-icon",
+   "causationEventId": null,
+   "correlationId": "gate-project-icon",
+   "payload": {
+    "projectId": "gate-project",
+    "defaultThreadEnvMode": "worktree",
+    "autoPull": true,
+    "faviconPath": null,
+    "projectIcon": {
+     "kind": "lucide",
+     "name": "folder-code",
+     "color": "blue",
+     "monogramText": "AB"
+    },
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 2,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 63,
+   "eventId": "05f11d84-554e-4232-9423-ba57b3bad2b8",
+   "type": "thread.settled",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-settle-pinned",
+   "causationEventId": null,
+   "correlationId": "gate-settle-pinned",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "settledAt": "2026-08-01T12:00:00.000Z",
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 39,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 64,
+   "eventId": "6d87f859-ba09-43e3-81fa-52fb628120ef",
+   "type": "thread.unpinned",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-settle-pinned",
+   "causationEventId": null,
+   "correlationId": "gate-settle-pinned",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 40,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 65,
+   "eventId": "920e7ef4-8ba2-4bcc-bccc-ac4b0565207d",
+   "type": "thread.deleted",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-3",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-delete-3",
+   "causationEventId": null,
+   "correlationId": "gate-delete-3",
+   "payload": {
+    "threadId": "gate-thread-3",
+    "deletedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 8,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 66,
+   "eventId": "96fb0391-6e47-45d2-b96a-96f792a46c7d",
+   "type": "project.meta-updated",
+   "aggregateKind": "project",
+   "aggregateId": "gate-project",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-legacy-monogram",
+   "causationEventId": null,
+   "correlationId": "gate-legacy-monogram",
+   "payload": {
+    "projectId": "gate-project",
+    "projectIcon": {
+     "kind": "lucide",
+     "name": "folder-code",
+     "color": "teal",
+     "monogramText": "XY"
+    },
+    "updatedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 3,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 67,
+   "eventId": "ff63fba7-034e-4270-a62a-4eb28440b88c",
+   "type": "thread.deleted",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-1",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-project-delete-force",
+   "causationEventId": null,
+   "correlationId": "gate-project-delete-force",
+   "payload": {
+    "threadId": "gate-thread-1",
+    "deletedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 41,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 68,
+   "eventId": "52827ed2-a970-4cd2-a8cc-61d3e83c9fbf",
+   "type": "thread.deleted",
+   "aggregateKind": "thread",
+   "aggregateId": "gate-thread-2",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-project-delete-force",
+   "causationEventId": null,
+   "correlationId": "gate-project-delete-force",
+   "payload": {
+    "threadId": "gate-thread-2",
+    "deletedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 12,
+   "actorKind": "client"
+  },
+  {
+   "sequence": 69,
+   "eventId": "2102b076-e262-4540-a296-fdd7747e512f",
+   "type": "project.deleted",
+   "aggregateKind": "project",
+   "aggregateId": "gate-project",
+   "occurredAt": "2026-08-01T12:00:00.000Z",
+   "commandId": "gate-project-delete-force",
+   "causationEventId": null,
+   "correlationId": "gate-project-delete-force",
+   "payload": {
+    "projectId": "gate-project",
+    "deletedAt": "2026-08-01T12:00:00.000Z"
+   },
+   "metadata": {},
+   "streamVersion": 4,
+   "actorKind": "client"
+  }
+ ]
+}

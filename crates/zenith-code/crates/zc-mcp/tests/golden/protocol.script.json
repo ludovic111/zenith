@@ -1,0 +1,940 @@
+{
+  "environmentId": "environment-golden",
+  "threadId": "thread-golden",
+  "thread": {
+    "id": "thread-golden",
+    "projectId": "project-golden",
+    "title": "Thread",
+    "modelSelection": {
+      "instanceId": "codex",
+      "model": "gpt-5"
+    },
+    "runtimeMode": "full-access",
+    "interactionMode": "default",
+    "branch": null,
+    "worktreePath": null,
+    "pullRequests": [
+      {
+        "host": "github.com",
+        "repository": "acme/widgets",
+        "number": 3,
+        "url": "https://github.com/acme/widgets/pull/3",
+        "source": "agent",
+        "linkedAt": "2026-08-10T00:00:00.000Z",
+        "snapshot": {
+          "state": "open",
+          "title": "PR 3",
+          "headBranch": "feat-c",
+          "baseBranch": "feat-b",
+          "isDraft": false,
+          "updatedAt": null,
+          "syncedAt": "2026-08-27T00:00:00.000Z"
+        },
+        "stack": null
+      },
+      {
+        "host": "github.com",
+        "repository": "acme/widgets",
+        "number": 1,
+        "url": "https://github.com/acme/widgets/pull/1",
+        "source": "created",
+        "linkedAt": "2026-08-10T00:00:00.000Z",
+        "snapshot": {
+          "state": "open",
+          "title": "PR 1",
+          "headBranch": "feat-a",
+          "baseBranch": "main",
+          "isDraft": false,
+          "updatedAt": null,
+          "syncedAt": "2026-08-27T00:00:00.000Z"
+        },
+        "stack": null
+      },
+      {
+        "host": "github.com",
+        "repository": "acme/widgets",
+        "number": 2,
+        "url": "https://github.com/acme/widgets/pull/2",
+        "source": "agent",
+        "linkedAt": "2026-08-10T00:00:00.000Z",
+        "snapshot": {
+          "state": "open",
+          "title": "PR 2",
+          "headBranch": "feat-b",
+          "baseBranch": "feat-a",
+          "isDraft": false,
+          "updatedAt": null,
+          "syncedAt": "2026-08-27T00:00:00.000Z"
+        },
+        "stack": null
+      },
+      {
+        "host": "github.com",
+        "repository": "acme/widgets",
+        "number": 9,
+        "url": "https://github.com/acme/widgets/pull/9",
+        "source": "stack-dismissed",
+        "linkedAt": "2026-08-10T00:00:00.000Z",
+        "snapshot": null,
+        "stack": null
+      },
+      {
+        "host": "github.com",
+        "repository": "acme/widgets",
+        "number": 10,
+        "url": "https://github.com/acme/widgets/pull/10",
+        "source": "manual",
+        "linkedAt": "2026-08-10T00:00:00.000Z",
+        "snapshot": null,
+        "stack": null
+      }
+    ],
+    "latestTurn": null,
+    "createdAt": "2026-08-01T00:00:00.000Z",
+    "updatedAt": "2026-08-20T00:00:00.000Z",
+    "archivedAt": null,
+    "settledOverride": null,
+    "settledAt": null,
+    "session": null,
+    "latestUserMessageAt": "2026-08-20T00:00:00.000Z",
+    "hasPendingApprovals": false,
+    "hasPendingUserInput": false,
+    "hasActionableProposedPlan": false
+  },
+  "project": {
+    "id": "project-golden",
+    "title": "Project",
+    "workspaceRoot": "/workspace/golden",
+    "defaultModelSelection": null,
+    "scripts": [],
+    "repositoryIdentity": {
+      "canonicalKey": "github.com/acme/widgets",
+      "locator": {
+        "source": "git-remote",
+        "remoteName": "origin",
+        "remoteUrl": "git@github.com:Acme/Widgets.git"
+      },
+      "provider": "github",
+      "displayName": "Acme/Widgets",
+      "owner": "Acme",
+      "name": "Widgets"
+    },
+    "createdAt": "2026-08-01T00:00:00.000Z",
+    "updatedAt": "2026-08-01T00:00:00.000Z"
+  },
+  "rejectLink": [
+    123
+  ],
+  "rejectUnlink": [
+    9
+  ],
+  "credentials": {
+    "pr": [],
+    "preview": [
+      "preview"
+    ]
+  },
+  "steps": [
+    {
+      "name": "initialize without a credential",
+      "method": "POST",
+      "token": "none",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-06-18\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"golden\", \"version\": \"1.0.0\"}}}"
+    },
+    {
+      "name": "initialize with an unknown credential",
+      "method": "POST",
+      "token": "bad",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-06-18\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"golden\", \"version\": \"1.0.0\"}}}"
+    },
+    {
+      "name": "GET is not allowed",
+      "method": "GET",
+      "token": "pr",
+      "headers": {
+        "accept": "text/event-stream"
+      }
+    },
+    {
+      "name": "PUT is not allowed",
+      "method": "PUT",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream"
+      },
+      "body": "{}"
+    },
+    {
+      "name": "OPTIONS is not allowed",
+      "method": "OPTIONS",
+      "token": "pr",
+      "headers": {}
+    },
+    {
+      "name": "wrong content type",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "text/plain",
+        "accept": "application/json, text/event-stream"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-06-18\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"golden\", \"version\": \"1.0.0\"}}}"
+    },
+    {
+      "name": "accept without event-stream",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-06-18\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"golden\", \"version\": \"1.0.0\"}}}"
+    },
+    {
+      "name": "browser origin",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "origin": "http://evil.example"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-06-18\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"golden\", \"version\": \"1.0.0\"}}}"
+    },
+    {
+      "name": "initialize",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-06-18\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"golden\", \"version\": \"1.0.0\"}}}"
+    },
+    {
+      "name": "initialize again inside the session",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-06-18\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"golden\", \"version\": \"1.0.0\"}}}"
+    },
+    {
+      "name": "initialized notification",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"method\": \"notifications/initialized\"}"
+    },
+    {
+      "name": "ping without a session",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 2, \"method\": \"ping\"}"
+    },
+    {
+      "name": "ping with an unknown session",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "unknown-session"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 3, \"method\": \"ping\"}"
+    },
+    {
+      "name": "ping",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 4, \"method\": \"ping\"}"
+    },
+    {
+      "name": "ping with a string id",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": \"abc\", \"method\": \"ping\", \"params\": {}}"
+    },
+    {
+      "name": "ping with an unsupported protocol header",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "1999-01-01"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 5, \"method\": \"ping\"}"
+    },
+    {
+      "name": "ping without the protocol header",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 6, \"method\": \"ping\"}"
+    },
+    {
+      "name": "parse error",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{not json"
+    },
+    {
+      "name": "invalid request",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 7}"
+    },
+    {
+      "name": "empty batch",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "[]"
+    },
+    {
+      "name": "batch",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "[{\"jsonrpc\": \"2.0\", \"id\": 8, \"method\": \"ping\"}]"
+    },
+    {
+      "name": "client response",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 99, \"result\": {}}"
+    },
+    {
+      "name": "unknown method",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 9, \"method\": \"foo/bar\", \"params\": {}}"
+    },
+    {
+      "name": "unknown notification",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"method\": \"notifications/whatever\"}"
+    },
+    {
+      "name": "tools/list",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 10, \"method\": \"tools/list\", \"params\": {}}"
+    },
+    {
+      "name": "resources/list",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 11, \"method\": \"resources/list\", \"params\": {}}"
+    },
+    {
+      "name": "resources/templates/list",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 12, \"method\": \"resources/templates/list\", \"params\": {}}"
+    },
+    {
+      "name": "prompts/list",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 13, \"method\": \"prompts/list\", \"params\": {}}"
+    },
+    {
+      "name": "logging/setLevel",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 14, \"method\": \"logging/setLevel\", \"params\": {\"level\": \"info\"}}"
+    },
+    {
+      "name": "completion/complete",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 15, \"method\": \"completion/complete\", \"params\": {\"ref\": {\"type\": \"ref/prompt\", \"name\": \"x\"}, \"argument\": {\"name\": \"a\", \"value\": \"b\"}}}"
+    },
+    {
+      "name": "tools/call without params",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 16, \"method\": \"tools/call\"}"
+    },
+    {
+      "name": "tools/call with array arguments",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 17, \"method\": \"tools/call\", \"params\": {\"name\": \"list_thread_pull_requests\", \"arguments\": []}}"
+    },
+    {
+      "name": "tools/call with a numeric name",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 18, \"method\": \"tools/call\", \"params\": {\"name\": 3}}"
+    },
+    {
+      "name": "cancelled notification",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"method\": \"notifications/cancelled\", \"params\": {\"requestId\": 99}}"
+    },
+    {
+      "name": "initialize without client info",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 19, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-06-18\", \"capabilities\": {}}}"
+    },
+    {
+      "name": "initialize offering an older protocol",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 20, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"old\", \"version\": \"1\"}}}"
+    },
+    {
+      "name": "notification without a session",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"method\": \"notifications/initialized\"}"
+    },
+    {
+      "name": "unknown tool",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 11, \"method\": \"tools/call\", \"params\": {\"name\": \"no_such_tool\", \"arguments\": {}}}"
+    },
+    {
+      "name": "list thread pull requests",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 12, \"method\": \"tools/call\", \"params\": {\"name\": \"list_thread_pull_requests\", \"arguments\": {}}}"
+    },
+    {
+      "name": "list thread pull requests without arguments",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 13, \"method\": \"tools/call\", \"params\": {\"name\": \"list_thread_pull_requests\"}}"
+    },
+    {
+      "name": "link by url",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 14, \"method\": \"tools/call\", \"params\": {\"name\": \"link_pull_request\", \"arguments\": {\"url\": \"https://github.com/Acme/Widgets/pull/77/files\"}}}"
+    },
+    {
+      "name": "link by repository and number",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 15, \"method\": \"tools/call\", \"params\": {\"name\": \"link_pull_request\", \"arguments\": {\"repository\": \"Acme/Other\", \"number\": 7}}}"
+    },
+    {
+      "name": "link on another host",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 16, \"method\": \"tools/call\", \"params\": {\"name\": \"link_pull_request\", \"arguments\": {\"host\": \"GitLab.example\", \"repository\": \"group/project\", \"number\": 3}}}"
+    },
+    {
+      "name": "link already linked",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 17, \"method\": \"tools/call\", \"params\": {\"name\": \"link_pull_request\", \"arguments\": {\"url\": \"https://github.com/acme/widgets/pull/123\"}}}"
+    },
+    {
+      "name": "link an issue url",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 18, \"method\": \"tools/call\", \"params\": {\"name\": \"link_pull_request\", \"arguments\": {\"url\": \"https://github.com/acme/widgets/issues/1?token=private\"}}}"
+    },
+    {
+      "name": "link without a number",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 19, \"method\": \"tools/call\", \"params\": {\"name\": \"link_pull_request\", \"arguments\": {\"repository\": \"acme/widgets\"}}}"
+    },
+    {
+      "name": "link with a negative number",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 20, \"method\": \"tools/call\", \"params\": {\"name\": \"link_pull_request\", \"arguments\": {\"repository\": \"acme/widgets\", \"number\": -1}}}"
+    },
+    {
+      "name": "link with a string number",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 21, \"method\": \"tools/call\", \"params\": {\"name\": \"link_pull_request\", \"arguments\": {\"repository\": \"acme/widgets\", \"number\": \"4\"}}}"
+    },
+    {
+      "name": "link with an empty url",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 22, \"method\": \"tools/call\", \"params\": {\"name\": \"link_pull_request\", \"arguments\": {\"url\": \"   \"}}}"
+    },
+    {
+      "name": "link with null fields",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 23, \"method\": \"tools/call\", \"params\": {\"name\": \"link_pull_request\", \"arguments\": {\"url\": \"https://github.com/acme/widgets/pull/5\", \"host\": null}}}"
+    },
+    {
+      "name": "unlink linked",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 24, \"method\": \"tools/call\", \"params\": {\"name\": \"unlink_pull_request\", \"arguments\": {\"repository\": \"acme/widgets\", \"number\": 5}}}"
+    },
+    {
+      "name": "unlink not linked",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 25, \"method\": \"tools/call\", \"params\": {\"name\": \"unlink_pull_request\", \"arguments\": {\"url\": \"https://github.com/acme/widgets/pull/9\"}}}"
+    },
+    {
+      "name": "device list without device access",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 26, \"method\": \"tools/call\", \"params\": {\"name\": \"device_list\", \"arguments\": {}}}"
+    },
+    {
+      "name": "device open without device access",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 27, \"method\": \"tools/call\", \"params\": {\"name\": \"device_open\", \"arguments\": {}}}"
+    },
+    {
+      "name": "device screenshot without device access",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 28, \"method\": \"tools/call\", \"params\": {\"name\": \"device_screenshot\", \"arguments\": {}}}"
+    },
+    {
+      "name": "preview status without preview access",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 29, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_status\", \"arguments\": {}}}"
+    },
+    {
+      "name": "preview snapshot without preview access",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 30, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_snapshot\", \"arguments\": {}}}"
+    },
+    {
+      "name": "preview status without a host",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 31, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_status\", \"arguments\": {}}}"
+    },
+    {
+      "name": "preview snapshot without a host",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 32, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_snapshot\", \"arguments\": {}}}"
+    },
+    {
+      "name": "preview click with an empty selector",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 33, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_click\", \"arguments\": {\"selector\": \"\"}}}"
+    },
+    {
+      "name": "preview click without a target",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 34, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_click\", \"arguments\": {}}}"
+    },
+    {
+      "name": "preview navigate with url and target",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 35, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_navigate\", \"arguments\": {\"url\": \"a.example\", \"target\": {\"kind\": \"environment-port\", \"port\": 5173}}}}"
+    },
+    {
+      "name": "preview resize fill with a preset",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 36, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_resize\", \"arguments\": {\"mode\": \"fill\", \"preset\": \"pixel-7\"}}}"
+    },
+    {
+      "name": "preview open with tabId and no reuse",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 37, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_open\", \"arguments\": {\"tabId\": \"tab-1\", \"reuseExistingTab\": false}}}"
+    },
+    {
+      "name": "preview evaluate with an empty expression",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 38, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_evaluate\", \"arguments\": {\"expression\": \"  \"}}}"
+    },
+    {
+      "name": "preview snapshot with a string includeImage",
+      "method": "POST",
+      "token": "preview",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 39, \"method\": \"tools/call\", \"params\": {\"name\": \"preview_snapshot\", \"arguments\": {\"includeImage\": \"false\"}}}"
+    },
+    {
+      "name": "delete without a session",
+      "method": "DELETE",
+      "token": "pr",
+      "headers": {}
+    },
+    {
+      "name": "delete an unknown session",
+      "method": "DELETE",
+      "token": "pr",
+      "headers": {
+        "mcp-session-id": "unknown-session"
+      }
+    },
+    {
+      "name": "delete the session",
+      "method": "DELETE",
+      "token": "pr",
+      "headers": {
+        "mcp-session-id": "$session"
+      }
+    },
+    {
+      "name": "ping after delete",
+      "method": "POST",
+      "token": "pr",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json, text/event-stream",
+        "mcp-session-id": "$session",
+        "mcp-protocol-version": "2025-06-18"
+      },
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 90, \"method\": \"ping\"}"
+    },
+    {
+      "name": "delete without a credential",
+      "method": "DELETE",
+      "token": "none",
+      "headers": {
+        "mcp-session-id": "x"
+      }
+    }
+  ]
+}

@@ -4,10 +4,7 @@
     {
       "name": "zenith",
       "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "dev"
-      ],
+      "runtimeArgs": ["run", "dev"],
       "port": 4748
     }
   ]

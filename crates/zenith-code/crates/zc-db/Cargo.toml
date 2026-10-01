@@ -1,0 +1,23 @@
+[package]
+name = "zc-db"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "zenith code's SQLite persistence: the single-writer actor, the migrations and every repository"
+
+[dependencies]
+futures = { workspace = true }
+jiff = { workspace = true }
+regex = { workspace = true }
+rusqlite = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+unicode-normalization = "0.1"
+url = "2"
+
+[dev-dependencies]
+tempfile = "3"
+tokio = { workspace = true }

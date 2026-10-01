@@ -1,0 +1,25 @@
+[package]
+name = "zc-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "zenith code in Rust: config and paths, process runner, PATH fix, secret store, atomic writes, ids and clock, pubsub"
+
+[dependencies]
+async-trait = { workspace = true }
+futures = { workspace = true }
+jiff = { workspace = true }
+libc = "0.2"
+rand = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+url = "2"
+uuid = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"
+tokio = { workspace = true, features = ["test-util"] }

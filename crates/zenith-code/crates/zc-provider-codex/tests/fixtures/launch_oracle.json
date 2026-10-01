@@ -1,0 +1,302 @@
+[
+  {
+    "case": {
+      "name": "defaults",
+      "kind": "session",
+      "config": {},
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LANG": "en_US.UTF-8"
+      },
+      "start": {
+        "threadId": "thread-a",
+        "cwd": "/work/project",
+        "runtimeMode": "full-access"
+      }
+    },
+    "spawn": {
+      "command": "codex",
+      "args": [
+        "app-server"
+      ],
+      "cwd": "/work/project",
+      "env": {
+        "PATH": "/usr/bin:/bin",
+        "LANG": "en_US.UTF-8"
+      },
+      "extendEnv": false
+    }
+  },
+  {
+    "case": {
+      "name": "binary, home and launch args from settings",
+      "kind": "session",
+      "config": {
+        "binaryPath": "/opt/example/bin/codex",
+        "homePath": "/home/example/.codex-work",
+        "launchArgs": "--strict-config --enable foo -c 'model=\"gpt 5\"'"
+      },
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LANG": "en_US.UTF-8"
+      },
+      "start": {
+        "threadId": "thread-b",
+        "cwd": "/work/other",
+        "runtimeMode": "approval-required"
+      }
+    },
+    "spawn": {
+      "command": "/opt/example/bin/codex",
+      "args": [
+        "app-server",
+        "--strict-config",
+        "--enable",
+        "foo",
+        "-c",
+        "model=\"gpt 5\""
+      ],
+      "cwd": "/work/other",
+      "env": {
+        "PATH": "/usr/bin:/bin",
+        "LANG": "en_US.UTF-8",
+        "CODEX_HOME": "/home/example/.codex-work"
+      },
+      "extendEnv": false
+    }
+  },
+  {
+    "case": {
+      "name": "launch args from T3CODE_CODEX_LAUNCH_ARGS win",
+      "kind": "session",
+      "config": {
+        "launchArgs": "--enable settings-feature"
+      },
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LANG": "en_US.UTF-8",
+        "T3CODE_CODEX_LAUNCH_ARGS": " --strict-config --enable env-feature "
+      },
+      "start": {
+        "threadId": "thread-c",
+        "cwd": "/work/project",
+        "runtimeMode": "auto"
+      }
+    },
+    "spawn": {
+      "command": "codex",
+      "args": [
+        "app-server",
+        "--strict-config",
+        "--enable",
+        "env-feature"
+      ],
+      "cwd": "/work/project",
+      "env": {
+        "PATH": "/usr/bin:/bin",
+        "LANG": "en_US.UTF-8",
+        "T3CODE_CODEX_LAUNCH_ARGS": " --strict-config --enable env-feature "
+      },
+      "extendEnv": false
+    }
+  },
+  {
+    "case": {
+      "name": "blank T3CODE_CODEX_LAUNCH_ARGS falls back to settings",
+      "kind": "session",
+      "config": {
+        "launchArgs": " --strict-config "
+      },
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LANG": "en_US.UTF-8",
+        "T3CODE_CODEX_LAUNCH_ARGS": "   "
+      },
+      "start": {
+        "threadId": "thread-d",
+        "cwd": "/work/project",
+        "runtimeMode": "auto-accept-edits"
+      }
+    },
+    "spawn": {
+      "command": "codex",
+      "args": [
+        "app-server",
+        "--strict-config"
+      ],
+      "cwd": "/work/project",
+      "env": {
+        "PATH": "/usr/bin:/bin",
+        "LANG": "en_US.UTF-8",
+        "T3CODE_CODEX_LAUNCH_ARGS": "   "
+      },
+      "extendEnv": false
+    }
+  },
+  {
+    "case": {
+      "name": "t3-code MCP session with device tools",
+      "kind": "session",
+      "config": {
+        "homePath": "/home/example/.codex",
+        "launchArgs": "--strict-config"
+      },
+      "instanceId": "codex_personal",
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LANG": "en_US.UTF-8"
+      },
+      "start": {
+        "threadId": "thread-mcp",
+        "cwd": "/work/project",
+        "runtimeMode": "full-access",
+        "modelSelection": {
+          "instanceId": "codex_personal",
+          "model": "gpt-5.4",
+          "options": [
+            {
+              "id": "serviceTier",
+              "value": "fast"
+            }
+          ]
+        }
+      },
+      "mcp": {
+        "endpoint": "http://127.0.0.1:41234/mcp",
+        "authorizationHeader": "Bearer example-token-123",
+        "capabilities": [
+          "preview",
+          "device"
+        ],
+        "agentDeviceEnvironment": {
+          "PATH": "/opt/example/agent-device/bin",
+          "AGENT_DEVICE_DAEMON": "http://127.0.0.1:41235"
+        }
+      }
+    },
+    "spawn": {
+      "command": "codex",
+      "args": [
+        "app-server",
+        "--strict-config",
+        "-c",
+        "mcp_servers.t3-code.url=http://127.0.0.1:41234/mcp",
+        "-c",
+        "mcp_servers.t3-code.bearer_token_env_var=\"T3_MCP_BEARER_TOKEN\""
+      ],
+      "cwd": "/work/project",
+      "env": {
+        "PATH": "/opt/example/agent-device/bin:/usr/bin:/bin",
+        "LANG": "en_US.UTF-8",
+        "AGENT_DEVICE_DAEMON": "http://127.0.0.1:41235",
+        "T3_MCP_BEARER_TOKEN": "example-token-123",
+        "CODEX_HOME": "/home/example/.codex"
+      },
+      "extendEnv": false
+    }
+  },
+  {
+    "case": {
+      "name": "MCP session without device environment",
+      "kind": "session",
+      "config": {},
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LANG": "en_US.UTF-8"
+      },
+      "start": {
+        "threadId": "thread-mcp-plain",
+        "cwd": "/work/project",
+        "runtimeMode": "full-access"
+      },
+      "mcp": {
+        "endpoint": "http://127.0.0.1:9/mcp",
+        "authorizationHeader": "Bearer x",
+        "capabilities": [
+          "preview"
+        ]
+      }
+    },
+    "spawn": {
+      "command": "codex",
+      "args": [
+        "app-server",
+        "-c",
+        "mcp_servers.t3-code.url=http://127.0.0.1:9/mcp",
+        "-c",
+        "mcp_servers.t3-code.bearer_token_env_var=\"T3_MCP_BEARER_TOKEN\""
+      ],
+      "cwd": "/work/project",
+      "env": {
+        "PATH": "/usr/bin:/bin",
+        "LANG": "en_US.UTF-8",
+        "T3_MCP_BEARER_TOKEN": "x"
+      },
+      "extendEnv": false
+    }
+  },
+  {
+    "case": {
+      "name": "status probe",
+      "kind": "probe",
+      "config": {
+        "binaryPath": "/opt/example/bin/codex",
+        "homePath": "/home/example/.codex-work",
+        "launchArgs": "--strict-config"
+      },
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LANG": "en_US.UTF-8"
+      },
+      "start": {
+        "cwd": "/work/project"
+      }
+    },
+    "spawn": {
+      "command": "/opt/example/bin/codex",
+      "args": [
+        "app-server",
+        "--strict-config"
+      ],
+      "cwd": "/work/project",
+      "env": {
+        "PATH": "/usr/bin:/bin",
+        "LANG": "en_US.UTF-8",
+        "CODEX_HOME": "/home/example/.codex-work"
+      },
+      "extendEnv": true
+    }
+  },
+  {
+    "case": {
+      "name": "status probe without a home",
+      "kind": "probe",
+      "config": {
+        "launchArgs": ""
+      },
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LANG": "en_US.UTF-8",
+        "T3CODE_CODEX_LAUNCH_ARGS": "--enable env-feature"
+      },
+      "start": {
+        "cwd": "/work/project"
+      }
+    },
+    "spawn": {
+      "command": "codex",
+      "args": [
+        "app-server",
+        "--enable",
+        "env-feature"
+      ],
+      "cwd": "/work/project",
+      "env": {
+        "PATH": "/usr/bin:/bin",
+        "LANG": "en_US.UTF-8",
+        "T3CODE_CODEX_LAUNCH_ARGS": "--enable env-feature"
+      },
+      "extendEnv": true
+    }
+  }
+]

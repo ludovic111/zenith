@@ -1018,7 +1018,14 @@ export const make = (options?: StartupOptions) =>
             Effect.withSpan("server.startup.heartbeat.record"),
             Effect.ignoreCause({ log: true }),
           );
-          if (serverConfig.startupPresentation === "headless") {
+          // zenith: under zenith's LaunchAgent this output lands in a log file and
+          // zenith.app pairs itself, so no startup token is issued or printed.
+          if (
+            serverConfig.startupPresentation === "headless" &&
+            process.env.ZENITH_NO_STARTUP_TOKEN === "1"
+          ) {
+            yield* Console.log("T3 Code server is ready.");
+          } else if (serverConfig.startupPresentation === "headless") {
             const accessInfo = yield* issueHeadlessServeAccessInfo();
             yield* runStartupPhase(
               "headless.output",

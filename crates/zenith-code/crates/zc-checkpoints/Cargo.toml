@@ -1,0 +1,31 @@
+[package]
+name = "zc-checkpoints"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "zenith code in Rust: git checkpoints and turn diffs, the checkpoint reactor, the worktree bootstrap of thread.turn.start (setup tracker, setup scripts), storage cleanup and the background policy"
+
+[dependencies]
+zc-contracts = { path = "../zc-contracts" }
+zc-core = { path = "../zc-core" }
+zc-ports = { path = "../zc-ports" }
+zc-rpc = { path = "../zc-rpc" }
+zc-settings = { path = "../zc-settings" }
+zc-terminal = { path = "../zc-terminal" }
+zc-vcs = { path = "../zc-vcs" }
+async-trait = { workspace = true }
+base64 = { workspace = true }
+futures = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tokio-util = { version = "0.7", features = ["rt"] }
+tracing = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+zc-db = { path = "../zc-db" }
+zc-orchestration = { path = "../zc-orchestration" }
+tempfile = "3"
+tokio = { workspace = true, features = ["test-util"] }
