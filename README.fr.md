@@ -1,5 +1,8 @@
 # zenith
 
+Fait partie de [lsuite](https://lsuite.xyz), la suite créative libre et gratuite que ton IA peut piloter.
+Site : **[lsuite.xyz/zenith](https://lsuite.xyz/zenith)**.
+
 **Tes projets et ta journée, en un coup d'œil.** zenith est un tableau de bord local pour qui mène plusieurs projets à la fois : l'état de chaque projet, ses déploiements, son code et ses agents IA, ton agenda, tes mails, ton argent et l'actualité — et **zenith code**, un vrai espace de code pour Claude Code et Codex, intégré.
 
 Et il agit. **Demande à zenith** n'importe quoi en une phrase (⌘J) : un agent IA s'y met aussitôt, dans le bon projet ou sur toute ta vie, avec tout ce que zenith sait. La liste **Maintenant** montre ce qui t'attend — un paiement en échec, des acheteurs à qui répondre, une CI cassée, un anniversaire — et confie chaque chose à un agent d'un geste. Il prépare, tu valides.

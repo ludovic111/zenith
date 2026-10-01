@@ -1,5 +1,8 @@
 # zenith
 
+Part of [lsuite](https://lsuite.xyz), the free, open-source creative suite your AI can drive.
+Website: **[lsuite.xyz/zenith](https://lsuite.xyz/zenith)**.
+
 **Your projects and your day, at a glance.** zenith is a local dashboard for people who build many things at once: every project's health, deploys, code and AI agents, your calendar, mail, money and news — plus **zenith code**, a full coding workspace for Claude Code and Codex, built in.
 
 And it acts. **Ask zenith** anything in one sentence (⌘J): an AI agent starts on it at once, in the right project or across your whole life, with everything zenith knows. The **Now** list shows what is waiting for you — a failing payment, buyers to answer, a broken CI, a birthday — and hands each one to an agent in one tap. It prepares; you approve.
