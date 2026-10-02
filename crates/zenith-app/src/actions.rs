@@ -27,6 +27,7 @@ actions!(
         NextThread,
         PreviousThread,
         OpenInBrowser,
+        OpenPullRequests,
         ShowServerLog,
         CheckForUpdates,
         FocusComposer,

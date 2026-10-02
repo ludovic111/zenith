@@ -38,6 +38,7 @@ icons! {
     AlarmClockOff => "alarm-clock-off",
     Archive => "archive",
     ArchiveRestore => "archive-restore",
+    ArrowDown => "arrow-down",
     Pull => "arrow-down-to-line",
     ArrowLeft => "arrow-left",
     ArrowUp => "arrow-up",

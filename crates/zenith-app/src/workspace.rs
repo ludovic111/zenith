@@ -736,6 +736,7 @@ impl Render for Workspace {
             .on_action(cx.listener(Self::toggle_sidebar))
             .on_action(cx.listener(Self::open_palette))
             .on_action(cx.listener(Self::open_in_browser))
+            .on_action(cx.listener(|this, _: &actions::OpenPullRequests, _, cx| this.open_web_page("/pull-requests", cx)))
             .on_action(cx.listener(|this, _: &actions::NewThread, window, cx| this.new_thread(None, window, cx)))
             .on_action(cx.listener(|this, _: &actions::AddProject, window, cx| this.add_project(window, cx)))
             .on_action(cx.listener(|this, _: &actions::OpenSettings, window, cx| this.navigate(Route::Settings, window, cx)))
@@ -856,7 +857,8 @@ impl Render for Workspace {
                         .inset_0()
                         .flex()
                         .justify_center()
-                        .pt(px(96.))
+                        // The web's palette: 90 px from the top, over its scrim.
+                        .pt(px(90.))
                         .bg(c.scrim)
                         .on_mouse_down(
                             MouseButton::Left,

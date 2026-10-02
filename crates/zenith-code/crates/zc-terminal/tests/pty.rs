@@ -180,11 +180,15 @@ async fn reports_exit_codes_and_signals() {
     // The output comes before the exit.
     let events = s.collect();
     let exit_index = events.iter().position(|e| e.kind.type_name() == "exited").unwrap();
-    let bye_index = events
+    // The PTY may split "bye" across reads: look at the output joined up to the exit.
+    let before_exit: String = events[..exit_index]
         .iter()
-        .position(|e| matches!(&e.kind, TerminalEventKind::Output { data } if data.contains("bye\r\n")))
-        .unwrap();
-    assert!(bye_index < exit_index);
+        .filter_map(|e| match &e.kind {
+            TerminalEventKind::Output { data } => Some(data.as_str()),
+            _ => None,
+        })
+        .collect();
+    assert!(before_exit.contains("bye\r\n"), "{before_exit:?}");
     // Writing to the exited terminal is ignored; reopening starts a fresh shell.
     s.write(DEFAULT_TERMINAL_ID, "ignored\n").await;
     let reopened = s.manager.open(s.open_input(DEFAULT_TERMINAL_ID)).await.unwrap();

@@ -9,10 +9,10 @@ use zenith_model::shell::{self, ThreadStatus};
 use crate::actions;
 use crate::assets::Icon;
 use crate::store;
-use crate::theme::{radius, text, ActiveTheme, Appearance};
+use crate::theme::{radius, ActiveTheme, Appearance};
+use crate::ui::icon;
 use crate::ui::text_area::{TextArea, TextAreaEvent};
 use crate::ui::OneLine;
-use crate::ui::{icon, kbd};
 use crate::workspace::Route;
 
 pub struct PaletteContext {
@@ -95,8 +95,8 @@ impl Palette {
     pub fn new(context: PaletteContext, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let input = cx.new(|cx| {
             TextArea::single_line(cx)
-                .with_placeholder("Type a command, a project or a thread")
-                .with_font(text::MD, 22.)
+                .with_placeholder("Search commands, projects, and threads...")
+                .with_font(14., 20.)
         });
         let subscription = cx.subscribe_in(&input, window, |this, _, event: &TextAreaEvent, _, cx| match event {
             TextAreaEvent::Changed => this.filter(cx),
@@ -134,7 +134,7 @@ impl Palette {
         let mut items = Vec::new();
         let mut command = |label: &str, icon: Icon, keys: Option<&'static str>, run: Run| {
             items.push(Item {
-                group: "Commands",
+                group: "Actions",
                 label: label.to_owned().into(),
                 detail: None,
                 icon,
@@ -142,10 +142,27 @@ impl Palette {
                 run,
             });
         };
-        command("New thread", Icon::NewThread, Some("⌘N"), Run::NewThread(context.project.clone()));
-        command("Add project…", Icon::FolderPlus, Some("⌘O"), Run::AddProject);
+        // The web's wording (`CommandPalette`), with the window's own shortcuts.
+        let project_title = context.project.as_ref().and_then(|p| store.shell.project(p)).map(|p| p.title.clone());
+        command(
+            &match &project_title {
+                Some(title) => format!("New thread in {title}"),
+                None => "New thread".to_owned(),
+            },
+            Icon::NewThread,
+            Some("⌘N"),
+            Run::NewThread(context.project.clone()),
+        );
+        command("Add project", Icon::FolderPlus, Some("⌘O"), Run::AddProject);
+        command(
+            "Open pull requests",
+            Icon::PullRequestArrow,
+            None,
+            Run::Action(Box::new(actions::OpenPullRequests)),
+        );
+        command("Open usage", Icon::ChartNoAxesColumn, Some("⌘U"), Run::Navigate(Route::Sessions));
+        command("Open sessions", Icon::History, None, Run::Navigate(Route::Sessions));
         command("Settings", Icon::Settings, Some("⌘,"), Run::Navigate(Route::Settings));
-        command("Sessions & costs", Icon::Coins, Some("⌘U"), Run::Navigate(Route::Sessions));
         command("Toggle the sidebar", Icon::PanelLeft, Some("⌘B"), Run::Action(Box::new(actions::ToggleSidebar)));
         if context.thread.is_some() {
             command("Stop the agent", Icon::CircleStop, Some("⌘."), Run::Action(Box::new(actions::StopTurn)));
@@ -241,7 +258,7 @@ impl Palette {
             .enumerate()
             .filter_map(|(i, item)| {
                 let haystack = match &item.detail {
-                    Some(detail) if item.group != "Commands" => format!("{} {}", item.label, detail),
+                    Some(detail) if item.group != "Actions" => format!("{} {}", item.label, detail),
                     _ => item.label.to_string(),
                 };
                 // Threads only show once something is typed (the list stays short).
@@ -278,6 +295,8 @@ impl Palette {
 }
 
 impl Render for Palette {
+    /// The web's command palette: 576 px, 18 px corners on glass 2, the search field, 32 px
+    /// rows, the shortcuts as text, and the hints under them.
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.theme().clone();
         let c = theme.colors.clone();
@@ -289,12 +308,13 @@ impl Render for Palette {
                 last_group = item.group;
                 rows.push(
                     div()
-                        .px(px(12.))
-                        .pt(px(10.))
-                        .pb(px(4.))
-                        .text_size(px(text::XS))
-                        .font_weight(FontWeight::SEMIBOLD)
-                        .text_color(c.text_3)
+                        .h(px(28.))
+                        .px(px(8.))
+                        .py(px(6.))
+                        .text_size(px(12.))
+                        .line_height(px(16.))
+                        .font_weight(FontWeight::MEDIUM)
+                        .text_color(c.text_2)
                         .child(item.group)
                         .into_any_element(),
                 );
@@ -305,57 +325,92 @@ impl Render for Palette {
                     .id(position)
                     .flex()
                     .items_center()
-                    .gap(px(10.))
-                    .mx(px(6.))
+                    .gap(px(8.))
                     .px(px(8.))
-                    .h(px(34.))
+                    .h(px(32.))
                     .rounded(px(radius::SM))
                     .cursor_pointer()
                     .when(selected, |this| this.bg(c.accent_soft))
                     .hover(|s| s.bg(c.accent_soft))
                     .on_click(cx.listener(move |this, _, _, cx| this.confirm(position, cx)))
-                    .child(icon(item.icon, if selected { c.accent_text } else { c.text_3 }))
+                    .child(icon(item.icon, c.text_3).size(px(16.)))
                     .child(
                         div()
                             .flex_none()
                             .max_w(px(380.))
                             .one_line()
-                            .text_size(px(text::BASE))
+                            .text_size(px(14.))
+                            .line_height(px(20.))
                             .text_color(c.text)
                             .child(item.label.clone()),
                     )
                     .when_some(item.detail.clone(), |this, detail| {
-                        this.child(div().flex_1().min_w_0().one_line().text_size(px(text::SM)).text_color(c.text_3).child(detail))
+                        this.child(div().flex_1().min_w_0().one_line().text_size(px(12.)).text_color(c.text_2).child(detail))
                     })
                     .when(item.detail.is_none(), |this| this.child(div().flex_1()))
-                    .when_some(item.keys, |this, keys| this.child(kbd(keys, cx)))
+                    .when_some(item.keys, |this, keys| {
+                        this.child(
+                            div()
+                                .text_size(px(12.))
+                                .line_height(px(16.))
+                                .font_weight(FontWeight::MEDIUM)
+                                .text_color(c.text_2)
+                                .child(keys),
+                        )
+                    })
                     .into_any_element(),
             );
         }
+        let hint_key = |content: gpui::AnyElement| {
+            div()
+                .min_w(px(20.))
+                .h(px(20.))
+                .px(px(4.))
+                .flex()
+                .items_center()
+                .justify_center()
+                .rounded(px(4.))
+                .bg(c.text.opacity(0.08))
+                .text_size(px(12.))
+                .font_weight(FontWeight::MEDIUM)
+                .text_color(c.text)
+                .child(content)
+        };
+        let hint_label = |label: &'static str| {
+            div()
+                .mr(px(8.))
+                .text_size(px(14.))
+                .line_height(px(20.))
+                .font_weight(FontWeight::MEDIUM)
+                .text_color(c.text_2)
+                .child(label)
+        };
         div()
             .track_focus(&self.focus_handle)
             .occlude()
             .on_mouse_down(gpui::MouseButton::Left, |_, _, cx| cx.stop_propagation())
-            .w(px(640.))
-            .max_h(px(520.))
+            .w(px(576.))
+            .h(px(420.))
             .flex()
             .flex_col()
-            .rounded(px(radius::LG))
-            .bg(theme.floating_bg())
+            .rounded(px(radius::XXL))
+            .bg(crate::composer::composer_surface(cx).0)
             .border_1()
             .border_color(c.glass_edge)
             .shadow(theme.floating_shadow())
+            .overflow_hidden()
             .child(
-                div()
-                    .flex()
-                    .items_center()
-                    .gap(px(10.))
-                    .px(px(16.))
-                    .h(px(52.))
-                    .border_b_1()
-                    .border_color(c.line)
-                    .child(icon(Icon::Command, c.text_3).size(px(16.)))
-                    .child(div().flex_1().child(self.input.clone())),
+                div().p(px(8.)).child(
+                    div()
+                        .flex()
+                        .items_center()
+                        .gap(px(8.))
+                        .h(px(36.))
+                        .px(px(10.))
+                        .rounded(px(radius::LG))
+                        .child(icon(Icon::Search, c.text_3).size(px(16.)))
+                        .child(div().flex_1().child(self.input.clone())),
+                ),
             )
             .child(
                 div()
@@ -363,11 +418,30 @@ impl Render for Palette {
                     .flex_1()
                     .min_h_0()
                     .overflow_y_scroll()
+                    .px(px(8.))
+                    .pt(px(6.))
                     .pb(px(8.))
                     .children(rows)
                     .when(self.matches.is_empty(), |this| {
-                        this.child(div().p(px(16.)).text_size(px(text::BASE)).text_color(c.text_3).child("Nothing matches."))
+                        this.child(div().p(px(16.)).text_size(px(14.)).text_color(c.text_2).child("Nothing matches."))
                     }),
+            )
+            .child(
+                div()
+                    .h(px(40.))
+                    .flex_none()
+                    .px(px(16.))
+                    .flex()
+                    .items_center()
+                    .gap(px(4.))
+                    .bg(c.text.opacity(0.024))
+                    .child(hint_key(icon(Icon::ArrowUp, c.text).size(px(12.)).into_any_element()))
+                    .child(hint_key(icon(Icon::ArrowDown, c.text).size(px(12.)).into_any_element()))
+                    .child(hint_label("Navigate"))
+                    .child(hint_key("Enter".into_any_element()))
+                    .child(hint_label("Select"))
+                    .child(hint_key("Esc".into_any_element()))
+                    .child(hint_label("Close")),
             )
     }
 }

@@ -29,12 +29,15 @@ struct Fake {
     record: PathBuf,
 }
 
-impl Fake {
-    /// A `#!/bin/sh` launcher (a native-looking binary path) running the node stub on `script`.
-    fn new(script: Value) -> Self {
-        let dir = tempfile::tempdir().unwrap();
+/// The `#!/bin/sh` launcher (a native-looking binary path) running the node stub, written once
+/// for every test: a test writing its own while another one forks could hand the child the
+/// open file, and exec'ing it then fails with "Text file busy".
+fn shared_launcher() -> &'static Path {
+    static LAUNCHER: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
+    LAUNCHER.get_or_init(|| {
+        let dir = tempfile::tempdir().unwrap().keep();
         let stub = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/fake-claude.mjs");
-        let launcher = dir.path().join("claude");
+        let launcher = dir.join("claude");
         std::fs::write(
             &launcher,
             format!("#!/bin/sh\nexec \"{}\" \"{}\" \"$@\"\n", find_on_path("node").display(), stub.display()),
@@ -45,6 +48,15 @@ impl Fake {
             use std::os::unix::fs::PermissionsExt;
             std::fs::set_permissions(&launcher, std::fs::Permissions::from_mode(0o755)).unwrap();
         }
+        launcher
+    })
+}
+
+impl Fake {
+    /// The shared launcher, running the node stub on `script`.
+    fn new(script: Value) -> Self {
+        let dir = tempfile::tempdir().unwrap();
+        let launcher = shared_launcher().to_path_buf();
         std::fs::write(dir.path().join("script.json"), script.to_string()).unwrap();
         let record = dir.path().join("record.jsonl");
         Self { dir, launcher, record }

@@ -260,7 +260,8 @@ async fn keeps_none_cached_until_the_negative_ttl_expires() {
     let cwd = dir.path().to_str().unwrap();
     git(dir.path(), &["init", "-q"]);
     let resolver = RepositoryIdentities::new(RepositoryIdentityOptions {
-        negative_ttl: Duration::from_millis(50),
+        // Long enough for `git remote add` and three lookups on a loaded CI runner.
+        negative_ttl: Duration::from_secs(1),
         positive_ttl: Duration::from_secs(1),
         cache_capacity: 16,
         ..RepositoryIdentityOptions::default()
@@ -270,7 +271,7 @@ async fn keeps_none_cached_until_the_negative_ttl_expires() {
     for _ in 0..3 {
         assert_eq!(resolver.resolve(cwd, false).await, None);
     }
-    tokio::time::sleep(Duration::from_millis(120)).await;
+    tokio::time::sleep(Duration::from_millis(1100)).await;
     let refreshed = resolver.resolve(cwd, false).await.unwrap();
     assert_eq!(refreshed.canonical_key, "github.com/octo-org/sample-app");
     assert_eq!(refreshed.name.as_deref(), Some("sample-app"));
@@ -283,7 +284,8 @@ async fn refreshes_cached_identities_after_the_positive_ttl() {
     git(dir.path(), &["init", "-q"]);
     git(dir.path(), &["remote", "add", "origin", "git@github.com:Octo-Org/sample-app.git"]);
     let resolver = RepositoryIdentities::new(RepositoryIdentityOptions {
-        negative_ttl: Duration::from_millis(50),
+        // Long enough for `git remote add` and three lookups on a loaded CI runner.
+        negative_ttl: Duration::from_secs(1),
         positive_ttl: Duration::from_millis(100),
         cache_capacity: 16,
         ..RepositoryIdentityOptions::default()

@@ -9,7 +9,7 @@ pgrep -x openbox >/dev/null || { openbox >/tmp/openbox.log 2>&1 & sleep 1; }
 pkill -x zenith || true; sleep 0.5
 thread=null; [ "$which" = thread ] && thread="\"${THREAD:?set THREAD to a thread id}\""
 echo "{\"appearance\":\"$scheme\",\"sidebarVisible\":true,\"sidebarWidth\":256,\"lastThread\":$thread,\"checkForUpdates\":false}" > gpui-home/app/window.json
-extra=(); [ "$which" = home ] && extra=(--page new); case "$which" in settings|sessions) extra=(--page $which);; esac
+extra=(); [ "$which" = home ] && extra=(--page new); case "$which" in settings|sessions|palette) extra=(--page $which);; esac
 "$bin" "${extra[@]}" >/tmp/zenith-app.log 2>&1 &
 for i in $(seq 1 40); do W=$(xdotool search --name '^zenith$' 2>/dev/null | head -1); [ -n "$W" ] && break; sleep 0.5; done
 xdotool windowsize "$W" 1440 900; xdotool windowmove "$W" 0 0
