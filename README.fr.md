@@ -21,7 +21,7 @@ Il tourne sur ta machine : le serveur ne répond que sur `127.0.0.1`, utilise te
 
 ## Installer
 
-Dès la première version signée, télécharge zenith sur [lsuite.xyz/zenith](https://lsuite.xyz/zenith) (macOS Apple Silicon et Intel, Linux x86_64) et ouvre-le : il installe son serveur (un LaunchAgent sur `127.0.0.1:4747`) et se met à jour tout seul.
+Télécharge zenith sur [lsuite.xyz/zenith](https://lsuite.xyz/zenith) ou dans les [versions](https://github.com/ludovic111/zenith/releases) (macOS Apple Silicon et Intel, signé et notarisé ; Linux x86_64), mets-le dans Applications et ouvre-le : il installe son serveur (un LaunchAgent sur `127.0.0.1:4747`) et se met à jour tout seul.
 
 Depuis les sources (macOS) : [Rust](https://rustup.rs), les outils en ligne de commande de Xcode, git ; Node.js 22.16+ pour construire l'interface web (facultatif). En option : la [CLI GitHub](https://cli.github.com) connectée, Claude Code et/ou Codex.
 

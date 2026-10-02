@@ -35,11 +35,10 @@ named in STANDARD.md).
       with Ed25519), `scripts/mac/package.sh`, the in-app updater (`zenith-commands/src/update.rs`,
       public key `crates/zenith-commands/assets/update-signing.pub`, `ZENITH_NO_UPDATE=1`,
       `app.checkUpdates`), and the app installs its own server LaunchAgent from the bundle.
-  - [ ] Owner: create the App Store Connect key "zenith notarization", run
-        `APPLE_API_ISSUER=… ../lsuite/scripts/set-apple-secrets.sh ludovic111/zenith AuthKey_….p8 [developer-id.p12]`,
-        add the secret `ZENITH_UPDATE_SIGNING_KEY` (the hex line of
-        `~/.lsuite/keys/zenith-update-signing.key`, made with `zenith-cli release keygen`), then
-        bump the version and push the `vX.Y.Z` tag.
+  - [x] Secrets set on ludovic111/zenith (2026-10-02): App Store Connect key "zenith
+        notarization", Developer ID certificate, `ZENITH_UPDATE_SIGNING_KEY` (private key in
+        `~/.lsuite/keys/zenith-update-signing.key`). A release: bump `Cargo.toml`'s version, push
+        the `vX.Y.Z` tag. First release: 0.2.0.
 - [x] **Design system** (`../lsuite/design/`): the native window reads the tokens
       (`crates/zenith-app/assets/lsuite-tokens.json`, zenith blue, hue 262), Manrope and IBM Plex
       Mono bundled, sidebar on the macOS material (NSVisualEffectView, Sidebar) with glass tier 1,
@@ -58,6 +57,6 @@ named in STANDARD.md).
       MCP servers to the agents of its threads (`zc_core::lsuite`, `ZENITH_NO_LSUITE_MCP=1`).
 - [x] Support links to `https://lsuite.xyz/zenith/support` (README, Settings); the lsuite page and
       `/zenith/download/<platform>` (`../lsuite/server.js`) are updated.
-  - [ ] Keep the lsuite page up to date (version, what's new) with every release.
+  - [ ] Keep the lsuite page up to date (version, what's new) with every release (0.2.0 done).
 
 When done, tick these, and update the status table at the end of `../lsuite/STANDARD.md`.

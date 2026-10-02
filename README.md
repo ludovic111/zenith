@@ -21,7 +21,7 @@ It runs on your machine: the server answers only on `127.0.0.1`, uses your own C
 
 ## Install
 
-From the first signed release on, download zenith from [lsuite.xyz/zenith](https://lsuite.xyz/zenith) (macOS arm64 and Intel, Linux x86_64) and open it: it sets up its server (a LaunchAgent on `127.0.0.1:4747`) and keeps itself up to date.
+Download zenith from [lsuite.xyz/zenith](https://lsuite.xyz/zenith) or the [releases](https://github.com/ludovic111/zenith/releases) (macOS Apple silicon and Intel, signed and notarized; Linux x86_64), move it to Applications and open it: it sets up its server (a LaunchAgent on `127.0.0.1:4747`) and keeps itself up to date.
 
 From source (macOS): [Rust](https://rustup.rs), Xcode's command line tools, git; Node.js 22.16+ to build the web interface (optional). Optional: the [GitHub CLI](https://cli.github.com) logged in, Claude Code and/or Codex.
 
