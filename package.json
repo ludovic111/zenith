@@ -1,6 +1,6 @@
 {
   "name": "zenith",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": true,
   "type": "module",
   "description": "zenith: the lsuite app for coding with agents (Claude Code, Codex), native on macOS.",
