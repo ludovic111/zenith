@@ -7,12 +7,12 @@ use std::ops::Range;
 use gpui::prelude::*;
 use gpui::{
     div, font, px, AnyElement, App, ClipboardItem, ElementId, FontStyle, FontWeight, Hsla, InteractiveText, SharedString, StrikethroughStyle, StyledText,
-    TextRun, UnderlineStyle,
+    TextRun,
 };
 use pulldown_cmark::{CodeBlockKind, Event, HeadingLevel, Options, Parser, Tag, TagEnd};
 
 use crate::assets::{Icon, MONO_FONT, UI_FONT};
-use crate::theme::{radius, text, ActiveTheme};
+use crate::theme::{radius, ActiveTheme};
 use crate::ui::Button;
 
 #[derive(Clone, Copy, Default, PartialEq)]
@@ -301,27 +301,81 @@ fn parse(markdown: &str) -> Vec<Block> {
     }
 }
 
-/// Renders `markdown` at `size` px; `id` keeps clickable links and code blocks apart.
-pub fn render(id: impl Into<SharedString>, markdown: &str, size: f32, cx: &App) -> AnyElement {
-    let id: SharedString = id.into();
-    let blocks = parse(markdown);
-    div()
-        .flex()
-        .flex_col()
-        .gap(px(10.))
-        .w_full()
-        .min_w_0()
-        .children(blocks.iter().enumerate().map(|(i, block)| render_block(&format!("{id}-{i}"), block, size, cx)))
-        .into_any_element()
+/// How a piece of markdown reads: the web's `.chat-markdown` at 14 px on 22.75 (`leading-
+/// relaxed`), in the text color it is given (the assistant writes at 80% of the foreground).
+#[derive(Clone, Copy)]
+pub struct MdStyle {
+    pub size: f32,
+    pub line_height: f32,
+    pub color: Hsla,
+    /// How deep in lists (disc, then circle, then square, as the web's CSS).
+    pub list_depth: u8,
 }
 
-fn render_inline(id: &str, inline: &Inline, size: f32, weight: FontWeight, color: Hsla, cx: &App) -> AnyElement {
+impl MdStyle {
+    pub fn web(color: Hsla) -> Self {
+        Self {
+            size: 14.,
+            line_height: 22.75,
+            color,
+            list_depth: 0,
+        }
+    }
+}
+
+/// Renders `markdown` at `size` px in the text color; `id` keeps clickable links and code
+/// blocks apart.
+pub fn render(id: impl Into<SharedString>, markdown: &str, size: f32, cx: &App) -> AnyElement {
+    let color = cx.theme().colors.text;
+    render_styled(
+        id,
+        markdown,
+        MdStyle {
+            size,
+            line_height: (size * 1.625 * 4.).round() / 4.,
+            color,
+            list_depth: 0,
+        },
+        cx,
+    )
+}
+
+/// The margins around a block (`index.css`, `.chat-markdown`): 0.65rem for paragraphs, lists,
+/// quotes, code and tables; 1.25rem above and 0.5rem below a heading. Siblings' margins
+/// collapse, and the first and last blocks have none outside.
+fn margins(block: &Block) -> (f32, f32) {
+    match block {
+        Block::Heading(..) => (20., 8.),
+        Block::Rule => (16., 16.),
+        _ => (10.4, 10.4),
+    }
+}
+
+/// Blocks stacked with their collapsed margins.
+fn stack(id: &str, blocks: &[Block], style: MdStyle, cx: &App) -> gpui::Div {
+    let mut previous_bottom: Option<f32> = None;
+    div().flex().flex_col().w_full().min_w_0().children(blocks.iter().enumerate().map(|(i, block)| {
+        let (top, bottom) = margins(block);
+        let gap = previous_bottom.map(|b| b.max(top)).unwrap_or(0.);
+        previous_bottom = Some(bottom);
+        div().w_full().min_w_0().mt(px(gap)).child(render_block(&format!("{id}-{i}"), block, style, cx))
+    }))
+}
+
+pub fn render_styled(id: impl Into<SharedString>, markdown: &str, style: MdStyle, cx: &App) -> AnyElement {
+    let id: SharedString = id.into();
+    let blocks = parse(markdown);
+    stack(&id, &blocks, style, cx).into_any_element()
+}
+
+fn render_inline(id: &str, inline: &Inline, size: f32, line_height: f32, weight: FontWeight, color: Hsla, cx: &App) -> AnyElement {
     let c = &cx.theme().colors;
     let runs: Vec<TextRun> = inline
         .spans
         .iter()
         .map(|(range, style)| {
             let mut f = font(if style.code { MONO_FONT } else { UI_FONT });
+            // `strong` is `bolder`: 700 over 400.
             f.weight = if style.bold { FontWeight::BOLD } else { weight };
             if style.italic {
                 f.style = FontStyle::Italic;
@@ -329,19 +383,16 @@ fn render_inline(id: &str, inline: &Inline, size: f32, weight: FontWeight, color
             TextRun {
                 len: range.len(),
                 font: f,
+                // Links in `--info-foreground`, code in the full foreground on `--muted`.
                 color: if style.link {
-                    c.accent_text
+                    c.info_text
                 } else if style.code {
                     c.text
                 } else {
                     color
                 },
-                background_color: style.code.then_some(c.hover),
-                underline: style.link.then_some(UnderlineStyle {
-                    color: Some(Hsla { a: 0.5, ..c.accent_text }),
-                    thickness: px(1.),
-                    wavy: false,
-                }),
+                background_color: style.code.then_some(c.muted),
+                underline: None,
                 strikethrough: style.strike.then_some(StrikethroughStyle {
                     color: Some(color),
                     thickness: px(1.),
@@ -361,54 +412,70 @@ fn render_inline(id: &str, inline: &Inline, size: f32, weight: FontWeight, color
         .w_full()
         .min_w_0()
         .text_size(px(size))
-        .line_height(px((size * 1.55).round()))
+        .line_height(px(line_height))
         .text_color(color)
         .child(text)
         .into_any_element()
 }
 
-fn render_block(id: &str, block: &Block, size: f32, cx: &App) -> AnyElement {
-    let c = cx.theme().colors.clone();
+fn render_block(id: &str, block: &Block, style: MdStyle, cx: &App) -> AnyElement {
+    let theme = cx.theme().clone();
+    let c = theme.colors.clone();
+    let MdStyle {
+        size,
+        line_height,
+        color,
+        list_depth,
+    } = style;
     match block {
-        Block::Paragraph(inline) => render_inline(id, inline, size, FontWeight::NORMAL, c.text, cx),
+        Block::Paragraph(inline) => render_inline(id, inline, size, line_height, FontWeight::NORMAL, color, cx),
         Block::Heading(level, inline) => {
-            let (heading_size, weight) = match level {
-                1 => (text::XL, FontWeight::BOLD),
-                2 => (text::LG, FontWeight::BOLD),
-                3 => (size + 1., FontWeight::SEMIBOLD),
-                _ => (size, FontWeight::SEMIBOLD),
+            // 600, line-height 1.3, in the full foreground; h6 muted.
+            let heading_size = match level {
+                1 => 20.,
+                2 => 18.,
+                3 => 16.,
+                _ => 14.,
             };
-            div()
-                .pt(px(4.))
-                .child(render_inline(id, inline, heading_size, weight, c.text, cx))
-                .into_any_element()
+            let heading_color = if *level >= 6 { c.text_2 } else { c.text };
+            render_inline(
+                id,
+                inline,
+                heading_size,
+                (heading_size * 1.3 * 4.).round() / 4.,
+                FontWeight::SEMIBOLD,
+                heading_color,
+                cx,
+            )
         }
         Block::Code { lang, text: code } => {
             let copy = code.clone();
+            let dark = theme.mode == crate::theme::Mode::Dark;
+            // `bg-secondary` with a 70% border in light; `bg-input/32` and no border in dark.
+            let bg = if dark { c.line_strong.opacity(c.line_strong.a * 0.32) } else { c.muted };
             div()
                 .flex()
                 .flex_col()
                 .w_full()
-                .rounded(px(radius::SM))
-                .bg(c.bg_sunken)
-                .border_1()
-                .border_color(c.line)
+                .rounded(px(radius::LG))
+                .overflow_hidden()
+                .bg(bg)
+                .when(!dark, |el| el.border_1().border_color(c.line.opacity(c.line.a * 0.7)))
                 .child(
                     div()
                         .flex()
                         .items_center()
                         .justify_between()
+                        .gap(px(8.))
+                        .pt(px(6.))
+                        .pr(px(6.))
                         .pl(px(12.))
-                        .pr(px(4.))
-                        .h(px(28.))
-                        .border_b_1()
-                        .border_color(c.line)
                         .child(
                             div()
                                 .font_family(MONO_FONT)
-                                .text_size(px(text::XS))
-                                .text_color(c.text_3)
-                                .child(SharedString::from(lang.clone().unwrap_or_else(|| "text".into()))),
+                                .text_size(px(11.))
+                                .text_color(c.text.opacity(0.72))
+                                .child(SharedString::from(lang.clone().unwrap_or_default())),
                         )
                         .child(
                             Button::new(SharedString::from(format!("{id}-copy")))
@@ -422,11 +489,11 @@ fn render_block(id: &str, block: &Block, size: f32, cx: &App) -> AnyElement {
                     div()
                         .id(SharedString::from(format!("{id}-scroll")))
                         .overflow_x_scroll()
-                        .px(px(12.))
-                        .py(px(10.))
+                        .px(px(14.4))
+                        .py(px(12.8))
                         .font_family(MONO_FONT)
-                        .text_size(px(text::SM))
-                        .line_height(px(19.))
+                        .text_size(px(13.))
+                        .line_height(px(17.875))
                         .text_color(c.text)
                         .whitespace_nowrap()
                         .child(SharedString::from(code.clone())),
@@ -442,58 +509,64 @@ fn render_block(id: &str, block: &Block, size: f32, cx: &App) -> AnyElement {
                     (Some(true), _) => "☑".into(),
                     (Some(false), _) => "☐".into(),
                     (None, Some(n)) => format!("{}.", n + i as u64).into(),
-                    (None, None) => "•".into(),
+                    (None, None) => match list_depth {
+                        0 => "•".into(),
+                        1 => "◦".into(),
+                        _ => "▪".into(),
+                    },
                 };
+                // The marker hangs in the list's 20 px gutter.
                 div()
                     .flex()
-                    .gap(px(8.))
                     .child(
                         div()
                             .flex_none()
-                            .min_w(px(14.))
+                            .w(px(20.))
+                            .pr(px(6.))
+                            .flex()
+                            .justify_end()
                             .text_size(px(size))
-                            .line_height(px((size * 1.55).round()))
-                            .text_color(c.text_3)
+                            .line_height(px(line_height))
+                            .text_color(color)
                             .child(marker),
                     )
                     .child(
-                        div()
-                            .flex()
-                            .flex_col()
-                            .gap(px(6.))
-                            .flex_1()
-                            .min_w_0()
-                            .children(item.blocks.iter().enumerate().map(|(j, b)| render_block(&format!("{id}-{i}-{j}"), b, size, cx))),
+                        stack(
+                            &format!("{id}-{i}"),
+                            &item.blocks,
+                            MdStyle {
+                                list_depth: list_depth + 1,
+                                ..style
+                            },
+                            cx,
+                        )
+                        .flex_1(),
                     )
             }))
             .into_any_element(),
         Block::Quote(blocks) => div()
-            .flex()
-            .flex_col()
-            .gap(px(8.))
-            .pl(px(12.))
+            .pl(px(12.8))
             .border_l_2()
-            .border_color(c.line_strong)
-            .children(blocks.iter().enumerate().map(|(i, b)| render_block(&format!("{id}-q{i}"), b, size, cx)))
+            .border_color(c.line)
+            .child(stack(&format!("{id}-q"), blocks, MdStyle { color: c.text_2, ..style }, cx))
             .into_any_element(),
         Block::Rule => div().h(px(1.)).w_full().bg(c.line).into_any_element(),
         Block::Table { head, rows } => {
             let cell = |key: String, inline: &Inline, bold: bool| {
-                div().flex_1().min_w(px(60.)).px(px(10.)).py(px(6.)).child(render_inline(
+                div().flex_1().min_w(px(60.)).px(px(12.)).py(px(7.2)).child(render_inline(
                     &key,
                     inline,
-                    text::BASE,
+                    12.,
+                    16.,
                     if bold { FontWeight::SEMIBOLD } else { FontWeight::NORMAL },
-                    c.text,
+                    color,
                     cx,
                 ))
             };
+            let rule = c.line.opacity(c.line.a * 0.6);
             div()
                 .id(SharedString::from(format!("{id}-table")))
                 .overflow_x_scroll()
-                .rounded(px(radius::SM))
-                .border_1()
-                .border_color(c.line)
                 .child(
                     div()
                         .flex()
@@ -501,14 +574,15 @@ fn render_block(id: &str, block: &Block, size: f32, cx: &App) -> AnyElement {
                         .child(
                             div()
                                 .flex()
-                                .bg(c.hover)
+                                .border_b_1()
+                                .border_color(rule)
                                 .children(head.iter().enumerate().map(|(i, h)| cell(format!("{id}-h{i}"), h, true))),
                         )
                         .children(rows.iter().enumerate().map(|(r, row)| {
                             div()
                                 .flex()
-                                .border_t_1()
-                                .border_color(c.line)
+                                .border_b_1()
+                                .border_color(rule)
                                 .children(row.iter().enumerate().map(|(i, v)| cell(format!("{id}-r{r}-{i}"), v, false)))
                         })),
                 )

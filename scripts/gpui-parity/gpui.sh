@@ -13,6 +13,7 @@ extra=(); [ "$which" = home ] && extra=(--page new)
 "$bin" "${extra[@]}" >/tmp/zenith-app.log 2>&1 &
 for i in $(seq 1 40); do W=$(xdotool search --name '^zenith$' 2>/dev/null | head -1); [ -n "$W" ] && break; sleep 0.5; done
 xdotool windowsize "$W" 1440 900; xdotool windowmove "$W" 0 0
+xdotool mousemove 1590 990
 sleep ${WAIT:-12}
 import -window "$W" gpui-$which-$scheme.png
 pkill -x zenith || true

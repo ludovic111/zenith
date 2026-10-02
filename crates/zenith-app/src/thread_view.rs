@@ -16,16 +16,17 @@ use std::rc::Rc;
 
 use gpui::prelude::*;
 use gpui::{
-    canvas, div, list, px, svg, AnyElement, App, ClipboardItem, Context, Corner, Entity, EventEmitter, Focusable, FontWeight, Hsla, ListAlignment, ListState,
-    MouseButton, MouseDownEvent, Pixels, Point, SharedString, Subscription, WeakEntity, Window,
+    canvas, div, list, px, relative, svg, AnyElement, App, ClipboardItem, Context, Corner, Entity, EventEmitter, Focusable, FontWeight, Hsla, ListAlignment,
+    ListState, MouseButton, MouseDownEvent, Pixels, Point, SharedString, Subscription, WeakEntity, Window,
 };
 use serde_json::{json, Value};
 use zc_contracts::{OrchestrationMessageRole, OrchestrationThread, OrchestrationThreadShell, ProjectId, ThreadId};
 use zenith_model::git;
 use zenith_model::requests::{pending_requests, PendingApproval, PendingUserInput};
-use zenith_model::time::{duration, millis, now_millis};
-use zenith_model::timeline::{self, TimelineItem, WorkGroup};
-use zenith_model::worklog::{self, Action, WorkEntry};
+use zenith_model::rows::{self, Entry as RowEntry, Expanded, Row, SummaryKind};
+use zenith_model::time::{format_duration, millis, now_millis};
+use zenith_model::timeline;
+use zenith_model::worklog::{self, WorkEntry};
 
 use crate::assets::{Icon, MONO_FONT};
 use crate::composer::{Composer, ComposerEvent, EnvMode, ModelChoice};
@@ -34,6 +35,7 @@ use crate::terminal::{TermStatus, TerminalPanel};
 use crate::theme::{radius, text, ActiveTheme};
 use crate::ui::badges::project_badge;
 use crate::ui::controls::{header_toggle, outline_button, split_separator, Part};
+use crate::ui::markdown::MdStyle;
 use crate::ui::menu::{Entry, OpenMenu};
 use crate::ui::{caps_label, icon, markdown, pill, spinner, Button, Tooltip, Variant};
 
@@ -72,7 +74,9 @@ pub struct ThreadView {
     target: Target,
     composer: Entity<Composer>,
     list: ListState,
-    items: Vec<TimelineItem>,
+    rows: Vec<Row>,
+    /// The folds and groups opened ("Worked for…", "Ran 3 commands").
+    open: Expanded,
     fingerprints: Vec<u64>,
     expanded: HashSet<String>,
     diffs: HashMap<String, DiffState>,
@@ -151,7 +155,8 @@ impl ThreadView {
             target,
             composer,
             list: ListState::new(0, ListAlignment::Bottom, px(800.)),
-            items: Vec::new(),
+            open: Expanded::default(),
+            rows: Vec::new(),
             fingerprints: Vec::new(),
             expanded: HashSet::new(),
             diffs: HashMap::new(),
@@ -234,29 +239,65 @@ impl ThreadView {
         });
     }
 
-    fn fingerprint(item: &TimelineItem) -> u64 {
+    fn fingerprint(row: &Row) -> u64 {
         let mut h = std::collections::hash_map::DefaultHasher::new();
-        item.key().hash(&mut h);
-        match item {
-            TimelineItem::Message(m) => {
-                m.text.len().hash(&mut h);
-                m.streaming.hash(&mut h);
-                m.updated_at.hash(&mut h);
+        row.id().hash(&mut h);
+        match row {
+            Row::Message { message, show_meta, diff, .. } => {
+                message.text.len().hash(&mut h);
+                message.streaming.hash(&mut h);
+                message.updated_at.hash(&mut h);
+                show_meta.hash(&mut h);
+                diff.as_ref().map(|d| d.files.len()).hash(&mut h);
             }
-            TimelineItem::Plan(p) => {
-                p.updated_at.hash(&mut h);
-                p.implemented_at.hash(&mut h);
+            Row::AssistantMeta { message, .. } => message.updated_at.hash(&mut h),
+            Row::TurnFold { label, expanded, .. } => {
+                label.hash(&mut h);
+                expanded.hash(&mut h);
             }
-            TimelineItem::Work(g) => {
-                g.entries.len().hash(&mut h);
-                g.running.hash(&mut h);
-                g.failed.hash(&mut h);
-                g.summary.hash(&mut h);
+            Row::ActivityGroup { entries, expanded, active, .. } => {
+                entries.len().hash(&mut h);
+                expanded.hash(&mut h);
+                active.hash(&mut h);
+                for entry in entries {
+                    if let RowEntry::Message(m) = entry {
+                        m.text.len().hash(&mut h);
+                    }
+                }
             }
-            TimelineItem::Diff(d) => {
-                d.completed_at.hash(&mut h);
-                d.files.len().hash(&mut h);
+            Row::Work { entries, label, .. } => {
+                label.hash(&mut h);
+                for e in entries {
+                    e.id.hash(&mut h);
+                    format!("{:?}", e.status).hash(&mut h);
+                    e.detail.as_ref().map(String::len).hash(&mut h);
+                }
             }
+            Row::WorkLive {
+                entry,
+                entries,
+                expanded,
+                active,
+                ..
+            } => {
+                entry.id.hash(&mut h);
+                format!("{:?}", entry.status).hash(&mut h);
+                entries.len().hash(&mut h);
+                expanded.hash(&mut h);
+                active.hash(&mut h);
+            }
+            Row::WorkToggle { summary, expanded, failed, .. } => {
+                summary.hash(&mut h);
+                expanded.hash(&mut h);
+                failed.hash(&mut h);
+            }
+            Row::Compaction { label, .. } => label.hash(&mut h),
+            Row::Plan { plan, .. } => {
+                plan.updated_at.hash(&mut h);
+                plan.implemented_at.hash(&mut h);
+            }
+            Row::Working { since } => since.hash(&mut h),
+            Row::Thinking => {}
         }
         h.finish()
     }
@@ -267,7 +308,7 @@ impl ThreadView {
             cx.notify();
             return;
         };
-        let items = timeline::timeline(thread);
+        let items = rows::rows(thread, &self.open);
         if let Some(pending) = &self.pending_send {
             if thread
                 .messages
@@ -287,17 +328,32 @@ impl ThreadView {
         if first_change < self.fingerprints.len() || fingerprints.len() != self.fingerprints.len() {
             self.list.splice(first_change..self.fingerprints.len(), fingerprints.len() - first_change);
         }
-        self.items = items;
+        self.rows = items;
         self.fingerprints = fingerprints;
         self.sync_composer(cx);
         cx.notify();
     }
 
     fn remeasure(&mut self, index: usize, cx: &mut Context<Self>) {
-        if index < self.items.len() {
+        if index < self.rows.len() {
             self.list.splice(index..index + 1, 1);
         }
         cx.notify();
+    }
+
+    /// Opens or closes a fold ("Worked for…") or a group ("Ran 3 commands"): the rows change.
+    fn toggle_turn(&mut self, turn: String, cx: &mut Context<Self>) {
+        if !self.open.turns.remove(&turn) {
+            self.open.turns.insert(turn);
+        }
+        self.rebuild(cx);
+    }
+
+    fn toggle_group(&mut self, group: String, cx: &mut Context<Self>) {
+        if !self.open.groups.remove(&group) {
+            self.open.groups.insert(group);
+        }
+        self.rebuild(cx);
     }
 
     fn toggle(&mut self, key: String, index: usize, cx: &mut Context<Self>) {
@@ -439,7 +495,7 @@ impl ThreadView {
                     Err(error) => DiffState::Failed(error),
                 };
                 this.diffs.insert(key, state);
-                let index = index.min(this.items.len().saturating_sub(1));
+                let index = index.min(this.rows.len().saturating_sub(1));
                 this.remeasure(index, cx);
             });
         })
@@ -1124,293 +1180,556 @@ impl ThreadView {
         cx.notify();
     }
 
+    /// One row of the timeline, in the web's 768 px column with its own space under it.
     fn render_item(&mut self, index: usize, cx: &mut Context<Self>) -> AnyElement {
-        let Some(item) = self.items.get(index).cloned() else {
+        let Some(row) = self.rows.get(index).cloned() else {
             return div().into_any_element();
         };
-        let body = match &item {
-            TimelineItem::Message(message) => self.render_message(index, message, cx),
-            TimelineItem::Work(group) => self.render_work(index, &item.key(), group, cx),
-            TimelineItem::Plan(plan) => self.render_plan(plan, cx),
-            TimelineItem::Diff(diff) => self.render_diff(index, diff, cx),
+        let body = match &row {
+            Row::Message { message, show_meta, diff, .. } => self.render_message(index, message, *show_meta, diff.as_ref(), cx),
+            Row::AssistantMeta { message, .. } => div().px(px(4.)).mt(px(2.)).child(self.render_meta(message, cx)).into_any_element(),
+            Row::TurnFold { turn_id, label, expanded, .. } => self.render_fold(turn_id, label, *expanded, cx),
+            Row::ActivityGroup {
+                group_id,
+                entries,
+                expanded,
+                active,
+                ..
+            } => self.render_activity(index, group_id, entries, *expanded, *active, cx),
+            Row::Work {
+                id,
+                entries,
+                expanded_group,
+                label,
+            } => self.render_work_entries(index, id, entries, *expanded_group, label.as_deref(), cx),
+            Row::WorkLive {
+                entry,
+                group_id,
+                expanded,
+                active,
+                ..
+            } => {
+                let label = entry.live_label(self.workspace_root(cx).as_deref(), *active);
+                let group = group_id.clone();
+                live_row(work_icon(entry), label.into(), cx)
+                    .id(SharedString::from(format!("live-{group_id}")))
+                    .cursor_pointer()
+                    .when(*expanded, |el| el.bg(cx.theme().colors.accent_soft.opacity(0.2)))
+                    .on_click(cx.listener(move |this, _, _, cx| this.toggle_group(group.clone(), cx)))
+                    .into_any_element()
+            }
+            Row::WorkToggle {
+                group_id,
+                summary,
+                kind,
+                expanded,
+                failed,
+                ..
+            } => self.render_toggle(group_id, summary, *kind, *expanded, *failed, cx),
+            Row::Compaction { label, .. } => render_compaction(label, cx),
+            Row::Plan { plan, .. } => self.render_plan(plan, cx),
+            Row::Working { since } => self.render_working(since.as_deref(), cx),
+            Row::Thinking => div().min_h(px(28.)).child(live_row(Icon::Brain, "Thinking".into(), cx)).into_any_element(),
         };
+        let last = index + 1 == self.rows.len();
         div()
             .w_full()
             .flex()
             .justify_center()
-            .px(px(24.))
-            .py(px(6.))
-            .child(div().w_full().max_w(px(COLUMN)).child(body))
+            .px(px(20.))
+            // The list's own header and footer (`h-4`).
+            .when(index == 0, |el| el.pt(px(16.)))
+            .child(
+                div()
+                    .w_full()
+                    .max_w(px(COLUMN))
+                    .min_w_0()
+                    .pb(px(row.bottom_padding() + if last { 16. } else { 0. }))
+                    .child(body),
+            )
             .into_any_element()
     }
 
-    fn render_message(&mut self, index: usize, message: &zc_contracts::OrchestrationMessage, cx: &mut Context<Self>) -> AnyElement {
+    fn workspace_root(&self, cx: &App) -> Option<String> {
+        let store = self.store.read(cx);
+        let thread = store.shell.thread(self.thread_id())?;
+        thread
+            .worktree_path
+            .clone()
+            .or_else(|| store.shell.project(&thread.project_id).map(|p| p.workspace_root.clone()))
+    }
+
+    fn render_message(
+        &mut self,
+        index: usize,
+        message: &zc_contracts::OrchestrationMessage,
+        show_meta: bool,
+        diff: Option<&zc_contracts::OrchestrationCheckpointSummary>,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
         let c = cx.theme().colors.clone();
         let id = message.id.as_str().to_owned();
         match message.role {
-            OrchestrationMessageRole::User => div()
-                .flex()
-                .justify_end()
-                .pt(px(10.))
-                .child(
-                    div()
-                        .max_w(px(COLUMN * 0.82))
-                        .px(px(14.))
-                        .py(px(10.))
-                        .rounded(px(radius::LG))
-                        .bg(c.accent_soft)
-                        .text_size(px(text::MD))
-                        .line_height(px(23.))
-                        .text_color(c.text)
-                        .child(SharedString::from(message.text.clone()))
-                        .when(message.attachments.as_ref().is_some_and(|a| !a.is_empty()), |this| {
-                            let count = message.attachments.as_ref().map(|a| a.len()).unwrap_or(0);
-                            this.child(
+            OrchestrationMessageRole::User => {
+                // Long messages fold to 176 px with a fade (`UserTimelineRow`).
+                let long = message.text.chars().count() > 600 || message.text.lines().count() > 8;
+                let key = format!("msg:{id}");
+                let open = self.expanded.contains(&key);
+                let collapsed = long && !open;
+                let fade_to = over(c.message_surface, c.bg_raised);
+                // Soft line breaks stay breaks, as on the web (`lineBreaks`).
+                let text = message.text.replace('\n', "  \n");
+                let attachments = message.attachments.as_ref().map(|a| a.len()).unwrap_or(0);
+                div()
+                    .group("user-message")
+                    .flex()
+                    .flex_col()
+                    .items_end()
+                    .gap(px(4.))
+                    .child(
+                        div()
+                            .max_w(relative(0.8))
+                            .rounded(px(radius::XXL))
+                            .bg(c.message_surface)
+                            .p(px(12.))
+                            .when(attachments > 0, |el| {
+                                el.child(
+                                    div()
+                                        .mb(px(8.))
+                                        .flex()
+                                        .items_center()
+                                        .gap(px(4.))
+                                        .text_size(px(12.))
+                                        .text_color(c.text_2)
+                                        .child(icon(Icon::Paperclip, c.text_3))
+                                        .child(SharedString::from(format!(
+                                            "{attachments} attachment{}",
+                                            if attachments == 1 { "" } else { "s" }
+                                        ))),
+                                )
+                            })
+                            .child(
                                 div()
-                                    .pt(px(6.))
-                                    .flex()
-                                    .items_center()
-                                    .gap(px(4.))
-                                    .text_size(px(text::SM))
-                                    .text_color(c.text_2)
-                                    .child(icon(Icon::Paperclip, c.text_3))
-                                    .child(SharedString::from(format!("{count} attachment{}", if count == 1 { "" } else { "s" }))),
+                                    .relative()
+                                    .when(collapsed, |el| el.max_h(px(176.)).overflow_hidden())
+                                    .child(markdown::render_styled(format!("u{id}"), &text, MdStyle::web(c.text), cx))
+                                    .when(collapsed, |el| {
+                                        el.child(div().absolute().left_0().right_0().bottom_0().h(px(28.)).bg(gpui::linear_gradient(
+                                            180.,
+                                            gpui::linear_color_stop(fade_to.opacity(0.), 0.),
+                                            gpui::linear_color_stop(fade_to, 1.),
+                                        )))
+                                    }),
                             )
-                        }),
-                )
+                            .when(long, |el| {
+                                let key = key.clone();
+                                el.child(
+                                    div().mt(px(6.)).flex().justify_end().child(
+                                        ghost_xs(
+                                            SharedString::from(format!("more-{id}")),
+                                            if open { "Show less" } else { "Show full message" },
+                                            cx,
+                                        )
+                                        .ml(px(-4.))
+                                        .on_click(cx.listener(move |this, _, _, cx| this.toggle(key.clone(), index, cx))),
+                                    ),
+                                )
+                            }),
+                    )
+                    // The time and actions show on hover; their place is kept.
+                    .child(
+                        div()
+                            .w_full()
+                            .max_w(relative(0.8))
+                            .h(px(24.))
+                            .pr(px(4.))
+                            .flex()
+                            .items_center()
+                            .justify_end()
+                            .gap(px(8.))
+                            .invisible()
+                            .group_hover("user-message", |s| s.visible())
+                            .text_size(px(12.))
+                            .text_color(c.text_2)
+                            .child(SharedString::from(clock_time(&message.created_at)))
+                            .child(copy_button(format!("copy-{id}"), message.text.clone(), cx)),
+                    )
+                    .into_any_element()
+            }
+            OrchestrationMessageRole::Assistant => div()
+                .group("assistant-message")
+                .px(px(4.))
+                .py(px(2.))
+                .min_w_0()
+                .child(if message.text.trim().is_empty() && !message.streaming {
+                    div().text_size(px(14.)).text_color(c.text_2).child("(empty response)").into_any_element()
+                } else {
+                    markdown::render_styled(format!("a{id}"), &message.text, MdStyle::web(c.text.opacity(0.8)), cx)
+                })
+                .when(show_meta, |el| {
+                    el.child(
+                        div()
+                            .mt(px(6.))
+                            .invisible()
+                            .group_hover("assistant-message", |s| s.visible())
+                            .child(self.render_meta(message, cx)),
+                    )
+                })
+                .when_some(diff.cloned().filter(|d| !d.files.is_empty()), |el, diff| {
+                    el.child(div().mt(px(16.)).child(self.render_diff(index, &diff, cx)))
+                })
                 .into_any_element(),
             OrchestrationMessageRole::Reasoning => {
                 let key = format!("m:{id}");
                 let open = self.expanded.contains(&key);
-                let text_copy = message.text.clone();
-                div()
-                    .flex()
-                    .flex_col()
-                    .gap(px(6.))
-                    .child(
-                        div()
-                            .id(SharedString::from(format!("reason-{id}")))
-                            .flex()
-                            .items_center()
-                            .gap(px(6.))
-                            .cursor_pointer()
-                            .text_size(px(text::SM))
-                            .text_color(c.text_3)
-                            .on_click(cx.listener(move |this, _, _, cx| this.toggle(key.clone(), index, cx)))
-                            .child(icon(Icon::Brain, c.text_3).size(px(13.)))
-                            .child(if message.streaming { "Thinking…" } else { "Thought" })
-                            .child(icon(if open { Icon::ChevronDown } else { Icon::ChevronRight }, c.text_3).size(px(11.))),
-                    )
-                    .when(open, |this| {
-                        this.child(
-                            div()
-                                .pl(px(20.))
-                                .border_l_2()
-                                .border_color(c.line)
-                                .child(markdown::render(format!("r{id}"), &text_copy, text::BASE, cx)),
-                        )
-                    })
-                    .into_any_element()
+                self.render_reasoning(index, &key, "Thought", &message.text, open, cx)
             }
-            OrchestrationMessageRole::System => div()
-                .flex()
-                .items_start()
-                .gap(px(8.))
-                .text_size(px(text::SM))
-                .line_height(px(18.))
-                .text_color(c.text_3)
-                .child(div().pt(px(2.)).flex_none().child(icon(Icon::Info, c.text_3).size(px(12.))))
-                .child(div().flex_1().min_w_0().child(SharedString::from(message.text.clone())))
-                .into_any_element(),
-            OrchestrationMessageRole::Assistant => {
-                let copy = message.text.clone();
-                div()
-                    .group("assistant")
-                    .flex()
-                    .flex_col()
-                    .gap(px(4.))
-                    .child(markdown::render(format!("a{id}"), &message.text, text::MD, cx))
-                    .when(message.streaming, |this| this.child(div().size(px(8.)).rounded_full().bg(c.accent)))
-                    .when(!message.streaming, |this| {
-                        this.child(
-                            div().flex().invisible().group_hover("assistant", |s| s.visible()).child(
-                                Button::new(SharedString::from(format!("copy-{id}")))
-                                    .icon(Icon::Copy)
-                                    .small()
-                                    .tooltip("Copy the answer")
-                                    .on_click(move |_, _, cx| cx.write_to_clipboard(ClipboardItem::new_string(copy.clone()))),
-                            ),
-                        )
-                    })
-                    .into_any_element()
-            }
+            // The web draws nothing for them (only the row's space).
+            OrchestrationMessageRole::System => div().into_any_element(),
         }
     }
 
-    fn render_work(&mut self, index: usize, key: &str, group: &WorkGroup, cx: &mut Context<Self>) -> AnyElement {
+    /// An answer's copy button and time (`AssistantTimelineRow`'s meta).
+    fn render_meta(&self, message: &zc_contracts::OrchestrationMessage, cx: &App) -> AnyElement {
         let c = cx.theme().colors.clone();
-        let open = self.expanded.contains(key) || (group.running && group.entries.len() <= 3);
-        let toggle_key = key.to_owned();
-        let tool_entries = group.entries.iter().filter(|e| e.is_tool_like()).count();
-        let lead_icon = if group.running {
-            spinner(SharedString::from(format!("work-spin-{key}")), c.accent, 13.).into_any_element()
-        } else if group.failed > 0 {
-            icon(Icon::Warning, c.warning).size(px(13.)).into_any_element()
-        } else {
-            icon(Icon::Wrench, c.text_3).size(px(13.)).into_any_element()
-        };
-        let single_info = tool_entries == 0 && group.entries.len() == 1;
-        if single_info {
-            let entry = &group.entries[0];
-            return self.render_entry(key, entry, cx);
-        }
+        div()
+            .flex()
+            .items_center()
+            .gap(px(8.))
+            .text_size(px(12.))
+            .line_height(px(16.))
+            .text_color(c.text_2)
+            .when(!message.text.trim().is_empty(), |el| {
+                el.child(copy_button(format!("copy-{}", message.id.as_str()), message.text.clone(), cx))
+            })
+            .child(SharedString::from(clock_time(&message.updated_at)))
+            .into_any_element()
+    }
+
+    /// A thinking block: "Thought" with a brain, opening into its text (`ReasoningTimelineRow`).
+    fn render_reasoning(&mut self, index: usize, key: &str, label: &str, text: &str, open: bool, cx: &mut Context<Self>) -> AnyElement {
+        let c = cx.theme().colors.clone();
+        let key_owned = key.to_owned();
         div()
             .flex()
             .flex_col()
-            .gap(px(2.))
             .child(
                 div()
-                    .id(SharedString::from(format!("work-{key}")))
+                    .id(SharedString::from(format!("reason-{key}")))
+                    .min_h(px(24.))
                     .flex()
                     .items_center()
-                    .gap(px(8.))
-                    .py(px(4.))
+                    .gap(px(6.))
+                    .pl(px(2.))
+                    .pr(px(8.))
+                    .rounded(px(radius::MD))
                     .cursor_pointer()
-                    .text_size(px(text::BASE))
-                    .text_color(c.text_2)
-                    .on_click(cx.listener(move |this, _, _, cx| this.toggle(toggle_key.clone(), index, cx)))
-                    .child(lead_icon)
-                    .child(div().truncate().child(SharedString::from(group.summary.clone())))
-                    .when(group.failed > 0, |this| {
-                        this.child(pill(format!("{} failed", group.failed), c.warning, Hsla { a: 0.14, ..c.warning }))
-                    })
-                    .child(icon(if open { Icon::ChevronDown } else { Icon::ChevronRight }, c.text_3).size(px(11.))),
+                    .hover(|s| s.bg(c.accent_soft.opacity(0.2)))
+                    .text_size(px(14.))
+                    .line_height(px(22.75))
+                    .on_click(cx.listener(move |this, _, _, cx| this.toggle(key_owned.clone(), index, cx)))
+                    .child(icon_box(Icon::Brain, muted_icon(cx)))
+                    .child(div().text_color(c.text_2).child(SharedString::from(label.to_owned())))
+                    .child(chevron(open, cx)),
             )
-            .when(open, |this| {
-                this.child(
+            .when(open, |el| {
+                el.child(
                     div()
-                        .flex()
-                        .flex_col()
-                        .gap(px(2.))
-                        .ml(px(6.))
-                        .pl(px(14.))
-                        .border_l_1()
-                        .border_color(c.line)
-                        .children(group.entries.iter().map(|entry| self.render_entry(key, entry, cx))),
+                        .ml(px(28.))
+                        .mt(px(4.))
+                        .px(px(2.))
+                        .py(px(4.))
+                        .child(markdown::render_styled(format!("r{key}"), text, MdStyle::web(c.text), cx)),
                 )
             })
             .into_any_element()
     }
 
-    fn render_entry(&self, group_key: &str, entry: &WorkEntry, cx: &mut Context<Self>) -> AnyElement {
+    /// "Worked for 7m 7s ›" over its rule (`TurnFoldTimelineRow`).
+    fn render_fold(&mut self, turn_id: &str, label: &str, expanded: bool, cx: &mut Context<Self>) -> AnyElement {
         let c = cx.theme().colors.clone();
-        let failed = entry.failed();
-        let entry_icon = match entry.action() {
-            Action::Read => Icon::FileSearch,
-            Action::Edit => Icon::FileEdit,
-            Action::Command => Icon::SquareTerminal,
-            Action::CodeSearch => Icon::Search,
-            Action::WebSearch => Icon::Globe,
-            Action::Other => Icon::Wrench,
-            Action::Update if failed => Icon::CircleAlert,
-            Action::Update => Icon::Info,
+        let turn = turn_id.to_owned();
+        let text = c.text;
+        div()
+            .flex()
+            .items_center()
+            .gap(px(4.))
+            .pt(px(4.))
+            .pb(px(8.))
+            .pr(px(2.))
+            .border_b_1()
+            .border_color(c.line.opacity(c.line.a * 0.6))
+            .child(
+                div()
+                    .id(SharedString::from(format!("fold-{turn_id}")))
+                    .flex()
+                    .items_center()
+                    .gap(px(4.))
+                    .px(px(4.))
+                    .rounded(px(radius::MD))
+                    .cursor_pointer()
+                    .text_size(px(14.))
+                    .line_height(px(22.75))
+                    .text_color(c.text_2)
+                    .hover(move |s| s.text_color(text))
+                    .on_click(cx.listener(move |this, _, _, cx| this.toggle_turn(turn.clone(), cx)))
+                    .child(SharedString::from(label.to_owned()))
+                    .child(
+                        svg()
+                            .path(if expanded { Icon::ChevronDown.path() } else { Icon::ChevronRight.path() })
+                            .size(px(14.))
+                            .text_color(c.text_2),
+                    ),
+            )
+            .into_any_element()
+    }
+
+    /// "Ran 3 commands", "Received 2 updates" (`WorkGroupToggleTimelineRow`).
+    fn render_toggle(&mut self, group_id: &str, summary: &str, kind: SummaryKind, expanded: bool, failed: bool, cx: &mut Context<Self>) -> AnyElement {
+        let c = cx.theme().colors.clone();
+        let group = group_id.to_owned();
+        div()
+            .id(SharedString::from(format!("toggle-{group_id}")))
+            .w_full()
+            .min_h(px(24.))
+            .flex()
+            .items_center()
+            .gap(px(6.))
+            .px(px(2.))
+            .py(px(2.))
+            .rounded(px(radius::MD))
+            .cursor_pointer()
+            .hover(|s| s.bg(c.accent_soft.opacity(0.2)))
+            .text_size(px(14.))
+            .line_height(px(22.75))
+            .on_click(cx.listener(move |this, _, _, cx| this.toggle_group(group.clone(), cx)))
+            .child(icon_box(summary_icon(kind), if failed { c.danger.opacity(0.4) } else { muted_icon(cx) }))
+            .child(
+                div()
+                    .flex_1()
+                    .min_w_0()
+                    .truncate()
+                    .text_color(c.text_2)
+                    .child(SharedString::from(summary.to_owned())),
+            )
+            .when(expanded, |el| el.bg(c.accent_soft.opacity(0.2)))
+            .into_any_element()
+    }
+
+    /// One work entry, or the entries of an open group (`PlainWorkEntryRow`).
+    fn render_work_entries(
+        &mut self,
+        index: usize,
+        id: &str,
+        entries: &[WorkEntry],
+        expanded_group: bool,
+        label: Option<&str>,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        let root = self.workspace_root(cx);
+        let rows: Vec<AnyElement> = entries
+            .iter()
+            .map(|entry| {
+                let text = match (label, entries.len()) {
+                    (Some(label), 1) => label.to_owned(),
+                    _ => entry.display_label(root.as_deref()),
+                };
+                self.render_entry_row(index, &format!("{id}/{}", entry.id), entry, text, expanded_group, cx)
+            })
+            .collect();
+        div()
+            .flex()
+            .flex_col()
+            .when(expanded_group, |el| el.max_h(px(288.)))
+            .children(rows)
+            .into_any_element()
+    }
+
+    fn render_entry_row(&mut self, index: usize, key: &str, entry: &WorkEntry, label: String, in_group: bool, cx: &mut Context<Self>) -> AnyElement {
+        let c = cx.theme().colors.clone();
+        let tool = entry.is_tool_like();
+        let severe = entry.kind == "runtime.error" || entry.kind.ends_with(".failed");
+        let warning = entry.kind == "runtime.warning";
+        let failed = entry.display_failed();
+        let (glyph, icon_color, label_color, weight) = if severe {
+            (Icon::CircleAlert, c.danger, c.danger, FontWeight::MEDIUM)
+        } else if warning {
+            (Icon::CircleAlert, c.warning, c.warning, FontWeight::MEDIUM)
+        } else if tool {
+            (
+                work_icon(entry),
+                if failed { c.danger.opacity(0.4) } else { muted_icon(cx) },
+                c.text_2,
+                FontWeight::NORMAL,
+            )
+        } else {
+            let glyph = match entry.tone {
+                worklog::Tone::Info => Icon::Check,
+                worklog::Tone::Thinking => Icon::Brain,
+                _ => Icon::Zap,
+            };
+            (glyph, muted_icon(cx), c.text.opacity(0.8), FontWeight::NORMAL)
         };
-        let color = if failed { c.danger } else { c.text_3 };
-        let key = format!("{group_key}/{}", entry.id);
-        let open = self.expanded.contains(&key);
-        let detail = entry.detail.clone().filter(|_| open);
-        let has_more = entry.detail.as_ref().is_some_and(|d| d.lines().count() > 1 || d.len() > 100) || !entry.changed_files.is_empty();
-        let index = self.items.iter().position(|i| i.key() == group_key).unwrap_or(0);
-        let is_tool = entry.is_tool_like();
+        let body = expanded_body(entry, &label);
+        let expandable = body.is_some();
+        let open = self.expanded.contains(key);
+        let key_owned = key.to_owned();
+        div()
+            .id(SharedString::from(format!("entry-{key}")))
+            .flex()
+            .flex_col()
+            .px(px(2.))
+            .when(!in_group, |el| el.py(px(2.)))
+            .when(in_group && open, |el| el.mb(px(4.)))
+            .rounded(px(radius::MD))
+            .when(expandable, |el| {
+                el.cursor_pointer()
+                    .hover(|s| s.bg(c.accent_soft.opacity(0.2)))
+                    .on_click(cx.listener(move |this, _, _, cx| this.toggle(key_owned.clone(), index, cx)))
+            })
+            .child(
+                div()
+                    .flex()
+                    .items_center()
+                    .gap(px(6.))
+                    .child(icon_box(glyph, icon_color))
+                    .child(
+                        div()
+                            .flex_1()
+                            .min_w_0()
+                            .when(!open, |el| el.truncate())
+                            .text_size(px(14.))
+                            .line_height(px(22.75))
+                            .font_weight(weight)
+                            .text_color(label_color)
+                            // Closed, the label is one line, its breaks read as spaces (CSS).
+                            .child(SharedString::from(if open {
+                                label
+                            } else {
+                                label.split_whitespace().collect::<Vec<_>>().join(" ")
+                            })),
+                    )
+                    .child(
+                        div()
+                            .size(px(16.))
+                            .flex_none()
+                            .flex()
+                            .items_center()
+                            .justify_center()
+                            .when(!expandable, |el| el.invisible())
+                            .child(
+                                svg()
+                                    .path(if open { Icon::ChevronDown.path() } else { Icon::ChevronRight.path() })
+                                    .size(px(12.))
+                                    .text_color(c.text_3.opacity(0.7)),
+                            ),
+                    ),
+            )
+            .when_some(body.filter(|_| open), |el, body| {
+                el.child(
+                    div()
+                        .mt(px(4.))
+                        .ml(px(28.))
+                        .rounded(px(radius::MD))
+                        .bg(c.muted.opacity(c.muted.a * 0.4))
+                        .px(px(12.))
+                        .py(px(8.))
+                        .max_h(px(256.))
+                        .overflow_hidden()
+                        .font_family(MONO_FONT)
+                        .text_size(px(13.))
+                        .line_height(px(21.125))
+                        .text_color(c.text_2)
+                        .child(SharedString::from(body)),
+                )
+            })
+            .into_any_element()
+    }
+
+    /// Thinking with tool calls (`ActivityGroupTimelineRow`).
+    fn render_activity(&mut self, index: usize, group_id: &str, entries: &[RowEntry], expanded: bool, active: bool, cx: &mut Context<Self>) -> AnyElement {
+        let c = cx.theme().colors.clone();
+        let work: Vec<&WorkEntry> = entries
+            .iter()
+            .filter_map(|e| match e {
+                RowEntry::Work(w) => Some(w),
+                _ => None,
+            })
+            .collect();
+        let thoughts = entries.iter().filter(|e| matches!(e, RowEntry::Message(_))).count();
+        let (glyph, label) = if active {
+            match work.iter().rev().find(|w| w.status == Some(worklog::ToolStatus::InProgress)) {
+                Some(w) => (work_icon(w), w.live_label(self.workspace_root(cx).as_deref(), true)),
+                None => (Icon::Brain, "Thinking".to_owned()),
+            }
+        } else if !work.is_empty() {
+            (summary_icon(rows::summary_kind(&work)), worklog::summarize(&work))
+        } else if thoughts > 1 {
+            (Icon::Brain, format!("Thought (×{thoughts})"))
+        } else {
+            (Icon::Brain, "Thought".to_owned())
+        };
+        let group = group_id.to_owned();
+        let mut children: Vec<AnyElement> = Vec::new();
+        if expanded {
+            let root = self.workspace_root(cx);
+            for entry in entries {
+                match entry {
+                    RowEntry::Work(w) => {
+                        let text = w.display_label(root.as_deref());
+                        children.push(self.render_entry_row(index, &format!("{group_id}/{}", w.id), w, text, true, cx));
+                    }
+                    RowEntry::Message(m) => {
+                        let key = format!("m:{}", m.id.as_str());
+                        let open = self.expanded.contains(&key);
+                        let preview = m.text.lines().map(str::trim).find(|l| !l.is_empty()).unwrap_or("Thought").to_owned();
+                        children.push(self.render_reasoning(index, &key, &preview, &m.text, open, cx));
+                    }
+                    RowEntry::Plan(_) => {}
+                }
+            }
+        }
         div()
             .flex()
             .flex_col()
             .child(
-                div()
-                    .id(SharedString::from(format!("entry-{key}")))
-                    .flex()
-                    .items_start()
-                    .gap(px(8.))
-                    .py(px(3.))
-                    .min_w_0()
-                    .text_size(px(text::SM))
-                    .line_height(px(18.))
-                    .when(has_more, |this| {
-                        let key = key.clone();
-                        this.cursor_pointer()
-                            .on_click(cx.listener(move |this, _, _, cx| this.toggle(key.clone(), index, cx)))
-                    })
-                    .child(div().pt(px(2.)).flex_none().child(if entry.running() {
-                        spinner(SharedString::from(format!("entry-spin-{key}")), c.accent, 12.).into_any_element()
-                    } else {
-                        icon(entry_icon, color).size(px(12.)).into_any_element()
-                    }))
-                    .child(if is_tool {
-                        // A tool: its name, then what it ran or touched, on one line.
-                        div()
-                            .flex()
-                            .flex_1()
-                            .min_w_0()
-                            .gap(px(8.))
-                            .child(
-                                div()
-                                    .flex_none()
-                                    .text_color(if failed { c.danger } else { c.text_2 })
-                                    .child(SharedString::from(entry.label.clone())),
-                            )
-                            .when_some(entry.preview(), |this, preview| {
-                                this.child(
-                                    div()
-                                        .flex_1()
-                                        .min_w_0()
-                                        .truncate()
-                                        .font_family(MONO_FONT)
-                                        .text_size(px(text::XS))
-                                        .text_color(c.text_3)
-                                        .child(SharedString::from(preview)),
-                                )
-                            })
-                            .into_any_element()
-                    } else {
-                        // A note (progress, a warning): its text, wrapped.
-                        div()
-                            .flex_1()
-                            .min_w_0()
-                            .text_color(if failed { c.danger } else { c.text_3 })
-                            .child(SharedString::from(worklog::truncate(&entry.label, 600)))
-                            .into_any_element()
-                    }),
+                live_row(glyph, label.into(), cx)
+                    .id(SharedString::from(format!("activity-{group_id}")))
+                    .cursor_pointer()
+                    .hover(|s| s.bg(c.accent_soft.opacity(0.2)))
+                    .on_click(cx.listener(move |this, _, _, cx| this.toggle_group(group.clone(), cx))),
             )
-            .when(open && !entry.changed_files.is_empty(), |this| {
-                this.child(
-                    div()
-                        .pl(px(20.))
-                        .flex()
-                        .flex_col()
-                        .font_family(MONO_FONT)
-                        .text_size(px(text::XS))
-                        .text_color(c.text_2)
-                        .children(entry.changed_files.iter().map(|f| SharedString::from(f.clone()))),
-                )
-            })
-            .when_some(detail, |this, detail| {
-                let shown: String = detail.lines().take(40).collect::<Vec<_>>().join("\n");
-                this.child(
-                    div()
-                        .ml(px(20.))
-                        .mt(px(2.))
-                        .mb(px(4.))
-                        .px(px(10.))
-                        .py(px(8.))
-                        .rounded(px(radius::SM))
-                        .bg(c.bg_sunken)
-                        .font_family(MONO_FONT)
-                        .text_size(px(text::XS))
-                        .line_height(px(17.))
-                        .text_color(c.text_2)
-                        .child(SharedString::from(shown)),
-                )
-            })
+            .when(expanded, |el| el.child(div().mt(px(8.)).flex().flex_col().children(children)))
+            .into_any_element()
+    }
+
+    /// "Working for 2m 3s" over its rule (`WorkingTimelineRow`).
+    fn render_working(&self, since: Option<&str>, cx: &App) -> AnyElement {
+        let c = cx.theme().colors.clone();
+        let label = match since.and_then(millis) {
+            Some(since) => {
+                let ms = (now_millis() - since).max(0);
+                format!("Working for {}", if ms < 60_000 { format!("{}s", ms / 1000) } else { format_duration(ms) })
+            }
+            None => "Working...".to_owned(),
+        };
+        div()
+            .pt(px(4.))
+            .pb(px(8.))
+            .border_b_1()
+            .border_color(c.line.opacity(c.line.a * 0.6))
+            .child(
+                div()
+                    .h(px(24.))
+                    .px(px(4.))
+                    .flex()
+                    .items_center()
+                    .gap(px(8.))
+                    .text_size(px(14.))
+                    .line_height(px(22.75))
+                    .text_color(c.text_2)
+                    .child(SharedString::from(label)),
+            )
             .into_any_element()
     }
 
@@ -1759,41 +2078,10 @@ impl ThreadView {
     }
 
     /// "Working for 1m 20s", the agent's plan, or the last error, above the composer.
+    /// The session's error, under the timeline (the web shows "Working for…" in the timeline).
     fn render_status_line(&self, cx: &App) -> Option<AnyElement> {
         let c = cx.theme().colors.clone();
         let thread = self.thread(cx)?;
-        let running = thread.session.as_ref().is_some_and(|s| matches!(s.status.as_str(), "running" | "starting"));
-        let current_turn = thread.latest_turn.as_ref().map(|t| t.turn_id.as_str().to_owned());
-        let plan = worklog::active_plan(&thread.activities, current_turn.as_deref()).filter(|_| running);
-        if running {
-            let since = thread
-                .latest_turn
-                .as_ref()
-                .and_then(|t| t.started_at.as_deref().or(Some(t.requested_at.as_str())))
-                .and_then(millis);
-            let label = match since {
-                Some(since) => format!("Working for {}", duration(now_millis() - since)),
-                None => "Working…".into(),
-            };
-            return Some(
-                div()
-                    .flex()
-                    .items_center()
-                    .gap(px(8.))
-                    .text_size(px(text::SM))
-                    .text_color(c.text_2)
-                    .child(spinner("working", c.accent, 13.))
-                    .child(SharedString::from(label))
-                    .when_some(plan, |this, plan| {
-                        let step = plan.steps.iter().find(|s| s.status == "inProgress").map(|s| s.step.clone());
-                        this.child(pill(format!("{}/{}", plan.completed(), plan.steps.len()), c.accent_text, c.accent_soft))
-                            .when_some(step, |this, step| {
-                                this.child(div().truncate().text_color(c.text_3).child(SharedString::from(step)))
-                            })
-                    })
-                    .into_any_element(),
-            );
-        }
         let error = thread
             .session
             .as_ref()
@@ -1994,6 +2282,206 @@ impl Render for ThreadView {
             .when_some(terminals, |this, terminals| this.child(terminals))
             .when_some(self.menu.as_ref(), |this, menu| this.child(menu.render()))
     }
+}
+
+/// `color` over `under`, as one opaque color.
+fn over(color: Hsla, under: Hsla) -> Hsla {
+    let (a, b) = (color.to_rgb(), under.to_rgb());
+    let alpha = color.a;
+    gpui::Rgba {
+        r: a.r * alpha + b.r * (1. - alpha),
+        g: a.g * alpha + b.g * (1. - alpha),
+        b: a.b * alpha + b.b * (1. - alpha),
+        a: 1.,
+    }
+    .into()
+}
+
+/// The work log's muted icons (`text-icon-muted opacity-70 light:brightness-60`), as one color.
+fn muted_icon(cx: &App) -> Hsla {
+    let theme = cx.theme();
+    let c = &theme.colors;
+    let base = c.text_3.to_rgb();
+    let dim = if theme.mode == crate::theme::Mode::Light { 0.6 } else { 1. };
+    over(
+        gpui::Rgba {
+            r: base.r * dim,
+            g: base.g * dim,
+            b: base.b * dim,
+            a: 0.7,
+        }
+        .into(),
+        c.bg_raised,
+    )
+}
+
+/// A 16 px icon in its 24 px box.
+fn icon_box(glyph: Icon, color: Hsla) -> gpui::Div {
+    div()
+        .size(px(24.))
+        .flex_none()
+        .flex()
+        .items_center()
+        .justify_center()
+        .child(svg().path(glyph.path()).size(px(16.)).text_color(color))
+}
+
+fn chevron(open: bool, cx: &App) -> gpui::Svg {
+    svg()
+        .path(if open { Icon::ChevronDown.path() } else { Icon::ChevronRight.path() })
+        .size(px(12.))
+        .flex_none()
+        .text_color(cx.theme().colors.text_3.opacity(0.7))
+}
+
+/// A live or settled activity line (`LiveActivityRow`): its icon and label in muted text.
+fn live_row(glyph: Icon, label: SharedString, cx: &App) -> gpui::Div {
+    let c = cx.theme().colors.clone();
+    div()
+        .min_h(px(24.))
+        .max_w_full()
+        .flex()
+        .items_center()
+        .gap(px(6.))
+        .px(px(2.))
+        .py(px(2.))
+        .rounded(px(radius::MD))
+        .text_size(px(14.))
+        .line_height(px(22.75))
+        .text_color(c.text_2)
+        .child(icon_box(glyph, muted_icon(cx)))
+        .child(
+            div()
+                .min_w_0()
+                .truncate()
+                .child(SharedString::from(label.split_whitespace().collect::<Vec<_>>().join(" "))),
+        )
+}
+
+/// A work entry's icon (`workEntryIconName`).
+fn work_icon(entry: &WorkEntry) -> Icon {
+    match entry.action() {
+        worklog::Action::Read => Icon::Eye,
+        worklog::Action::Edit => Icon::NewThread,
+        worklog::Action::Command => Icon::Terminal,
+        worklog::Action::WebSearch => Icon::Globe,
+        worklog::Action::CodeSearch => Icon::Search,
+        _ => match entry.item_type.as_deref() {
+            Some("mcp_tool_call") => Icon::Wrench,
+            Some("dynamic_tool_call") => Icon::Hammer,
+            Some("collab_agent_tool_call") => Icon::Bot,
+            _ => match entry.tone {
+                worklog::Tone::Error => Icon::CircleAlert,
+                worklog::Tone::Thinking => Icon::Brain,
+                worklog::Tone::Info => Icon::Check,
+                worklog::Tone::Tool => Icon::Zap,
+            },
+        },
+    }
+}
+
+/// A group's icon (`toolGroupSummaryIconName`).
+fn summary_icon(kind: SummaryKind) -> Icon {
+    match kind {
+        SummaryKind::Action(worklog::Action::Read) => Icon::Eye,
+        SummaryKind::Action(worklog::Action::Edit) => Icon::NewThread,
+        SummaryKind::Action(worklog::Action::Command) => Icon::Terminal,
+        SummaryKind::Action(worklog::Action::WebSearch) => Icon::Globe,
+        SummaryKind::Action(worklog::Action::CodeSearch) => Icon::Search,
+        SummaryKind::Action(worklog::Action::Other) => Icon::Wrench,
+        SummaryKind::Action(worklog::Action::Update) | SummaryKind::Mixed | SummaryKind::DynamicTool => Icon::Hammer,
+        SummaryKind::AgentTool => Icon::Bot,
+        SummaryKind::ToneTool => Icon::Zap,
+    }
+}
+
+/// What an entry opens into (`buildToolCallExpandedBody`): the command, the detail, then the
+/// changed files, without repeating the label.
+fn expanded_body(entry: &WorkEntry, label: &str) -> Option<String> {
+    let mut parts: Vec<String> = Vec::new();
+    for part in [entry.command.clone(), entry.detail.clone()].into_iter().flatten() {
+        let part = part.trim().to_owned();
+        if !part.is_empty() && part != label.trim() && !parts.contains(&part) {
+            parts.push(part);
+        }
+    }
+    if !entry.changed_files.is_empty() {
+        let files = entry.changed_files.join("\n");
+        if files != label.trim() {
+            parts.push(files);
+        }
+    }
+    (!parts.is_empty()).then(|| parts.join("\n\n"))
+}
+
+/// A context compaction: its label between two lines.
+fn render_compaction(label: &str, cx: &App) -> AnyElement {
+    let c = cx.theme().colors.clone();
+    let line = c.line.opacity(c.line.a * 0.7);
+    div()
+        .flex()
+        .items_center()
+        .gap(px(12.))
+        .py(px(4.))
+        .text_size(px(12.))
+        .text_color(c.text_2)
+        .child(div().h(px(1.)).flex_1().bg(line))
+        .child(
+            div()
+                .flex()
+                .items_center()
+                .gap(px(4.))
+                .child(svg().path(Icon::Minimize2.path()).size(px(12.)).text_color(c.text_2))
+                .child(SharedString::from(label.to_owned())),
+        )
+        .child(div().h(px(1.)).flex_1().bg(line))
+        .into_any_element()
+}
+
+/// An `xs` ghost-muted button with a label ("Show full message").
+fn ghost_xs(id: SharedString, label: &'static str, cx: &App) -> gpui::Stateful<gpui::Div> {
+    let c = cx.theme().colors.clone();
+    let (text, accent) = (c.text, c.accent_soft);
+    div()
+        .id(id)
+        .h(px(24.))
+        .px(px(7.))
+        .flex()
+        .items_center()
+        .rounded(px(radius::MD))
+        .cursor_pointer()
+        .text_size(px(12.))
+        .font_weight(FontWeight::MEDIUM)
+        .text_color(c.text_2)
+        .hover(move |s| s.bg(accent).text_color(text))
+        .child(label)
+}
+
+/// The copy button under a message (`MessageCopyButton`).
+fn copy_button(id: String, text: String, cx: &App) -> gpui::Stateful<gpui::Div> {
+    let c = cx.theme().colors.clone();
+    let accent = c.accent_soft;
+    div()
+        .id(SharedString::from(id))
+        .size(px(24.))
+        .flex()
+        .items_center()
+        .justify_center()
+        .rounded(px(radius::MD))
+        .cursor_pointer()
+        .hover(move |s| s.bg(accent))
+        .on_click(move |_, _, cx| cx.write_to_clipboard(ClipboardItem::new_string(text.clone())))
+        .child(svg().path(Icon::Copy.path()).size(px(12.)).text_color(c.text_2))
+}
+
+/// "16:07": a message's local time of day.
+fn clock_time(iso: &str) -> String {
+    let Some(ms) = millis(iso) else { return String::new() };
+    let Ok(ts) = jiff::Timestamp::from_millisecond(ms) else {
+        return String::new();
+    };
+    let zoned = ts.to_zoned(jiff::tz::TimeZone::system());
+    format!("{:02}:{:02}", zoned.hour(), zoned.minute())
 }
 
 /// A project script's icon (`projectScriptEditor.tsx`).

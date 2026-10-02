@@ -12,6 +12,7 @@
 
 pub mod git;
 pub mod requests;
+pub mod rows;
 pub mod shell;
 pub mod thread;
 pub mod time;
