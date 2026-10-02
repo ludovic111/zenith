@@ -44,14 +44,12 @@ named in STANDARD.md).
         notarization", Developer ID certificate, `ZENITH_UPDATE_SIGNING_KEY` (private key in
         `~/.lsuite/keys/zenith-update-signing.key`). A release: bump `Cargo.toml`'s version, push
         the `vX.Y.Z` tag. First release: 0.2.0.
-- [x] **Design system** (`../lsuite/design/`): the native window reads the tokens
-      (`crates/zenith-app/assets/lsuite-tokens.json`, zenith blue, hue 262), Manrope and IBM Plex
-      Mono bundled, sidebar on the macOS material (NSVisualEffectView, Sidebar) with glass tier 1,
-      floating surfaces on tier 2's opaque fallback (GPUI cannot blur inside the window), work
-      solid, "Reduce transparency" honored, contrast tested on every tier (`cargo test -p
-      zenith-app`). Filled accents use step 700 in light mode (white on 600 is under 4.5:1). Icon
-      redrawn from the template (`crates/zenith-app/assets/icon/zenith.svg`, rendered by
-      `examples/render_icon.rs`).
+- [x] **Design system** (`../lsuite/design/`), superseded for the native window on 2026-10-02:
+      **the window copies the web interface (`code/apps/web`) to the pixel**; the web interface is
+      the reference for every value (colors in `crates/zenith-app/assets/web-theme.json`, resolved
+      by Chromium; the sidebar's glass in `assets/material-*.png`; how to compare in
+      `scripts/gpui-parity/`), not `../lsuite/design`. Icon redrawn from the template
+      (`crates/zenith-app/assets/icon/zenith.svg`, rendered by `examples/render_icon.rs`).
   - [x] The web interface (`code/apps/web`): `src/lsuite-tokens.css` (zenith's copy) and
         `src/lsuite.css` make the lsuite look its default theme (tier 1 sidebar and top bars,
         tier 2 popovers, palette and composer, tier 3 dialogs, work solid), Manrope and IBM Plex

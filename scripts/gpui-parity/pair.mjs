@@ -1,0 +1,10 @@
+import { chromium } from 'playwright';
+const browser = await chromium.launch();
+const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+const page = await ctx.newPage();
+await page.goto(`${process.env.ZENITH_URL ?? 'http://127.0.0.1:4747'}/pair#token=${process.argv[2]}`);
+await page.waitForTimeout(6000);
+console.log(page.url());
+await ctx.storageState({ path: 'state.json' });
+await page.screenshot({ path: 'web-home.png' });
+await browser.close();

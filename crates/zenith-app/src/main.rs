@@ -29,7 +29,7 @@ mod workspace;
 
 use gpui::{point, px, size, App, AppContext, Application, Bounds, TitlebarOptions, WindowBackgroundAppearance, WindowBounds, WindowOptions};
 
-use crate::theme::{ActiveTheme, Theme};
+use crate::theme::Theme;
 use crate::workspace::Workspace;
 
 fn main() {
@@ -108,7 +108,6 @@ fn register_app_actions(cx: &mut App) {
 
 fn open_window(prefs: prefs::Prefs, cx: &mut App) {
     let bounds = Bounds::centered(None, size(px(1440.), px(920.)), cx);
-    let reduce_transparency = cx.theme().reduce_transparency;
     let options = WindowOptions {
         window_bounds: Some(WindowBounds::Windowed(bounds)),
         titlebar: Some(TitlebarOptions {
@@ -117,18 +116,13 @@ fn open_window(prefs: prefs::Prefs, cx: &mut App) {
             traffic_light_position: Some(point(px(18.), px(18.))),
         }),
         window_min_size: Some(size(px(560.), px(480.))),
-        window_background: if reduce_transparency {
-            WindowBackgroundAppearance::Opaque
-        } else {
-            WindowBackgroundAppearance::Transparent
-        },
+        // As on the web, nothing of the desktop shows through.
+        window_background: WindowBackgroundAppearance::Opaque,
         app_id: Some("dev.zenith.app".into()),
         ..Default::default()
     };
     let opened = cx.open_window(options, move |window, cx| {
-        if !reduce_transparency {
-            native::add_vibrancy(window);
-        }
+        native::float_for_scripts(window);
         cx.new(|cx| Workspace::new(prefs, window, cx))
     });
     if let Err(error) = opened {

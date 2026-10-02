@@ -9613,6 +9613,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
+ "unicode-normalization",
  "unicode-segmentation",
  "vt100",
  "zc-contracts",

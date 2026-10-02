@@ -1,0 +1,13 @@
+import { chromium } from 'playwright';
+const [,, scheme = 'light', which = 'thread'] = process.argv;
+if (which === 'thread' && !process.env.THREAD) throw new Error('set THREAD to a thread id');
+const browser = await chromium.launch();
+const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1, colorScheme: scheme, storageState: 'state.json' });
+const page = await ctx.newPage();
+const base = process.env.ZENITH_URL ?? 'http://127.0.0.1:4747';
+const env = await (await fetch(`${base}/.well-known/t3/environment`)).json();
+await page.goto(which === 'thread' ? `${base}/${env.environmentId}/${process.env.THREAD}` : `${base}/`);
+await page.waitForTimeout(4000);
+console.log(page.url());
+await page.screenshot({ path: `web-${which}-${scheme}.png` });
+await browser.close();

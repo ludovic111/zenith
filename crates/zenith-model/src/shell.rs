@@ -524,3 +524,91 @@ mod tests {
         assert!(first < mid && mid < after, "{first} < {mid} < {after}");
     }
 }
+
+/// The state a pull request badge shows, folded over every link of a thread.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PullRequestTone {
+    Open,
+    Draft,
+    Closed,
+    Merged,
+    /// Not synced yet (a lone link without a snapshot).
+    Unknown,
+}
+
+/// The pull request badge of a sidebar row or the composer's strip
+/// (`resolveThreadPullRequestBadge` and `resolveThreadPullRequestBadgePresentation`): one
+/// pull request shows its number, several unrelated ones "+N", a stack its layer count.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PullRequestBadge {
+    pub tone: PullRequestTone,
+    pub text: String,
+    pub stack: bool,
+    pub url: String,
+}
+
+pub fn pull_request_badge(thread: &OrchestrationThreadShell) -> Option<PullRequestBadge> {
+    use zc_contracts::{PullRequestState, ThreadPullRequestLinkSource};
+    let visible: Vec<_> = thread
+        .pull_requests
+        .iter()
+        .filter(|link| link.source != ThreadPullRequestLinkSource::StackDismissed)
+        .collect();
+    let Some(first) = visible.first() else {
+        let legacy = thread.linked_pull_request.clone().flatten()?;
+        return Some(PullRequestBadge {
+            tone: PullRequestTone::Unknown,
+            text: legacy.number.to_string(),
+            stack: false,
+            url: legacy.url.to_string(),
+        });
+    };
+    let state = |link: &&zc_contracts::ThreadPullRequestLink| link.snapshot.as_ref().map(|s| s.state).unwrap_or(PullRequestState::Open);
+    let folded = if visible
+        .iter()
+        .all(|l| l.snapshot.as_ref().is_some_and(|s| s.state == PullRequestState::Open && s.is_draft))
+    {
+        PullRequestTone::Draft
+    } else if visible.iter().any(|l| state(l) == PullRequestState::Open) {
+        PullRequestTone::Open
+    } else if visible.iter().all(|l| state(l) == PullRequestState::Merged) {
+        PullRequestTone::Merged
+    } else {
+        PullRequestTone::Closed
+    };
+    let one_stack = visible.len() > 1
+        && visible
+            .iter()
+            .all(|l| l.stack.as_ref().map(|s| &s.id) == first.stack.as_ref().map(|s| &s.id) && l.stack.is_some());
+    if one_stack {
+        return Some(PullRequestBadge {
+            tone: folded,
+            text: visible.len().to_string(),
+            stack: true,
+            url: first.url.to_string(),
+        });
+    }
+    if visible.len() > 1 {
+        return Some(PullRequestBadge {
+            tone: folded,
+            text: format!("+{}", visible.len()),
+            stack: false,
+            url: first.url.to_string(),
+        });
+    }
+    let tone = match first.snapshot.as_ref() {
+        None => PullRequestTone::Unknown,
+        Some(s) if s.state == PullRequestState::Open && s.is_draft => PullRequestTone::Draft,
+        Some(s) => match s.state {
+            PullRequestState::Open => PullRequestTone::Open,
+            PullRequestState::Closed => PullRequestTone::Closed,
+            PullRequestState::Merged => PullRequestTone::Merged,
+        },
+    };
+    Some(PullRequestBadge {
+        tone,
+        text: first.number.to_string(),
+        stack: false,
+        url: first.url.to_string(),
+    })
+}
