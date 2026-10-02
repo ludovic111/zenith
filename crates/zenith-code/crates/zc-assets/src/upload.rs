@@ -488,10 +488,12 @@ mod tests {
         {
             let upload = f.uploads.store_upload(&claims, receiver);
             futures::pin_mut!(upload);
-            // Runs until the body stalls waiting for its next chunk.
+            // Runs until the body stalls waiting for its next chunk. The partial file is written
+            // off the runtime's thread: give it up to five seconds on a slow machine.
             assert!(futures::poll!(upload.as_mut()).is_pending());
-            for _ in 0..50 {
-                tokio::task::yield_now().await;
+            let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+            while std::time::Instant::now() < deadline {
+                tokio::time::sleep(std::time::Duration::from_millis(5)).await;
                 let _ = futures::poll!(upload.as_mut());
                 if entries(&f.attachments_dir).iter().any(|name| name.ends_with(".part")) {
                     break;

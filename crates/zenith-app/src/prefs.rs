@@ -13,6 +13,9 @@ use crate::theme::Appearance;
 pub struct Prefs {
     pub appearance: Appearance,
     pub sidebar_visible: bool,
+    /// The web's sidebar width (`chat_thread_sidebar_width`, 256 by default); a new key, so
+    /// the width older versions saved (280) does not carry over.
+    #[serde(rename = "threadSidebarWidth")]
     pub sidebar_width: f32,
     pub last_thread: Option<String>,
     /// Check GitHub Releases for a new zenith when the app starts.
@@ -24,7 +27,7 @@ impl Default for Prefs {
         Self {
             appearance: Appearance::System,
             sidebar_visible: true,
-            sidebar_width: 280.,
+            sidebar_width: 256.,
             last_thread: None,
             check_for_updates: true,
         }

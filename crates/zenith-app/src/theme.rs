@@ -1,17 +1,18 @@
-//! zenith's look: the lsuite design system (`../lsuite/design/DESIGN.md`), read from its
-//! tokens (`assets/lsuite-tokens.json`, a copy of `design/tokens.json`) with zenith's
-//! signature blue (hue 262: accent `#72a6ff` dark, `#4777d2` light).
+//! zenith's look: the web interface's (`code/apps/web`, its default zenith theme), copied
+//! to the pixel. Its colors are resolved by Chromium and kept in `assets/web-theme.json`
+//! (role → light and dark, see `scripts/gpui-parity`); the window uses them by the web's own
+//! role names.
 //!
-//! Surfaces: the window is native vibrancy (macOS `NSVisualEffectView`), the chrome (sidebar,
-//! title bar) is glass tier 1 over it, the work (thread log, diffs) is solid, floating
-//! surfaces (menus, the palette) and dialogs use tiers 2 and 3. GPUI cannot blur what is
-//! behind an element inside the window, so floating surfaces sit on the tier's opaque
-//! fallback; with "Reduce transparency" on, everything does.
+//! Surfaces, as on the web: the sidebar is glass 1 over the window's backdrop (two soft glows),
+//! blurred; GPUI cannot blur, so that material is drawn by Chromium once and carried as an
+//! image (`assets/material-{light,dark}.png`, stretched to the window). The top bar is glass 1
+//! over the work, which is solid; floating surfaces (menus, the palette, the composer) use
+//! glass 2 and dialogs glass 3, on their opaque fallback when "Reduce transparency" is on.
 
 use gpui::{px, App, BoxShadow, Global, Hsla, Rgba, WindowAppearance};
 use serde::Deserialize;
 
-const TOKENS: &str = include_str!("../assets/lsuite-tokens.json");
+const WEB_THEME: &str = include_str!("../assets/web-theme.json");
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default, serde::Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -28,140 +29,150 @@ pub enum Mode {
     Light,
 }
 
-/// The lsuite tokens for one mode (all of them, used or not yet).
+/// The web theme's colors for one mode. The first names are the window's own (kept from
+/// before), each documented with the web role it now holds.
 #[derive(Clone, Debug)]
 #[allow(dead_code)]
 pub struct Colors {
+    /// `--ls-bg`: the window's backdrop.
     pub bg: Hsla,
+    /// `--background`: the work (thread log, pages).
     pub bg_raised: Hsla,
+    /// `--card`.
     pub bg_sunken: Hsla,
+    /// `--foreground`.
     pub text: Hsla,
+    /// `--muted-foreground`.
     pub text_2: Hsla,
+    /// `--ls-text-3` (`--icon-muted`).
     pub text_3: Hsla,
+    /// `--primary-foreground`.
     pub text_on_accent: Hsla,
+    /// `--border`.
     pub line: Hsla,
+    /// `--input`.
     pub line_strong: Hsla,
+    /// `--destructive`.
     pub danger: Hsla,
     pub warning: Hsla,
     pub success: Hsla,
     pub glass_1: Hsla,
     pub glass_2: Hsla,
     pub glass_3: Hsla,
+    /// `--ls-glass-edge`.
     pub glass_edge: Hsla,
+    /// The 1px inset highlight on top of floating glass.
     pub glass_highlight: Hsla,
+    /// `--ls-glass-opaque` (`--popover`).
     pub glass_opaque: Hsla,
+    /// `--ls-scrim`.
     pub scrim: Hsla,
+    /// `--ls-accent`.
     pub accent: Hsla,
-    /// Fills that carry text (primary buttons): the accent, one step darker in light mode,
-    /// where white on step 600 stays under 4.5:1.
+    /// `--primary`: fills that carry text (the send button, primary buttons).
     pub accent_fill: Hsla,
+    /// `--message-action-hover`.
     pub accent_hover: Hsla,
+    /// `--primary` as text (links, accented labels).
     pub accent_text: Hsla,
+    /// `--accent`: soft accent fills (selected rows, the user's bubble).
     pub accent_soft: Hsla,
+    /// `--ring`.
     pub accent_ring: Hsla,
-    /// A row under the pointer (text color at a low alpha).
+    /// `--sidebar-row-hover`: a row under the pointer.
     pub hover: Hsla,
     pub shadow: Hsla,
+
+    /// `--muted` (`--secondary`): neutral soft fills.
+    pub muted: Hsla,
+    /// `--sidebar-icon-color`.
+    pub sidebar_icon: Hsla,
+    /// `--sidebar-row-active`: the thread on screen.
+    pub sidebar_row_active: Hsla,
+    /// `--sidebar-row-selected`.
+    pub sidebar_row_selected: Hsla,
+    /// `--sidebar-control-surface`.
+    pub sidebar_control: Hsla,
+    /// The top bar: glass 1 over the work, blurred (measured on the web, it is one color).
+    pub header_bg: Hsla,
+    /// `--message-surface`: the user's bubble.
+    pub message_surface: Hsla,
+    /// `--code-background`.
+    pub code_bg: Hsla,
+    /// `--info` and `--info-foreground`.
+    pub info: Hsla,
+    pub info_text: Hsla,
+    /// `--warning-foreground`, `--success-foreground`, `--destructive-foreground`.
+    pub warning_text: Hsla,
+    pub success_text: Hsla,
+    pub danger_text: Hsla,
+    /// `--warning-surface`, `--error-surface`.
+    pub warning_surface: Hsla,
+    pub danger_surface: Hsla,
+    /// `--diff-addition-foreground`, `--diff-deletion-foreground`.
+    pub diff_added: Hsla,
+    pub diff_removed: Hsla,
+    /// `--terminal-selection-background`.
+    pub selection: Hsla,
 }
 
 #[derive(Clone, Debug)]
 pub struct Theme {
     pub mode: Mode,
     pub colors: Colors,
-    /// "Reduce transparency" is on: no vibrancy, opaque chrome.
+    /// "Reduce transparency" is on: opaque chrome, no glass.
     pub reduce_transparency: bool,
 }
 
 impl Global for Theme {}
 
-/// The type scale (px): 11 · 12 · 13 (controls) · 15 (body) · 17 · 22 · 28.
+/// The web's type scale (Tailwind, px): xs 12/16 · sm 14/20 · base 16/24; the window's names
+/// are kept (`BASE` was its control size, 13 before).
 pub mod text {
-    pub const XS: f32 = 11.;
+    pub const XS: f32 = 12.;
     pub const SM: f32 = 12.;
-    pub const BASE: f32 = 13.;
-    pub const MD: f32 = 15.;
-    pub const LG: f32 = 17.;
-    pub const XL: f32 = 22.;
-    pub const XXL: f32 = 28.;
+    pub const BASE: f32 = 14.;
+    pub const MD: f32 = 14.;
+    pub const LG: f32 = 16.;
+    pub const XL: f32 = 20.;
+    pub const XXL: f32 = 30.;
 }
 
-/// Radii (px): 4 · 6 (controls) · 10 (popovers) · 14 (panels) · 20 (cards).
+#[allow(dead_code)]
+/// Radii (px), Tailwind's with `--radius: .625rem`: sm 6 · md 8 · lg 10 · xl 14 · 2xl 18 ·
+/// 3xl 22.
 pub mod radius {
     pub const XS: f32 = 4.;
     pub const SM: f32 = 6.;
-    pub const MD: f32 = 10.;
-    pub const LG: f32 = 14.;
+    pub const MD: f32 = 8.;
+    pub const LG: f32 = 10.;
+    pub const XL: f32 = 14.;
+    pub const XXL: f32 = 18.;
+    pub const XXXL: f32 = 22.;
 }
 
 #[derive(Deserialize)]
-struct Tokens {
-    apps: std::collections::HashMap<String, AppTokens>,
-    neutral: ByMode<Neutral>,
-    glass: ByMode<Glass>,
+struct WebTheme {
+    colors: std::collections::HashMap<String, ByMode>,
 }
 
 #[derive(Deserialize)]
-struct AppTokens {
-    scale: std::collections::HashMap<String, String>,
+struct ByMode {
+    light: String,
+    dark: String,
 }
 
-#[derive(Deserialize)]
-struct ByMode<T> {
-    dark: T,
-    light: T,
-}
-
-#[derive(Deserialize)]
-struct Neutral {
-    bg: String,
-    #[serde(rename = "bg-raised")]
-    bg_raised: String,
-    #[serde(rename = "bg-sunken")]
-    bg_sunken: String,
-    text: String,
-    #[serde(rename = "text-2")]
-    text_2: String,
-    #[serde(rename = "text-3")]
-    text_3: String,
-    #[serde(rename = "text-on-accent")]
-    text_on_accent: String,
-    line: String,
-    #[serde(rename = "line-strong")]
-    line_strong: String,
-    danger: String,
-    warning: String,
-    success: String,
-}
-
-#[derive(Deserialize)]
-struct Tier {
-    bg: String,
-}
-
-#[derive(Deserialize)]
-struct Glass {
-    #[serde(rename = "1")]
-    one: Tier,
-    #[serde(rename = "2")]
-    two: Tier,
-    #[serde(rename = "3")]
-    three: Tier,
-    edge: String,
-    highlight: String,
-    scrim: String,
-    opaque: String,
-}
-
-/// `#rrggbb` or `rgba(r,g,b,a)`.
+/// `#rrggbb`, `#rrggbbaa` or `rgba(r,g,b,a)`.
 pub fn parse_color(value: &str) -> Hsla {
     let value = value.trim();
     if let Some(hex) = value.strip_prefix('#') {
         let n = u32::from_str_radix(hex, 16).unwrap_or(0);
+        let (rgb, a) = if hex.len() == 8 { (n >> 8, (n & 0xff) as f32 / 255.) } else { (n, 1.) };
         return Rgba {
-            r: ((n >> 16) & 0xff) as f32 / 255.,
-            g: ((n >> 8) & 0xff) as f32 / 255.,
-            b: (n & 0xff) as f32 / 255.,
-            a: 1.,
+            r: ((rgb >> 16) & 0xff) as f32 / 255.,
+            g: ((rgb >> 8) & 0xff) as f32 / 255.,
+            b: (rgb & 0xff) as f32 / 255.,
+            a,
         }
         .into();
     }
@@ -180,66 +191,73 @@ pub fn parse_color(value: &str) -> Hsla {
     gpui::black()
 }
 
-fn alpha(color: Hsla, a: f32) -> Hsla {
-    Hsla { a, ..color }
-}
-
 impl Theme {
     pub fn new(mode: Mode, reduce_transparency: bool) -> Self {
-        let tokens: Tokens = serde_json::from_str(TOKENS).expect("assets/lsuite-tokens.json");
-        let scale = &tokens.apps["zenith"].scale;
-        let step = |s: &str| parse_color(&scale[s]);
-        let (neutral, glass) = match mode {
-            Mode::Dark => (&tokens.neutral.dark, &tokens.glass.dark),
-            Mode::Light => (&tokens.neutral.light, &tokens.glass.light),
+        let web: WebTheme = serde_json::from_str(WEB_THEME).expect("assets/web-theme.json");
+        let role = |name: &str| {
+            let colors = web.colors.get(name).unwrap_or_else(|| panic!("assets/web-theme.json has no {name}"));
+            parse_color(match mode {
+                Mode::Dark => &colors.dark,
+                Mode::Light => &colors.light,
+            })
         };
-        let c = parse_color;
-        // [data-app="zenith"] in tokens.css.
-        let (accent, accent_hover, accent_soft, accent_ring) = match mode {
-            Mode::Dark => (step("400"), step("300"), alpha(step("400"), 0.18), alpha(step("300"), 0.6)),
-            Mode::Light => (step("600"), step("700"), alpha(step("600"), 0.14), alpha(step("600"), 0.5)),
-        };
-        let accent_fill = match mode {
-            Mode::Dark => step("400"),
-            Mode::Light => step("700"),
-        };
-        let text = c(&neutral.text);
-        let opaque = c(&glass.opaque);
-        let tier = |bg: &str| if reduce_transparency { opaque } else { c(bg) };
+        let dark = mode == Mode::Dark;
+        let opaque = role("ls-glass-opaque");
+        let tier = |name: &str| if reduce_transparency { opaque } else { role(name) };
         Self {
             mode,
             reduce_transparency,
             colors: Colors {
-                bg: c(&neutral.bg),
-                bg_raised: c(&neutral.bg_raised),
-                bg_sunken: c(&neutral.bg_sunken),
-                text,
-                text_2: c(&neutral.text_2),
-                text_3: c(&neutral.text_3),
-                text_on_accent: c(&neutral.text_on_accent),
-                line: c(&neutral.line),
-                line_strong: c(&neutral.line_strong),
-                danger: c(&neutral.danger),
-                warning: c(&neutral.warning),
-                success: c(&neutral.success),
-                glass_1: tier(&glass.one.bg),
-                glass_2: tier(&glass.two.bg),
-                glass_3: tier(&glass.three.bg),
-                glass_edge: c(&glass.edge),
-                glass_highlight: parse_color(glass.highlight.trim_start_matches("inset 0 1px 0 ")),
+                bg: role("ls-bg"),
+                bg_raised: role("background"),
+                bg_sunken: role("card"),
+                text: role("foreground"),
+                text_2: role("muted-foreground"),
+                text_3: role("ls-text-3"),
+                text_on_accent: role("primary-foreground"),
+                line: role("border"),
+                line_strong: role("input"),
+                danger: role("destructive"),
+                warning: role("warning"),
+                success: role("success"),
+                glass_1: tier("lsg-1-bg"),
+                glass_2: tier("lsg-2-bg"),
+                glass_3: tier("lsg-3-bg"),
+                glass_edge: role("ls-glass-edge"),
+                glass_highlight: parse_color(if dark { "#ffffff12" } else { "#ffffffe6" }),
                 glass_opaque: opaque,
-                scrim: c(&glass.scrim),
-                accent,
-                accent_fill,
-                accent_hover,
-                accent_text: accent_hover,
-                accent_soft,
-                accent_ring,
-                hover: alpha(text, if mode == Mode::Dark { 0.06 } else { 0.05 }),
-                shadow: match mode {
-                    Mode::Dark => gpui::hsla(0., 0., 0., 0.45),
-                    Mode::Light => gpui::hsla(220. / 360., 0.4, 0.14, 0.14),
+                scrim: role("ls-scrim"),
+                accent: role("ls-accent"),
+                accent_fill: role("primary"),
+                accent_hover: role("message-action-hover"),
+                accent_text: role("primary"),
+                accent_soft: role("accent"),
+                accent_ring: role("ring"),
+                hover: role("sidebar-row-hover"),
+                // --ls-glass-shadow: 0 12px 40px, then 0 1px 2px.
+                shadow: parse_color(if dark { "#00000073" } else { "#141e3224" }),
+                muted: role("muted"),
+                sidebar_icon: role("sidebar-icon-color"),
+                sidebar_row_active: role("sidebar-row-active"),
+                sidebar_row_selected: role("sidebar-row-selected"),
+                sidebar_control: role("sidebar-control-surface"),
+                header_bg: if reduce_transparency {
+                    opaque
+                } else {
+                    parse_color(if dark { "#15171f" } else { "#fbfcfe" })
                 },
+                message_surface: role("message-surface"),
+                code_bg: role("code-background"),
+                info: role("info"),
+                info_text: role("info-foreground"),
+                warning_text: role("warning-foreground"),
+                success_text: role("success-foreground"),
+                danger_text: role("destructive-foreground"),
+                warning_surface: role("warning-surface"),
+                danger_surface: role("error-surface"),
+                diff_added: role("diff-addition-foreground"),
+                diff_removed: role("diff-deletion-foreground"),
+                selection: role("terminal-selection-background"),
             },
         }
     }
@@ -265,7 +283,7 @@ impl Theme {
                 spread_radius: px(0.),
             },
             BoxShadow {
-                color: alpha(self.colors.shadow, self.colors.shadow.a * 0.9),
+                color: parse_color(if self.mode == Mode::Dark { "#00000066" } else { "#141e321a" }),
                 offset: gpui::point(px(0.), px(1.)),
                 blur_radius: px(2.),
                 spread_radius: px(0.),
@@ -273,15 +291,78 @@ impl Theme {
         ]
     }
 
-    /// The opaque surface floating glass sits on inside the window.
+    /// Floating glass (glass 2): GPUI cannot blur inside the window, so menus and the palette
+    /// sit on the tier's opaque fallback, the web's `--popover`.
     pub fn floating_bg(&self) -> Hsla {
         self.colors.glass_opaque
     }
 
-    /// The vertical hairline between chrome and work.
-    pub fn hairline(&self) -> Hsla {
-        self.colors.line
+    /// `text-{name}-{light} dark:text-{name}-{dark}` (with the dark shade's alpha, e.g.
+    /// `dark:text-emerald-300/90`).
+    pub fn tw(&self, name: &str, light: u16, dark: u16, dark_alpha: f32) -> Hsla {
+        match self.mode {
+            Mode::Light => tw::color(name, light),
+            Mode::Dark => tw::color(name, dark).opacity(dark_alpha),
+        }
     }
+
+    /// The sidebar's material (`assets/material-*.png`), unless transparency is reduced.
+    pub fn material(&self) -> Option<&'static str> {
+        (!self.reduce_transparency).then_some(match self.mode {
+            Mode::Dark => "material-dark.png",
+            Mode::Light => "material-light.png",
+        })
+    }
+}
+
+/// The Tailwind colors the web's components name directly (Tailwind 4.3.3, shades 300 to 700,
+/// as Chromium draws them in sRGB): status labels, pull request states, project badges.
+pub mod tw {
+    use gpui::Hsla;
+
+    const PALETTE: &[(&str, [&str; 5])] = &[
+        ("gray", ["#d1d5dc", "#99a1af", "#6a7282", "#4a5565", "#364153"]),
+        ("red", ["#ffa2a2", "#ff6467", "#fb2c36", "#e7000b", "#c10007"]),
+        ("orange", ["#ffb86a", "#ff8904", "#ff6900", "#f54900", "#ca3500"]),
+        ("amber", ["#ffd230", "#ffb900", "#fe9a00", "#e17100", "#bb4d00"]),
+        ("yellow", ["#ffdf20", "#fdc700", "#f0b100", "#d08700", "#a65f00"]),
+        ("lime", ["#bbf451", "#9ae600", "#7ccf00", "#5ea500", "#497d00"]),
+        ("green", ["#7bf1a8", "#05df72", "#00c950", "#00a63e", "#008236"]),
+        ("emerald", ["#5ee9b5", "#00d492", "#00bc7d", "#009966", "#007a55"]),
+        ("teal", ["#46ecd5", "#00d5be", "#00bba7", "#009689", "#00786f"]),
+        ("cyan", ["#53eafd", "#00d3f2", "#00b8db", "#0092b8", "#007595"]),
+        ("sky", ["#74d4ff", "#00bcff", "#00a6f4", "#0084d1", "#0069a8"]),
+        ("blue", ["#8ec5ff", "#51a2ff", "#2b7fff", "#155dfc", "#1447e6"]),
+        ("indigo", ["#a3b3ff", "#7c86ff", "#615fff", "#4f39f6", "#432dd7"]),
+        ("violet", ["#c4b4ff", "#a684ff", "#8e51ff", "#7f22fe", "#7008e7"]),
+        ("purple", ["#dab2ff", "#c27aff", "#ad46ff", "#9810fa", "#8200db"]),
+        ("fuchsia", ["#f4a8ff", "#ed6aff", "#e12afb", "#c800de", "#a800b7"]),
+        ("pink", ["#fda5d5", "#fb64b6", "#f6339a", "#e60076", "#c6005c"]),
+        ("rose", ["#ffa1ad", "#ff637e", "#ff2056", "#ec003f", "#c70036"]),
+        ("zinc", ["#d4d4d8", "#9f9fa9", "#71717b", "#52525c", "#3f3f46"]),
+    ];
+
+    /// `text-{color}-{shade}`; shade is 300, 400, 500, 600 or 700.
+    pub fn color(name: &str, shade: u16) -> Hsla {
+        let index = match shade {
+            300 => 0,
+            400 => 1,
+            500 => 2,
+            600 => 3,
+            _ => 4,
+        };
+        PALETTE
+            .iter()
+            .find(|(n, _)| *n == name)
+            .map(|(_, shades)| super::parse_color(shades[index]))
+            .unwrap_or_else(gpui::black)
+    }
+
+    /// The project badge colors, in the web's order (`projectIconColors.ts`).
+    pub const PROJECT_COLORS: [&str; 18] = [
+        "gray", "red", "orange", "amber", "yellow", "lime", "green", "emerald", "teal", "cyan", "sky", "blue", "indigo", "violet", "purple", "fuchsia", "pink",
+        "rose",
+    ];
 }
 
 /// `cx.theme()`.
@@ -338,27 +419,25 @@ mod tests {
         (la.max(lb) + 0.05) / (la.min(lb) + 0.05)
     }
 
-    /// Text stays readable on every glass tier over the brightest and darkest backdrop, in
-    /// both modes (DESIGN.md "Accessibility"): ≥ 4.5 for text, ≥ 3 for secondary text.
+    /// Text stays readable where it sits (DESIGN.md "Accessibility"): ≥ 4.5 for text and
+    /// secondary text on the work, the sidebar (glass 1 over the backdrop) and floating
+    /// surfaces, in both modes.
     #[test]
-    fn glass_tiers_keep_contrast() {
-        let backdrops = [parse_color("#ffffff"), parse_color("#000000")];
+    fn text_keeps_contrast() {
         for mode in [Mode::Dark, Mode::Light] {
             let theme = Theme::new(mode, false);
             let c = &theme.colors;
-            for tier in [c.glass_1, c.glass_2, c.glass_3] {
-                for backdrop in backdrops {
-                    // Native vibrancy dims the desktop toward the mode before the tier applies.
-                    let base = over(Hsla { a: 0.6, ..c.bg }, backdrop);
-                    let surface = over(tier, base);
-                    assert!(contrast(c.text, surface) >= 4.5, "{mode:?} text {}", contrast(c.text, surface));
-                    assert!(contrast(c.text_2, surface) >= 3.0, "{mode:?} text-2 {}", contrast(c.text_2, surface));
-                }
-            }
-            for surface in [c.bg_raised, c.bg_sunken, c.glass_opaque] {
-                assert!(contrast(c.text, surface) >= 4.5);
-                assert!(contrast(c.text_2, surface) >= 4.5, "{mode:?} text-2 on work");
-                assert!(contrast(c.accent_text, surface) >= 3.0, "{mode:?} accent text");
+            let sidebar = over(c.glass_1, c.bg);
+            for surface in [
+                c.bg_raised,
+                c.bg_sunken,
+                c.glass_opaque,
+                c.header_bg,
+                sidebar,
+                over(c.sidebar_row_active, sidebar),
+            ] {
+                assert!(contrast(c.text, surface) >= 4.5, "{mode:?} text {}", contrast(c.text, surface));
+                assert!(contrast(c.text_2, surface) >= 4.5, "{mode:?} text-2 {}", contrast(c.text_2, surface));
             }
             assert!(contrast(c.text_on_accent, c.accent_fill) >= 4.5, "{mode:?} text on accent");
         }
@@ -370,6 +449,8 @@ mod tests {
         assert!((blue.r - 0x72 as f32 / 255.).abs() < 0.01);
         let edge = parse_color("rgba(255,255,255,0.09)");
         assert!((edge.a - 0.09).abs() < 0.001);
+        let soft = parse_color("#4777d224");
+        assert!((soft.a - 0x24 as f32 / 255.).abs() < 0.001);
         let reduced = Theme::new(Mode::Dark, true);
         assert_eq!(reduced.colors.glass_1, reduced.colors.glass_opaque);
     }

@@ -3,8 +3,8 @@
 
 use gpui::prelude::*;
 use gpui::{
-    div, px, AnyElement, App, ClickEvent, Context, Entity, FocusHandle, Focusable, FontWeight, MouseButton, MouseDownEvent, PathPromptOptions, SharedString,
-    Subscription, Window,
+    div, img, px, AnyElement, App, ClickEvent, Context, Entity, FocusHandle, Focusable, FontWeight, ImageSource, MouseButton, MouseDownEvent, ObjectFit,
+    PathPromptOptions, Resource, SharedString, Subscription, Window,
 };
 use serde_json::json;
 use zc_contracts::{ProjectId, ThreadId};
@@ -20,14 +20,13 @@ use crate::sessions::SessionsView;
 use crate::settings::SettingsView;
 use crate::sidebar::{Sidebar, SidebarEvent};
 use crate::store::{self, Store};
-use crate::theme::{text, ActiveTheme, Appearance, Theme};
+use crate::theme::{radius, text, ActiveTheme, Appearance, Theme};
 use crate::thread_view::{ThreadView, ThreadViewEvent};
-use crate::ui::{icon, Button};
+use crate::ui::{icon, icon_button, Button, Tooltip};
 
 /// The height of the title bars (the traffic lights sit in the sidebar's).
 pub const TITLE_BAR: f32 = 52.;
 /// Room left for the traffic lights when the sidebar is hidden.
-pub const TRAFFIC_LIGHTS: f32 = 78.;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Route {
@@ -328,7 +327,7 @@ impl Workspace {
             SidebarEvent::AddProject => self.add_project(window, cx),
             SidebarEvent::OpenSettings => self.navigate(Route::Settings, window, cx),
             SidebarEvent::OpenSessions => self.navigate(Route::Sessions, window, cx),
-            SidebarEvent::ToggleSidebar => self.toggle_sidebar(&actions::ToggleSidebar, window, cx),
+            SidebarEvent::OpenPullRequests => self.open_web_page("/pull-requests", cx),
             SidebarEvent::Removed(id) => self.left_thread(id, window, cx),
         }
     }
@@ -433,6 +432,12 @@ impl Workspace {
         }
     }
 
+    /// A page of the web interface that the window does not have (yet), in the browser.
+    fn open_web_page(&mut self, path: &str, cx: &mut Context<Self>) {
+        let url = format!("{}{path}", self.store.read(cx).client.base_url());
+        cx.open_url(&url);
+    }
+
     fn open_in_browser(&mut self, _: &actions::OpenInBrowser, _: &mut Window, cx: &mut Context<Self>) {
         // The browser has no session of its own: it gets a one-time pairing token.
         let base = self.store.read(cx).client.base_url().to_owned();
@@ -486,10 +491,6 @@ impl Workspace {
             let _ = cx.update(|cx| cx.open_url(&url));
         })
         .detach();
-    }
-
-    fn render_title_bar_spacer(&self) -> impl IntoElement {
-        div().w(px(if self.prefs.sidebar_visible { 0. } else { TRAFFIC_LIGHTS }))
     }
 
     fn page(&self, cx: &App) -> AnyElement {
@@ -651,8 +652,6 @@ impl Render for Workspace {
         let theme = cx.theme().clone();
         let c = theme.colors.clone();
         let sidebar_visible = self.prefs.sidebar_visible;
-        let fullscreen = window.is_fullscreen();
-        let opaque_window = theme.reduce_transparency;
         let page = self.page(cx);
         div()
             .id("workspace")
@@ -664,7 +663,7 @@ impl Render for Workspace {
             .font_family(crate::assets::UI_FONT)
             .text_color(c.text)
             .text_size(px(text::BASE))
-            .when(opaque_window, |this| this.bg(c.bg))
+            .bg(c.bg)
             .on_action(cx.listener(Self::toggle_sidebar))
             .on_action(cx.listener(Self::open_palette))
             .on_action(cx.listener(Self::open_in_browser))
@@ -710,15 +709,30 @@ impl Render for Workspace {
                 });
             }))
             .when(sidebar_visible, |this| {
+                let viewport = window.viewport_size();
                 this.child(
                     div()
+                        .relative()
                         .w(px(self.prefs.sidebar_width))
                         .h_full()
                         .flex_none()
-                        .bg(c.glass_1)
-                        .border_r_1()
-                        .border_color(theme.hairline())
-                        .child(self.sidebar.clone()),
+                        .overflow_hidden()
+                        .bg(c.glass_opaque)
+                        // The web's glass over its backdrop, stretched to the window like the
+                        // backdrop's glows are.
+                        .when_some(theme.material(), |this, material| {
+                            this.child(
+                                // Embedded: a bare file name would be taken for a web address.
+                                img(ImageSource::Resource(Resource::Embedded(material.into())))
+                                    .absolute()
+                                    .top_0()
+                                    .left_0()
+                                    .w(viewport.width)
+                                    .h(viewport.height)
+                                    .object_fit(ObjectFit::Fill),
+                            )
+                        })
+                        .child(div().absolute().inset_0().border_r_1().border_color(c.line).child(self.sidebar.clone())),
                 )
             })
             .child(
@@ -731,22 +745,39 @@ impl Render for Workspace {
                     .bg(c.bg_raised)
                     .child(
                         title_bar("page-title-bar")
-                            .px(px(12.))
-                            .gap(px(8.))
+                            .pl(px(if sidebar_visible { 20. } else { crate::sidebar::content_left(window) }))
+                            .pr(px(20.))
+                            .gap(px(12.))
+                            .bg(c.header_bg)
                             .border_b_1()
                             .border_color(c.line)
-                            .when(!sidebar_visible && !fullscreen, |this| this.child(self.render_title_bar_spacer()))
-                            .when(!sidebar_visible, |this| {
-                                this.child(
-                                    Button::new("show-sidebar")
-                                        .icon(Icon::PanelLeft)
-                                        .tooltip_keys("Show the sidebar", "⌘B")
-                                        .on_click(|_, window, cx| window.dispatch_action(Box::new(actions::ToggleSidebar), cx)),
-                                )
-                            })
                             .child(self.page_title(cx)),
                     )
                     .child(div().flex_1().min_h_0().child(page)),
+            )
+            // The sidebar's toggle floats over both bars, past the window's own controls.
+            .child(
+                div()
+                    .absolute()
+                    .top_0()
+                    .left(px(crate::sidebar::controls_left(window) + 1.))
+                    .h(px(crate::sidebar::TOPBAR))
+                    .flex()
+                    .items_center()
+                    .child(
+                        icon_button(
+                            "toggle-sidebar",
+                            if sidebar_visible { Icon::PanelLeftClose } else { Icon::PanelLeft },
+                            28.,
+                            16.,
+                            radius::MD,
+                            c.text_2,
+                            c.accent_soft,
+                            c.text_2,
+                        )
+                        .tooltip(|_, cx| Tooltip::view("Toggle main sidebar", Some("⌘B".into()), cx))
+                        .on_click(|_, window, cx| window.dispatch_action(Box::new(actions::ToggleSidebar), cx)),
+                    ),
             )
             .child(self.render_notices(cx))
             .when_some(self.palette.as_ref(), |this, (palette, _)| {

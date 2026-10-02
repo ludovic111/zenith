@@ -1,5 +1,6 @@
 //! zenith's controls, drawn with GPUI's elements and the lsuite tokens.
 
+pub mod badges;
 pub mod markdown;
 pub mod menu;
 pub mod text_area;
@@ -27,6 +28,43 @@ pub fn spinner(id: impl Into<ElementId>, color: Hsla, size: f32) -> impl IntoEle
         Animation::new(Duration::from_millis(900)).repeat(),
         |svg, delta| svg.with_transformation(Transformation::rotate(percentage(delta))),
     )
+}
+
+/// An icon-only button as the web draws them (`size="icon"` ghost buttons): `size` square,
+/// rounded `radius`, the icon at `icon_size` in `color`; hovered, `hover_bg` behind it and the
+/// icon in `hover_color`.
+#[allow(clippy::too_many_arguments)]
+pub fn icon_button(
+    id: impl Into<ElementId>,
+    glyph: Icon,
+    size: f32,
+    icon_size: f32,
+    radius: f32,
+    color: Hsla,
+    hover_bg: Hsla,
+    hover_color: Hsla,
+) -> gpui::Stateful<gpui::Div> {
+    let id: ElementId = id.into();
+    let group: SharedString = format!("icon-button-{id}").into();
+    div()
+        .id(id)
+        .group(group.clone())
+        .size(px(size))
+        .flex()
+        .flex_none()
+        .items_center()
+        .justify_center()
+        .rounded(px(radius))
+        .cursor_pointer()
+        .hover(move |s| s.bg(hover_bg))
+        .child(
+            svg()
+                .path(glyph.path())
+                .size(px(icon_size))
+                .flex_none()
+                .text_color(color)
+                .group_hover(group, move |s| s.text_color(hover_color)),
+        )
 }
 
 /// A small status dot.

@@ -972,7 +972,8 @@ impl Element for TextAreaElement {
             input.content.clone()
         };
         let color = if showing_placeholder {
-            theme.text_3
+            // The web's `--placeholder`: muted text.
+            theme.text_2
         } else if input.disabled {
             theme.text_2
         } else {
