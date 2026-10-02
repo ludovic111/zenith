@@ -35,6 +35,11 @@ named in STANDARD.md).
       with Ed25519), `scripts/mac/package.sh`, the in-app updater (`zenith-commands/src/update.rs`,
       public key `crates/zenith-commands/assets/update-signing.pub`, `ZENITH_NO_UPDATE=1`,
       `app.checkUpdates`), and the app installs its own server LaunchAgent from the bundle.
+  - [x] Linux: the archive carries the web interface (`client`, next to the server), and
+        `zenith-cli setup` (`zenith-commands/src/agent.rs`) writes the systemd user service
+        (`zenith.service`, always `--host 127.0.0.1`, lingering on, log in
+        `~/.local/state/zenith/server.log`); `--tailscale-serve` publishes it on the tailnet.
+        CI lints and tests everything but the window on Linux (`rust-linux` in `ci.yml`).
   - [x] Secrets set on ludovic111/zenith (2026-10-02): App Store Connect key "zenith
         notarization", Developer ID certificate, `ZENITH_UPDATE_SIGNING_KEY` (private key in
         `~/.lsuite/keys/zenith-update-signing.key`). A release: bump `Cargo.toml`'s version, push

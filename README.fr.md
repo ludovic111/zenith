@@ -21,7 +21,7 @@ Il tourne sur ta machine : le serveur ne répond que sur `127.0.0.1`, utilise te
 
 ## Installer
 
-Télécharge zenith sur [lsuite.xyz/zenith](https://lsuite.xyz/zenith) ou dans les [versions](https://github.com/ludovic111/zenith/releases) (macOS Apple Silicon et Intel, signé et notarisé ; Linux x86_64), mets-le dans Applications et ouvre-le : il installe son serveur (un LaunchAgent sur `127.0.0.1:4747`) et se met à jour tout seul.
+Télécharge zenith sur [lsuite.xyz/zenith](https://lsuite.xyz/zenith) ou dans les [versions](https://github.com/ludovic111/zenith/releases) (macOS Apple Silicon et Intel, signé et notarisé ; Linux x86_64). Sous macOS, mets-le dans Applications et ouvre-le : il installe son serveur (un LaunchAgent sur `127.0.0.1:4747`) et se met à jour tout seul. Sous Linux, voir [plus bas](#linux).
 
 Depuis les sources (macOS) : [Rust](https://rustup.rs), les outils en ligne de commande de Xcode, git ; Node.js 22.16+ pour construire l'interface web (facultatif). En option : la [CLI GitHub](https://cli.github.com) connectée, Claude Code et/ou Codex.
 
@@ -34,6 +34,26 @@ npm run mac:install
 Ça construit zenith, installe **zenith.app**, met `zenith-cli` et `zenith-mcp` dans `~/.local/bin` s'il existe, et garde le serveur en marche en arrière-plan, pour que les agents continuent quand la fenêtre est fermée. À relancer après une mise à jour du code ; `npm run mac:uninstall` retire tout. Tes fils et réglages vivent dans `~/.zenith/code`.
 
 Le serveur est celui en Rust. `ZENITH_SERVER=node npm run mac:install` installe à la place le serveur TypeScript d'origine (certains fournisseurs, comme Cursor ou OpenCode, n'existent encore que là) ; les deux lisent et écrivent les mêmes données.
+
+### Linux
+
+L'archive Linux contient le serveur (`zenith-code`), `zenith-cli`, `zenith-mcp`, la fenêtre (`zenith`) et l'interface web (`client`). Extrais-la dans un dossier et lance `zenith-cli setup` ; une machine sans écran convient aussi (tu utilises alors zenith dans un navigateur, ou avec `zenith-cli` et `zenith-mcp`) :
+
+```bash
+mkdir -p ~/.local/share/zenith
+curl -L https://github.com/ludovic111/zenith/releases/latest/download/zenith-linux-x86_64.tar.gz | tar -xz -C ~/.local/share/zenith
+~/.local/share/zenith/zenith-cli setup
+```
+
+`setup` écrit un service systemd utilisateur (`~/.config/systemd/user/zenith.service`) qui fait tourner le serveur sur `127.0.0.1:4747`, l'active, et active le « lingering » (`loginctl enable-linger`) pour qu'il démarre avec la machine, avant toute connexion. Le journal du serveur est `~/.local/state/zenith/server.log` ; `systemctl --user status zenith` montre le service. Relance `setup` après avoir déplacé le dossier ou pour changer une option : il réécrit le service et redémarre le serveur (les agents en cours sont interrompus). Pour avoir les commandes dans ton `PATH` : `ln -s ~/.local/share/zenith/zenith-cli ~/.local/share/zenith/zenith-mcp ~/.local/bin/`.
+
+**Depuis tes autres machines, avec Tailscale.** `zenith-cli setup --tailscale-serve` garde le serveur sur `127.0.0.1` et demande à [Tailscale Serve](https://tailscale.com/kb/1312/serve) de le publier en HTTPS sur ton tailnet, et nulle part ailleurs : `https://mon-serveur.exemple-tailnet.ts.net` (`tailscale serve status` montre la vraie adresse ; `--tailscale-serve-port 8443` choisit un autre port que 443). Tailscale doit laisser ton utilisateur le configurer (`sudo tailscale set --operator=$USER`, une fois). Un navigateur sur une autre machine s'associe avec un lien à usage unique :
+
+```bash
+zenith-code auth pairing create --base-dir ~/.zenith/code --base-url https://mon-serveur.exemple-tailnet.ts.net
+```
+
+Si tu lances `zenith-code serve` toi-même, ne passe jamais `--tailscale-serve` sans `--host 127.0.0.1` : sans `--host`, le serveur écoute sur toutes les interfaces réseau (`0.0.0.0`), pas seulement pour Tailscale.
 
 ## Comment c'est fait
 
@@ -54,7 +74,7 @@ Publier : pousse un tag `vX.Y.Z` égal à la version de `Cargo.toml` ; [.github/
 
 ## Vie privée
 
-- Le serveur n'écoute que sur `127.0.0.1`. La fenêtre, `zenith-cli` et `zenith-mcp` se connectent avec une session que crée la ligne de commande du serveur ; le navigateur reçoit un jeton à usage unique.
+- Le serveur n'écoute que sur `127.0.0.1` (sous Linux, `zenith-cli setup --tailscale-serve` laisse en plus Tailscale Serve lui passer les requêtes de ton tailnet ; il écoute toujours sur `127.0.0.1`). La fenêtre, `zenith-cli` et `zenith-mcp` se connectent avec une session que crée la ligne de commande du serveur ; le navigateur reçoit un jeton à usage unique.
 - Les agents tournent avec tes propres CLI et abonnements (`claude`, `codex`).
 - Ni compte ni télémétrie. La recherche de mises à jour demande à GitHub la dernière version, et peut être coupée.
 - `npm run privacy -- --install` vérifie chaque push contre les secrets.

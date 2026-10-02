@@ -1,8 +1,9 @@
 //! The local zenith server: where it answers, where it keeps its state, waking it up, its
 //! command line, and the bearer session local clients sign in with.
 //!
-//! The server runs on its own (a LaunchAgent on 127.0.0.1:4747, see `scripts/mac/install.sh`),
-//! so the window can close and the agents keep working. Every local client (the window,
+//! The server runs on its own (a LaunchAgent on 127.0.0.1:4747 on macOS, see
+//! `scripts/mac/install.sh`; a systemd user service on Linux, see `zenith-cli setup`), so the
+//! window can close and the agents keep working. Every local client (the window,
 //! zenith-cli, zenith-mcp) shares one owner session: `zenith-code auth session issue` mints
 //! it straight into the server's database, and it is kept in `~/.zenith/app/session.token`
 //! (0600). Never log it.
@@ -52,9 +53,24 @@ pub fn app_home() -> PathBuf {
     home_dir().join(".zenith").join("app")
 }
 
-/// The server's log, where the LaunchAgent writes it.
+/// The server's log: where the LaunchAgent writes it on macOS; elsewhere
+/// `$XDG_STATE_HOME/zenith/server.log` (`~/.local/state/zenith/server.log`), where the systemd
+/// service and [`kickstart`] write it.
 pub fn server_log() -> PathBuf {
-    home_dir().join("Library/Logs/Zenith/server.log")
+    server_log_in(&home_dir(), std::env::var_os("XDG_STATE_HOME").map(PathBuf::from), cfg!(target_os = "macos"))
+}
+
+fn server_log_in(home: &Path, xdg_state: Option<PathBuf>, macos: bool) -> PathBuf {
+    if macos {
+        return home.join("Library/Logs/Zenith/server.log");
+    }
+    xdg_dir(xdg_state, home, ".local/state").join("zenith/server.log")
+}
+
+/// An XDG base directory: the variable when it holds an absolute path, else its default in
+/// the home folder.
+fn xdg_dir(variable: Option<PathBuf>, home: &Path, default: &str) -> PathBuf {
+    variable.filter(|dir| dir.is_absolute()).unwrap_or_else(|| home.join(default))
 }
 
 /// The `zenith-code` binary: `ZENITH_CODE_BIN`, else next to this program (inside
@@ -89,25 +105,63 @@ pub async fn healthy(base_url: &str) -> bool {
         .unwrap_or(false)
 }
 
-/// The LaunchAgent's label: `ZENITH_AGENT_LABEL`, else what the build was given, else
-/// `dev.zenith.app`.
-pub fn agent_label() -> String {
+/// `ZENITH_AGENT_LABEL` at run time, else what the build was given.
+fn label_override() -> Option<String> {
     std::env::var("ZENITH_AGENT_LABEL")
         .ok()
         .filter(|l| !l.is_empty())
         .or(option_env!("ZENITH_AGENT_LABEL").map(String::from))
-        .unwrap_or_else(|| "dev.zenith.app".into())
 }
 
-/// Starts the server if it sleeps: asks launchd on macOS; elsewhere, starts `zenith-code
-/// serve` itself, detached, logging to the state folder.
+/// The LaunchAgent's label: `ZENITH_AGENT_LABEL`, else what the build was given, else
+/// `dev.zenith.app`.
+pub fn agent_label() -> String {
+    label_override().unwrap_or_else(|| "dev.zenith.app".into())
+}
+
+/// The server's systemd user unit (Linux): `ZENITH_AGENT_LABEL`, else what the build was
+/// given, else `zenith`, with `.service`.
+pub fn service_unit() -> String {
+    format!("{}.service", label_override().unwrap_or_else(|| "zenith".into()))
+}
+
+/// Where `zenith-cli setup` writes that unit: `$XDG_CONFIG_HOME/systemd/user`
+/// (`~/.config/systemd/user`).
+pub fn service_unit_path() -> PathBuf {
+    xdg_dir(std::env::var_os("XDG_CONFIG_HOME").map(PathBuf::from), &home_dir(), ".config")
+        .join("systemd/user")
+        .join(service_unit())
+}
+
+#[cfg(target_os = "linux")]
+fn systemctl(verb: &str) -> bool {
+    std::process::Command::new("systemctl")
+        .args(["--user", verb, &service_unit()])
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .map(|status| status.success())
+        .unwrap_or(false)
+}
+
+/// Starts the server if it sleeps: asks launchd on macOS, and systemd on Linux when
+/// `zenith-cli setup` installed the service; otherwise starts `zenith-code serve` itself,
+/// detached, logging to [`server_log`].
 pub fn kickstart() {
+    #[cfg(target_os = "linux")]
+    if service_unit_path().is_file() && systemctl("start") {
+        return;
+    }
     #[cfg(not(target_os = "macos"))]
     {
         let port = base_url().rsplit(':').next().unwrap_or("4747").trim_end_matches('/').to_owned();
-        let log = std::fs::create_dir_all(code_home())
-            .ok()
-            .and_then(|_| std::fs::OpenOptions::new().create(true).append(true).open(code_home().join("server.log")).ok());
+        let _ = std::fs::create_dir_all(code_home());
+        let log = server_log();
+        let log = log
+            .parent()
+            .and_then(|dir| std::fs::create_dir_all(dir).ok())
+            .and_then(|_| std::fs::OpenOptions::new().create(true).append(true).open(&log).ok());
         let mut command = std::process::Command::new(server_binary());
         command
             .args(["serve", "--host", "127.0.0.1", "--port", &port, "--base-dir"])
@@ -148,6 +202,9 @@ pub fn restart_server() {
             .stderr(Stdio::null())
             .status();
     }
+    // The service, when it runs; a server started by hand is left alone.
+    #[cfg(target_os = "linux")]
+    systemctl("try-restart");
 }
 
 #[cfg(target_os = "macos")]
@@ -287,5 +344,18 @@ mod tests {
         }
         std::fs::remove_dir_all(dir).unwrap();
         std::env::remove_var("ZENITH_APP_HOME");
+    }
+
+    #[test]
+    fn the_log_is_where_each_system_keeps_logs() {
+        let home = Path::new("/home/me");
+        assert_eq!(server_log_in(home, None, true), Path::new("/home/me/Library/Logs/Zenith/server.log"));
+        assert_eq!(server_log_in(home, None, false), Path::new("/home/me/.local/state/zenith/server.log"));
+        assert_eq!(server_log_in(home, Some("/var/state".into()), false), Path::new("/var/state/zenith/server.log"));
+        // The XDG specification ignores relative paths.
+        assert_eq!(
+            server_log_in(home, Some("state".into()), false),
+            Path::new("/home/me/.local/state/zenith/server.log")
+        );
     }
 }

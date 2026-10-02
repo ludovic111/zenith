@@ -17,6 +17,14 @@ running zenith (its server, which runs from login). The full list, with every pa
 `zenith-cli` and `zenith-mcp` live in `zenith.app/Contents/MacOS` (and `~/.local/bin` after
 `npm run mac:install`). Both wake the server up if it sleeps.
 
+On Linux they are in the folder the release archive was extracted in, next to the server.
+`zenith-cli setup` makes that server a systemd user service that starts when the machine boots
+(`zenith.service`, on `127.0.0.1:4747`, log in `~/.local/state/zenith/server.log`), which is all
+a machine without a screen needs: agents drive it with `zenith-mcp --live`, scripts with
+`zenith-cli`. `zenith-cli setup --tailscale-serve` also publishes the web interface on your
+tailnet through Tailscale Serve; the server keeps listening on `127.0.0.1` only (see the
+README, "Linux").
+
 ## What agents may do
 
 zenith › Settings › Agents sets what an agent connected through `zenith-mcp` may run, checked for
