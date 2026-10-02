@@ -605,8 +605,17 @@ impl App {
         if let Err(error) = persist_server_runtime_state(&config.paths.server_runtime_state_path, &runtime_state).await {
             tracing::warn!(%error, "Failed to persist server runtime state");
         }
-        if config.tailscale_serve_enabled {
-            tailscale_serve(port, config.tailscale_serve_port, true).await;
+        if config.tailscale_serve_enabled && !tailscale_serve(port, config.tailscale_serve_port, true).await {
+            // A server started at boot can be up before tailscaled is: keep trying for a while.
+            let serve_port = config.tailscale_serve_port;
+            tokio::spawn(async move {
+                for _ in 0..TAILSCALE_SERVE_RETRIES {
+                    tokio::time::sleep(TAILSCALE_SERVE_RETRY_DELAY).await;
+                    if tailscale_serve(port, serve_port, true).await {
+                        break;
+                    }
+                }
+            });
         }
         tokio::spawn(zc_auth::dpop::run_replay_marker_sweeper(config.paths.secrets_dir.clone()));
 
@@ -774,8 +783,13 @@ pub fn connection_string(host: Option<&str>, port: u16) -> String {
     format!("http://{}:{port}", format_host_for_url(&host))
 }
 
-/// `ensureTailscaleServe` / `disableTailscaleServe`, best effort.
-async fn tailscale_serve(local_port: u16, serve_port: u16, enable: bool) {
+/// How long the server keeps trying to turn Tailscale Serve on after a first failure (five
+/// minutes: tailscaled starts, then connects).
+const TAILSCALE_SERVE_RETRIES: u32 = 30;
+const TAILSCALE_SERVE_RETRY_DELAY: std::time::Duration = std::time::Duration::from_secs(10);
+
+/// `ensureTailscaleServe` / `disableTailscaleServe`, best effort; whether Tailscale took it.
+async fn tailscale_serve(local_port: u16, serve_port: u16, enable: bool) -> bool {
     let args: Vec<String> = if enable {
         vec![
             "serve".into(),
@@ -789,10 +803,14 @@ async fn tailscale_serve(local_port: u16, serve_port: u16, enable: bool) {
     let mut input = zc_core::ProcessRunInput::new("tailscale", args);
     input.timeout = Some(std::time::Duration::from_secs(10));
     match zc_core::run_process(input).await {
-        Ok(output) if output.code == Some(0) => tracing::info!(serve_port, enable, "Tailscale Serve updated"),
+        Ok(output) if output.code == Some(0) => {
+            tracing::info!(serve_port, enable, "Tailscale Serve updated");
+            return true;
+        }
         Ok(output) => tracing::warn!(serve_port, enable, code = ?output.code, "Failed to update Tailscale Serve"),
         Err(error) => tracing::warn!(serve_port, enable, %error, "Failed to update Tailscale Serve"),
     }
+    false
 }
 
 /// Registers a placeholder for every method of the table that has no handler yet, so the
