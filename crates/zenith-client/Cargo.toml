@@ -1,0 +1,22 @@
+[package]
+name = "zenith-client"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "zenith: a client of the running zenith server (WebSocket RPC with a bearer session), shared by the window, zenith-cli and zenith-mcp"
+
+[dependencies]
+zc-contracts = { path = "../zenith-code/crates/zc-contracts" }
+anyhow = { workspace = true }
+futures = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tokio-tungstenite = "0.29"
+tracing = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }

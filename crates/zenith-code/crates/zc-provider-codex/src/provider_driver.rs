@@ -83,6 +83,7 @@ pub struct CodexManagedSeams {
 pub struct CodexProviderDriver {
     env: DriverEnv,
     mcp_sessions: Option<Arc<dyn McpSessionLookup>>,
+    lsuite_mcp: bool,
     managed_seams: Option<CodexManagedSeams>,
     status_probe: Option<ProbeFn>,
     runtime_factory: Option<RuntimeFactory>,
@@ -94,6 +95,7 @@ impl CodexProviderDriver {
         Self {
             env,
             mcp_sessions: None,
+            lsuite_mcp: false,
             managed_seams: None,
             status_probe: None,
             runtime_factory: None,
@@ -104,6 +106,12 @@ impl CodexProviderDriver {
     /// The per-thread `t3-code` MCP sessions (WP-27a) sessions are started with.
     pub fn with_mcp_sessions(mut self, lookup: Option<Arc<dyn McpSessionLookup>>) -> Self {
         self.mcp_sessions = lookup;
+        self
+    }
+
+    /// zenith: hand sessions the other lsuite apps' MCP servers (off by default).
+    pub fn with_lsuite_mcp(mut self, on: bool) -> Self {
+        self.lsuite_mcp = on;
         self
     }
 
@@ -191,6 +199,7 @@ impl Driver for CodexProviderDriver {
                 .clone()
                 .map(|logger| Arc::new(NativeEventLog(logger)) as Arc<dyn NativeEventSink>),
             mcp_sessions: self.mcp_sessions.clone(),
+            lsuite_mcp: self.lsuite_mcp,
             attachments: Some(Arc::new(AttachmentsDir(self.env.attachments_dir.clone()))),
             default_cwd: Some(self.env.server_cwd.to_string_lossy().into_owned()),
             ..CodexAdapterOptions::default()

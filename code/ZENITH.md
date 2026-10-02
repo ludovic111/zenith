@@ -21,54 +21,39 @@ npm run code:build     # from zenith's root: install + build (≈1 min the first
 
 This produces `apps/server/dist/bin.mjs` with the web client in `apps/server/dist/client`.
 
-On a Mac, `npm run mac:install` (`scripts/mac/install.sh`) builds it, builds zenith.app,
-and runs the server as a LaunchAgent (label `dev.zenith.app`, or `ZENITH_BUNDLE_ID`):
+On a Mac, `npm run mac:install` (`scripts/mac/install.sh`) builds it (the web client is then
+copied into zenith.app's `Contents/Resources/web`), builds zenith.app, and runs the server as a
+LaunchAgent (label `dev.zenith.app`, or `ZENITH_BUNDLE_ID`). The default server is the Rust
+one, run from the app bundle:
 
 ```
-node code/apps/server/dist/bin.mjs serve --host 127.0.0.1 --port 4747 --base-dir ~/.zenith/code
+/Applications/zenith.app/Contents/MacOS/zenith-code serve --host 127.0.0.1 --port 4747 \
+  --base-dir ~/.zenith/code --static-dir /Applications/zenith.app/Contents/Resources/web
 ```
 
-with `ZENITH_NO_STARTUP_TOKEN=1` (see below). Logs: `~/Library/Logs/Zenith/server.log`.
-State (database, settings, worktrees) lives in `~/.zenith/code` (`ZENITH_CODE_HOME` at
-install), never `~/.t3`, so an upstream T3 Code install is left alone.
-
-The command line is spelled in two places only: `SERVER` in `scripts/mac/install.sh` and
-`server_command()` in `crates/zenith-app/src/server.rs` (the app runs the CLI to mint
-pairing tokens). The Rust server takes the same arguments, so switching to it is one line
-in each: `SERVER=("$ROOT/target/release/zenith-code")` and
-`Command::new(root().join("target/release/zenith-code"))`.
+(`ZENITH_SERVER=node` runs `node code/apps/server/dist/bin.mjs serve …` instead, with the same
+arguments), with `ZENITH_NO_STARTUP_TOKEN=1` (see below). Logs:
+`~/Library/Logs/Zenith/server.log`. State (database, settings, worktrees) lives in
+`~/.zenith/code` (`ZENITH_CODE_HOME` at install), never `~/.t3`, so an upstream T3 Code install
+is left alone. An installed release writes the same LaunchAgent itself on its first start
+(`crates/zenith-commands/src/agent.rs`).
 
 Development: `npm run code:dev` runs upstream's dev runner (Vite + server) with its
 own state in `~/.zenith/code-dev`.
 
-## zenith.app
+## zenith.app and the browser
 
-zenith.app (Tauri) shows `http://127.0.0.1:4747` (`ZENITH_URL` and `ZENITH_CODE_HOME`
-override the server and its state dir for a development build), a waiting page while the
-server starts, and reconnects when it restarts.
+zenith.app is native (Rust, GPUI: `crates/zenith-app`); it does not show this web app. It is a
+client of the same server, over the same WebSocket RPC, signed in with a bearer session that
+the server's own command line issues (`zenith-code auth session issue`, kept 0600 in
+`~/.zenith/app/session.token`; `crates/zenith-client`). `zenith-cli` and `zenith-mcp` use the
+same session.
 
-**Pairing.** The server requires pairing even on loopback. zenith.app does it without
-user action:
-
-1. Unpaired, the web app redirects to `/pair`. The app's init script (`PAIRING` in
-   `crates/zenith-app/src/main.rs`) notices it and invokes the app's `pairing_token`
-   command (allowed for `http://127.0.0.1:*` by `capabilities/main.json`; the command
-   also checks the page is the server's own origin).
-2. The app runs `auth pairing create --ttl 2m --admin --label zenith --json --base-dir
-   <state dir>` and returns `credential`, never logged.
-3. The script puts it in the URL (`location.replace(…#token=…)`); the pairing screen takes
-   it on `hashchange` (`zenith/useEmbeddedPairing.ts`), or on mount if it was already
-   there, submits it and gets its 30-day session cookie.
-
-Open in Browser (⌥⌘O) mints a token the same way and opens `/pair#token=…`.
-
-**Title bar.** The traffic lights sit over the web app's top bar. `zenith/app.ts`
-recognizes zenith.app (`window.__TAURI_INTERNALS__`), marks `<html data-zenith-app>` so
-`index.css` gives `--workspace-controls-left` room for the lights (none when the app marks
-`data-fullscreen`), and sends presses in the top bar, off its controls, to the app's
-`shell_drag` / `shell_zoom` commands: the window moves, or zooms on a double-click, as
-with any title bar. The app's menu opens pages with a `zenith:navigate` event
-(Settings… → `/settings/general`).
+**Pairing in the browser.** The server requires pairing even on loopback. File › Open in
+Browser (⌥⌘O) in zenith.app runs `auth pairing create --ttl 2m --admin --label "zenith browser"
+--json --base-dir <state dir>` and opens `/pair#token=…`; the pairing screen takes the token on
+`hashchange` (`zenith/useEmbeddedPairing.ts`), or on mount if it was already there, submits it
+and gets its 30-day session cookie.
 
 **Startup token.** `serve` normally prints a startup pairing token, URL and QR code. With
 `ZENITH_NO_STARTUP_TOKEN=1` (the LaunchAgent sets it) it prints only that the server is

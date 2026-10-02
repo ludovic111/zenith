@@ -4,9 +4,9 @@ import { peekPairingTokenFromUrl, stripPairingTokenFromUrl } from "../environmen
 import { isEmbedded, requestEmbeddedPairingToken } from "./embed";
 
 /**
- * On the pairing screen, sign in without user action: inside zenith (an iframe),
- * fetch a one-time token from the parent page; in zenith.app, take the token its
- * init script puts in the URL (`#token=`) once it has minted one, after this
+ * On the pairing screen, sign in without user action: inside a parent page (an
+ * iframe), fetch a one-time token from it; otherwise take a token put in the URL
+ * (`#token=`, as in zenith's "Open in Browser" link to `/pair#token=…`) after this
  * screen showed. A token already in the URL on load is handled by the screen.
  */
 export function useZenithEmbeddedPairing(input: {

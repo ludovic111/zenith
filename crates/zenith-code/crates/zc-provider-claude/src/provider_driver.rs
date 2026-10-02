@@ -74,6 +74,7 @@ pub type LatestVersionLookup = Arc<dyn Fn(String) -> BoxFuture<'static, Option<S
 pub struct ClaudeProviderDriver {
     env: DriverEnv,
     mcp_sessions: Option<Arc<dyn McpSessionLookup>>,
+    lsuite_mcp: bool,
     latest_version: LatestVersionLookup,
 }
 
@@ -82,6 +83,7 @@ impl ClaudeProviderDriver {
         Self {
             env,
             mcp_sessions: None,
+            lsuite_mcp: false,
             latest_version: Arc::new(|package_name| Box::pin(npm_latest_version_cached(package_name))),
         }
     }
@@ -89,6 +91,12 @@ impl ClaudeProviderDriver {
     /// The MCP credentials the provider service issues per thread (none by default).
     pub fn with_mcp_sessions(mut self, lookup: Option<Arc<dyn McpSessionLookup>>) -> Self {
         self.mcp_sessions = lookup;
+        self
+    }
+
+    /// zenith: hand sessions the other lsuite apps' MCP servers (off by default).
+    pub fn with_lsuite_mcp(mut self, on: bool) -> Self {
+        self.lsuite_mcp = on;
         self
     }
 
@@ -136,6 +144,7 @@ impl Driver for ClaudeProviderDriver {
             .clone()
             .map(|logger| Arc::new(NativeLoggerSink(logger)) as Arc<dyn NativeEventSink>);
         let mcp_sessions = self.mcp_sessions.clone();
+        let lsuite_mcp = self.lsuite_mcp;
         let instance = Arc::new(ClaudeInstance::with_adapter_options(
             ClaudeInstanceInput {
                 instance_id: instance_id.clone(),
@@ -149,6 +158,7 @@ impl Driver for ClaudeProviderDriver {
             move |mut options| {
                 options.native_sink = native_sink;
                 options.mcp_sessions = mcp_sessions;
+                options.lsuite_mcp = lsuite_mcp;
                 options
             },
         ));

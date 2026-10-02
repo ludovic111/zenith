@@ -1,0 +1,32 @@
+[package]
+name = "zenith-commands"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "zenith's command registry (family.verb, JSON in, JSON out), served to the window, zenith-cli and zenith-mcp; lsuite discovery; signed updates from GitHub Releases"
+
+[[bin]]
+name = "zenith-cli"
+path = "src/bin/zenith-cli.rs"
+
+[[bin]]
+name = "zenith-mcp"
+path = "src/bin/zenith-mcp.rs"
+
+[dependencies]
+zenith-client = { path = "../zenith-client" }
+zenith-model = { path = "../zenith-model" }
+zc-contracts = { path = "../zenith-code/crates/zc-contracts" }
+anyhow = { workspace = true }
+base64 = { workspace = true }
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+futures = { workspace = true }
+rand_core = { version = "0.6", features = ["getrandom"] }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+tokio = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"

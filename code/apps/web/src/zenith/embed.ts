@@ -19,7 +19,7 @@ export const ZENITH_MESSAGE = {
   navigate: "zenith-code:navigate",
   /** app → parent: a `ZenithSidebarSnapshot`, whenever it changes. */
   sidebar: "zenith-code:sidebar",
-  /** app → parent: `{ zoom: boolean }`, a press in the title bar (zenith.app moves the window). */
+  /** app → parent: `{ zoom: boolean }`, a press in the title bar (the parent moves its window). */
   drag: "zenith-code:drag",
 } as const;
 
@@ -62,12 +62,31 @@ export interface ZenithSidebarSnapshot {
   readonly pathname: string;
 }
 
+/** What a press in the top bar must leave alone. */
+const TITLE_BAR_PRESS_EXCLUDED =
+  "a,button,input,textarea,select,label,summary,[role=button],[role=link],[role=menuitem],[role=tab],[contenteditable],[data-slot=button],[data-slot$=trigger],[draggable=true]";
+
+/** A primary press in the top bar, off its controls: the parent's title bar (`drag`). */
+export function isTitleBarPress(event: MouseEvent): boolean {
+  const topbar =
+    parseFloat(
+      getComputedStyle(document.documentElement).getPropertyValue("--workspace-topbar-height"),
+    ) || 52;
+  const target = event.target instanceof Element ? event.target : null;
+  return (
+    event.button === 0 &&
+    event.clientY <= topbar &&
+    target !== null &&
+    !target.closest(TITLE_BAR_PRESS_EXCLUDED)
+  );
+}
+
 /**
  * An in-app path the parent may open (zenith mirrors the app's path in its own URL, so
  * back/forward and reloads land on the same thread). Plain same-origin paths only, never
  * the pairing page.
  */
-export function isZenithAppPath(value: unknown): value is string {
+function isZenithAppPath(value: unknown): value is string {
   return (
     typeof value === "string" &&
     /^\/(?!\/)[A-Za-z0-9\-._~%/:@]*$/.test(value) &&

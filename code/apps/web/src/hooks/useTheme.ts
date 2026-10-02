@@ -37,8 +37,8 @@ type DesktopThemeBridge = Pick<DesktopBridge, "setTheme">;
 
 const STORAGE_KEY = "t3code:theme";
 const MEDIA_QUERY = "(prefers-color-scheme: dark)";
-// zenith: the stock palette, following the system's appearance, is the default look,
-// as in the zenith dashboard (index.html mirrors this).
+// zenith: the lsuite palette (index.css), following the system's appearance, is the
+// default look (index.html mirrors this).
 const DEFAULT_THEME_SNAPSHOT: ThemeSnapshot = {
   theme: "system",
   resolvedTheme: "dark",
@@ -355,6 +355,10 @@ function applyTheme(theme: Theme, { suppressTransitions = false, preservePreview
   );
   applyThemePalette(resolveThemeHalf(theme, themeHalves, resolvedAppearance), resolvedAppearance);
   document.documentElement.classList.toggle("dark", resolvedAppearance === "dark");
+  // zenith: the lsuite tokens (lsuite-tokens.css) follow data-mode.
+  if (document.documentElement.dataset) {
+    document.documentElement.dataset.mode = resolvedAppearance;
+  }
   lastAppliedTheme = { theme, systemDark, followSystem, appearanceMode, themeHalves };
   syncBrowserChromeTheme();
   syncDesktopTheme(theme, followSystem, appearanceMode);

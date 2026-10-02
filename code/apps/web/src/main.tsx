@@ -14,7 +14,6 @@ import {
 } from "./lib/windowControlsOverlay";
 import { AppRoot } from "./AppRoot";
 import { captureProjectFocusRequest } from "./zenith/embed";
-import { installZenithApp } from "./zenith/app";
 import { clearChunkReloadGuard, reloadOnceForChunkLoadError } from "./lib/chunkReloadGuard";
 
 prepareProviderAuthDelivery();
@@ -30,8 +29,6 @@ if (isElectron) {
   syncDocumentElectronPlatformClasses(navigator.platform);
   syncDocumentWindowControlsOverlayClass();
 }
-// zenith: the title bar and menus of zenith.app, the Mac app.
-installZenithApp((path) => void router.navigate({ href: path }));
 
 const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
 

@@ -118,6 +118,8 @@ pub struct ClaudeAdapterOptions {
     /// The server's attachments directory (`ServerConfig.attachmentsDir`).
     pub attachments_dir: PathBuf,
     pub mcp_sessions: Option<Arc<dyn McpSessionLookup>>,
+    /// zenith: also hand sessions the other lsuite apps' MCP servers (`zc_core::lsuite`).
+    pub lsuite_mcp: bool,
     /// Defaults to the files under the instance's Claude config dir.
     pub history: Option<Arc<dyn HistoryOps>>,
     pub native_sink: Option<Arc<dyn NativeEventSink>>,
@@ -138,6 +140,7 @@ impl ClaudeAdapterOptions {
             query_factory: Arc::new(crate::protocol::ProcessQueryFactory),
             attachments_dir,
             mcp_sessions: None,
+            lsuite_mcp: false,
             history: None,
             native_sink: None,
             ids: Arc::new(RandomIds),
@@ -815,7 +818,7 @@ impl ClaudeAdapter {
             additional_directories.push(cwd.clone());
         }
         additional_directories.push(self.inner.options.attachments_dir.to_string_lossy().into_owned());
-        let mcp_servers = mcp_session.as_ref().map(|session| {
+        let mut mcp_servers = mcp_session.as_ref().map(|session| {
             let mut servers = Map::new();
             servers.insert(
                 "t3-code".into(),
@@ -823,6 +826,20 @@ impl ClaudeAdapter {
             );
             servers
         });
+        // zenith: the other lsuite apps' MCP servers (zc_core::lsuite).
+        let lsuite = if self.inner.options.lsuite_mcp {
+            zc_core::lsuite::mcp_servers()
+        } else {
+            Vec::new()
+        };
+        if !lsuite.is_empty() {
+            let servers = mcp_servers.get_or_insert_with(Map::new);
+            for server in lsuite {
+                servers
+                    .entry(server.name.clone())
+                    .or_insert_with(|| json!({ "type": "stdio", "command": server.command, "args": server.args }));
+            }
+        }
         let thinking_config = (extra_args.get("thinking-display").and_then(Value::as_str) == Some("summarized")).then(|| ThinkingConfig::Adaptive {
             display: Some("summarized".into()),
         });

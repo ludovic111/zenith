@@ -90,32 +90,34 @@ describe("theme files", () => {
     }
   });
 
-  it("keeps stock dark controls in the neutral-black surface hierarchy", () => {
+  it("seeds new themes from the lsuite default the app paints", () => {
+    // zenith's default look is the lsuite design system (index.css, lsuite-tokens.css).
     expectThemeColors(getStandardThemeColors("dark"), {
-      canvas: "#0a0a0a",
-      surface: "#111111",
-      surfaceRaised: "#111111",
-      surfaceOverlay: "#111111",
-      toolbarControl: "#111111",
-      secondary: "#111111",
-      muted: "#111111",
-      accentSurface: "#141414",
+      canvas: "#121318",
+      chrome: "#0b0c0f",
+      text: "#ecedf1",
+      accent: "#72a6ff",
+      messageAction: "#72a6ff",
+      sidebar: "#1a1c22",
+    });
+    expectThemeColors(getStandardThemeColors("light"), {
+      canvas: "#f7f8fb",
+      chrome: "#eef0f4",
+      text: "#14161b",
+      accent: "#4777d2",
+      // White on the light accent is under 4.5:1: filled actions take step 700.
+      messageAction: "#355da9",
+      sidebar: "#f4f5f8",
     });
   });
 
-  it("keeps the stock sidebar and chat on distinct surfaces in both appearances", () => {
-    expectThemeColors(getStandardThemeColors("light"), {
-      canvas: "#fcfcfc",
-      sidebar: "#fafafa",
-      sidebarRowActive: "#ffffff",
-      messageSurface: "#f4f4f5",
-    });
-    expectThemeColors(getStandardThemeColors("dark"), {
-      canvas: "#0a0a0a",
-      sidebar: "#000000",
-      sidebarRowActive: "#1a1b1b",
-      messageSurface: "#141414",
-    });
+  it("keeps the default sidebar and chat on distinct surfaces in both appearances", () => {
+    for (const appearance of ["light", "dark"] as const) {
+      const colors = getStandardThemeColors(appearance);
+      expect(asHex(colors.sidebar)).not.toBe(asHex(colors.canvas));
+      expect(asHex(colors.messageSurface)).not.toBe(asHex(colors.canvas));
+      expect(asHex(colors.sidebarRowActive)).not.toBe(asHex(colors.sidebar));
+    }
   });
 
   it("derives readable, distinctive vivid palettes from exact seeds", () => {

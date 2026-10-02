@@ -1,10 +1,15 @@
 # zenith in Rust: the coding-agents server (crates/zenith-code and its parts in
-# crates/zenith-code/crates/*) and the Mac app (crates/zenith-app). The interface stays web,
-# in code/apps/web.
+# crates/zenith-code/crates/*), the native window (crates/zenith-app, GPUI), and what every
+# client shares: the server connection (zenith-client), what clients derive from the server's
+# data (zenith-model), and the command registry with zenith-cli and zenith-mcp
+# (zenith-commands). The web interface (code/apps/web) still serves zenith in a browser.
 [workspace]
 resolver = "2"
 members = [
   "crates/zenith-app",
+  "crates/zenith-client",
+  "crates/zenith-commands",
+  "crates/zenith-model",
   "crates/zenith-code",
   "crates/zenith-code/crates/*",
 ]

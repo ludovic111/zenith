@@ -31,6 +31,7 @@ const bootScript = (() => {
 
 type BootResult = {
   isDark: boolean;
+  mode: string | undefined;
   themeId: string | undefined;
   themeSelected: string | undefined;
   backgroundColor: string;
@@ -93,6 +94,7 @@ function runBootScript(options: {
 
   return {
     isDark: classes.has("dark"),
+    mode: documentElement.dataset.mode,
     themeId: documentElement.dataset.themeId,
     themeSelected: documentElement.dataset.themeSelected,
     backgroundColor: documentElement.style.backgroundColor,
@@ -493,8 +495,9 @@ describe("index.html boot script", () => {
 
     expect(boot.themeId).toBeUndefined();
     expect(boot.themeSelected).toBeUndefined();
-    expect(boot.backgroundColor).toBe("#ffffff");
-    expect(boot.metaContent).toBe("#ffffff");
+    // The lsuite window backdrop (--ls-bg), light.
+    expect(boot.backgroundColor).toBe("#eef0f4");
+    expect(boot.metaContent).toBe("#eef0f4");
   });
 
   it("leaves unknown preferences unthemed so the runtime default applies", () => {
@@ -505,14 +508,18 @@ describe("index.html boot script", () => {
     expect(boot.themeId).toBeUndefined();
     expect(boot.themeSelected).toBeUndefined();
     expect(boot.isDark).toBe(true);
+    // The lsuite tokens follow data-mode, in step with the dark class.
+    expect(boot.mode).toBe("dark");
   });
 
   it("follows the OS appearance when storage is unavailable", () => {
     const light = runBootScript({ storageThrows: true, prefersDark: false });
     expect(light.isDark).toBe(false);
+    expect(light.mode).toBe("light");
     expect(light.themeId).toBeUndefined();
 
     const dark = runBootScript({ storageThrows: true, prefersDark: true });
     expect(dark.isDark).toBe(true);
+    expect(dark.mode).toBe("dark");
   });
 });

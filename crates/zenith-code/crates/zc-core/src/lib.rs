@@ -32,6 +32,7 @@ pub mod environment_id;
 pub mod ids;
 pub mod lease;
 pub mod lenient_json;
+pub mod lsuite;
 pub mod paths;
 pub mod process;
 pub mod pubsub;

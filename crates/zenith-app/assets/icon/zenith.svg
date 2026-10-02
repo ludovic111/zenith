@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- zenith's app icon, from the lsuite template (../lsuite/design/DESIGN.md, "App icons"):
+       the macOS grid's 824 px squircle in zenith's 300 → 600 → 800 steps, the white glyph
+       (the circle with the sun at its top) at 58 % of the tile, and the glass sheen. -->
+  <defs>
+    <linearGradient id="fill" x1="0.329" y1="0.03" x2="0.671" y2="0.97">
+      <stop offset="0" stop-color="#8fbdff"/>
+      <stop offset="0.7" stop-color="#4777d2"/>
+      <stop offset="1" stop-color="#28467d"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.28"/>
+      <stop offset="0.48" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="drop" color-interpolation-filters="sRGB" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="22" stdDeviation="26" flood-color="#101c34" flood-opacity="0.45"/>
+    </filter>
+    <filter id="glyph-shadow" color-interpolation-filters="sRGB" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0.9" stdDeviation="0.8" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+    <clipPath id="tile"><rect x="100" y="100" width="824" height="824" rx="184.3"/></clipPath>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="184.3" fill="url(#fill)" filter="url(#drop)"/>
+  <g clip-path="url(#tile)">
+    <rect x="100" y="100" width="824" height="824" fill="url(#sheen)"/>
+    <rect x="100" y="100" width="824" height="6" fill="#ffffff" fill-opacity="0.35"/>
+    <rect x="100" y="918" width="824" height="6" fill="#000000" fill-opacity="0.25"/>
+  </g>
+  <g transform="translate(273 273) scale(11.95)" filter="url(#glyph-shadow)">
+    <circle cx="20" cy="22" r="12" fill="none" stroke="#ffffff" stroke-width="3.5"/>
+    <circle cx="20" cy="9.5" r="5.5" fill="#ffffff"/>
+  </g>
+</svg>

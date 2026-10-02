@@ -159,6 +159,8 @@ pub struct CodexAdapterOptions {
     pub on_managed_connection_revoked: Option<OnRevoked>,
     pub native_event_sink: Option<Arc<dyn NativeEventSink>>,
     pub mcp_sessions: Option<Arc<dyn McpSessionLookup>>,
+    /// zenith: also hand sessions the other lsuite apps' MCP servers (`zc_core::lsuite`).
+    pub lsuite_mcp: bool,
     pub attachments: Option<Arc<dyn AttachmentResolver>>,
     /// The cwd of sessions started without one (`process.cwd()`).
     pub default_cwd: Option<String>,
@@ -291,6 +293,18 @@ impl CodexAdapter {
                 "mcp_servers.t3-code.bearer_token_env_var=\"T3_MCP_BEARER_TOKEN\"".into(),
             ]);
             runtime.mcp_capabilities = Some(mcp.capabilities.clone());
+        }
+        // zenith: the other lsuite apps' MCP servers (zc_core::lsuite), as stdio servers.
+        let lsuite = if options.lsuite_mcp { zc_core::lsuite::mcp_servers() } else { Vec::new() };
+        if !lsuite.is_empty() {
+            let args = runtime.app_server_args.get_or_insert_with(Vec::new);
+            for server in lsuite {
+                let list: Vec<String> = server.args.iter().map(|a| zc_core::lsuite::toml_string(a)).collect();
+                args.push("-c".into());
+                args.push(format!("mcp_servers.{}.command={}", server.name, zc_core::lsuite::toml_string(&server.command)));
+                args.push("-c".into());
+                args.push(format!("mcp_servers.{}.args=[{}]", server.name, list.join(", ")));
+            }
         }
         runtime
     }

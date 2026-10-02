@@ -1,43 +1,63 @@
 @AGENTS.md
 
-## lsuite: bring zenith up to the suite standard (notes merged 2026-10-01)
+## lsuite: bring zenith up to the suite standard (notes merged 2026-10-01, updated 2026-10-02)
 
 zenith is part of **lsuite** (lowercase), the free open-source creative suite with a music app
-and a video app. Since 2026-10-01 zenith is the suite's **app for coding with agents** (zenith
-code in a Tauri window, plus Sessions & costs); the life dashboard and personal agents are gone.
-Its page is lsuite.xyz/zenith (`../lsuite/zenith/index.html`). Two documents in the lsuite
-repository (locally `../lsuite/`, which names the other apps and their repositories) are the
-contract: `STANDARD.md` and `design/DESIGN.md` (the shared design system, live at
+and a video app. Since 2026-10-01 zenith is the suite's **app for coding with agents**; since
+2026-10-02 its window is **native Rust with GPUI** (`crates/zenith-app`; Tauri is gone), a client
+of zenith's server (`crates/zenith-code`). The web interface (`code/apps/web`) still serves zenith
+in a browser. Its page is lsuite.xyz/zenith (`../lsuite/zenith/index.html`). Two documents in the
+lsuite repository (locally `../lsuite/`, which names the other apps and their repositories) are
+the contract: `STANDARD.md` and `design/DESIGN.md` (the shared design system, live at
 lsuite.xyz/design). The owner wants every lsuite app **100 % drivable by MCP, CLI and its
 built-in agent**, written in Rust, with automatic updates, compatible with the others, and with
 one common look. The suite's music app is the reference implementation (its folder and files are
 named in STANDARD.md).
 
-- [x] **Rust**: the server is `crates/zenith-code` (a port of zenith code's TypeScript server,
-      checked against it), the Mac app `crates/zenith-app`. Still in TypeScript only: the
-      Cursor, Grok, OpenCode and Antigravity drivers, provider sign-in and installers, devices.
-- [ ] **Command registry**: every action in the interface (threads, projects, git, pull
-      requests, settings) as a named command, served to the UI, a CLI and the MCP server alike.
-      Today the MCP server (`/mcp`, per thread) covers pull request links and the preview.
-- [ ] **CLI**: a `zenith-cli` on the same registry (talks to the running server, token-protected,
-      127.0.0.1 only). `zenith-code` has `auth` and `project` commands so far.
-- [ ] **Releases and auto-update**: today zenith runs from source (`npm run mac:install`).
-      Ship signed release builds (macOS notarized: same six `APPLE_*` secrets as the other apps,
-      set with `../lsuite/scripts/set-apple-secrets.sh` and a new App Store Connect key "zenith
-      notarization"; Linux) with a signed in-app updater, `ZENITH_NO_UPDATE=1`, and "check for
-      updates" as a command.
-- [ ] **Design system** (`../lsuite/design/`): zenith's signature color is **blue, hue 262**
-      (`--ls-zenith-*`, accent `#72a6ff` dark / `#4777d2` light). The interface is
-      `code/apps/web`: map its theme (`src/index.css`, `src/themePalette.ts`) onto `tokens.css`
-      (`data-app="zenith"`) as the default theme, keep imported VS Code / Open VSX themes working
-      on top, move the UI font to Manrope (code stays monospace), put the sidebar, title bar,
-      composer, popovers, command palette and dialogs on the glass tiers over `.ls-backdrop` (the
-      Mac app: window vibrancy), keep the thread log, diffs and terminals solid, keep
-      `appearanceContrast.test.ts` passing with the glass tiers, and redraw the icon from the
-      lsuite template.
-- [ ] **Suite**: write `~/.lsuite/apps/zenith.json` (format in STANDARD.md); decide with the
-      owner whether zenith still shows the other installed lsuite apps now that it is a coding app.
-- [ ] Support links to `https://lsuite.xyz/zenith/support`; keep the lsuite page up to date
-      (version, what's new) with every release.
+- [x] **Rust**: the server is `crates/zenith-code`, the window `crates/zenith-app` (GPUI 0.2.2 from
+      crates.io, `runtime_shaders`), with `zenith-client` (WebSocket RPC, bearer session 0600 in
+      `~/.zenith/app`) and `zenith-model` (what clients derive from the server's data). Still in
+      TypeScript only: the Cursor, Grok, OpenCode and Antigravity drivers, provider sign-in and
+      installers, devices.
+- [x] **Command registry**: `crates/zenith-commands` (52 `family.verb` commands, validated in one
+      place, `docs/COMMANDS.md` generated); the window runs every action through it (no raw
+      orchestration command left in `crates/zenith-app`), like the CLI and MCP.
+  - [x] git, pull requests, terminals and project scripts as commands (`git.*`, `pr.*`,
+        `terminal.*`, `project.scripts` / `project.runScript`) and in the native window (git bar
+        and menu in the thread's title bar, Git menu, terminal panel ⌘J drawn with `vt100`,
+        scripts menu). Images in messages too (`images` on `thread.new` / `thread.send`, the
+        composer's paperclip and paste).
+- [x] **CLI**: `zenith-cli` (same registry, talks to the running server, wakes it up); MCP:
+      `zenith-mcp --live`; agent permissions (off/read/full) in Settings › Agents.
+      `docs/AI_CONTROL.md` explains how to drive zenith.
+- [x] **Releases and auto-update** (code): `.github/workflows/release.yml` (macOS arm64 and x86_64
+      signed and notarized when the six `APPLE_*` secrets exist, Linux x86_64, `SHA256SUMS` signed
+      with Ed25519), `scripts/mac/package.sh`, the in-app updater (`zenith-commands/src/update.rs`,
+      public key `crates/zenith-commands/assets/update-signing.pub`, `ZENITH_NO_UPDATE=1`,
+      `app.checkUpdates`), and the app installs its own server LaunchAgent from the bundle.
+  - [ ] Owner: create the App Store Connect key "zenith notarization", run
+        `APPLE_API_ISSUER=… ../lsuite/scripts/set-apple-secrets.sh ludovic111/zenith AuthKey_….p8 [developer-id.p12]`,
+        add the secret `ZENITH_UPDATE_SIGNING_KEY` (the hex line of
+        `~/.lsuite/keys/zenith-update-signing.key`, made with `zenith-cli release keygen`), then
+        bump the version and push the `vX.Y.Z` tag.
+- [x] **Design system** (`../lsuite/design/`): the native window reads the tokens
+      (`crates/zenith-app/assets/lsuite-tokens.json`, zenith blue, hue 262), Manrope and IBM Plex
+      Mono bundled, sidebar on the macOS material (NSVisualEffectView, Sidebar) with glass tier 1,
+      floating surfaces on tier 2's opaque fallback (GPUI cannot blur inside the window), work
+      solid, "Reduce transparency" honored, contrast tested on every tier (`cargo test -p
+      zenith-app`). Filled accents use step 700 in light mode (white on 600 is under 4.5:1). Icon
+      redrawn from the template (`crates/zenith-app/assets/icon/zenith.svg`, rendered by
+      `examples/render_icon.rs`).
+  - [x] The web interface (`code/apps/web`): `src/lsuite-tokens.css` (zenith's copy) and
+        `src/lsuite.css` make the lsuite look its default theme (tier 1 sidebar and top bars,
+        tier 2 popovers, palette and composer, tier 3 dialogs, work solid), Manrope and IBM Plex
+        Mono in `public/fonts`, `data-app="zenith"`, contrast tested (`src/lsuiteTheme.test.ts`);
+        imported VS Code / Open VSX themes still apply on top; the Tauri integration is gone.
+- [x] **Suite**: `~/.lsuite/apps/zenith.json` (format 1, as the suite's video app first wrote it, plus `bridge`);
+      decided with the owner: zenith lists the installed lsuite apps in Settings and hands their
+      MCP servers to the agents of its threads (`zc_core::lsuite`, `ZENITH_NO_LSUITE_MCP=1`).
+- [x] Support links to `https://lsuite.xyz/zenith/support` (README, Settings); the lsuite page and
+      `/zenith/download/<platform>` (`../lsuite/server.js`) are updated.
+  - [ ] Keep the lsuite page up to date (version, what's new) with every release.
 
 When done, tick these, and update the status table at the end of `../lsuite/STANDARD.md`.

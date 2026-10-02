@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "zenith: a coding workspace for Claude Code, Codex and other agents, as a Mac app.",
+  "description": "zenith: the lsuite app for coding with agents (Claude Code, Codex), native on macOS.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -16,9 +16,7 @@
     "code:install": "cd code && npx -y pnpm@11.10.0 install",
     "code:build": "npm run code:install && cd code && npx -y pnpm@11.10.0 run build",
     "code:dev": "cd code && npx -y pnpm@11.10.0 run dev --home-dir \"$HOME/.zenith/code-dev\"",
-    "code:sync": "bash scripts/code-sync.sh"
-  },
-  "devDependencies": {
-    "@tauri-apps/cli": "^2.12.1"
+    "code:sync": "bash scripts/code-sync.sh",
+    "mac:package": "bash scripts/mac/package.sh"
   }
 }

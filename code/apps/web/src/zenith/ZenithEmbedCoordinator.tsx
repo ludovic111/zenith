@@ -29,6 +29,7 @@ import { useUiStateStore } from "../uiStateStore";
 import {
   clearPendingProjectFocus,
   isEmbedded,
+  isTitleBarPress,
   isTrustedParentMessage,
   parseNavigateRequest,
   postToZenith,
@@ -44,7 +45,6 @@ import {
   type ZenithThreadSection,
   type ZenithThreadStatus,
 } from "./embed";
-import { isTitleBarPress } from "./app";
 
 // Projects registered by zenith at startup may land a moment after the snapshot.
 const PROJECT_WAIT_MS = 10_000;
@@ -107,7 +107,7 @@ export function ZenithEmbedCoordinator() {
         setPending(path);
       } else if (type === ZENITH_MESSAGE.chrome && typeof ownSidebar === "boolean") {
         setOwnSidebar(ownSidebar);
-        // Room for zenith.app's traffic lights when zenith's sidebar is hidden.
+        // Room for the parent window's controls when its sidebar is hidden.
         const inset = typeof insetLeft === "number" && insetLeft > 0 ? Math.min(insetLeft, 160) : 0;
         if (inset) {
           document.documentElement.style.setProperty(
@@ -122,8 +122,8 @@ export function ZenithEmbedCoordinator() {
         if (parsed) navigate(parsed);
       }
     };
-    // The top bar is the window's title bar in zenith.app: a press there, off any
-    // control, lets zenith move (or, double-clicked, zoom) the window.
+    // The top bar is the parent window's title bar: a press there, off any control,
+    // lets the parent move (or, double-clicked, zoom) its window.
     const onMouseDown = (event: MouseEvent) => {
       if (!isTitleBarPress(event)) return;
       postToZenith({ type: ZENITH_MESSAGE.drag, zoom: event.detail === 2 }, allowed);

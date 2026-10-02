@@ -83,6 +83,9 @@ const unitTestProject = {
     hookTimeout: 15_000,
     testTimeout: 15_000,
     setupFiles: ["../../packages/shared/src/testing/longTempDir.ts"],
+    // zenith: lsuiteTheme.ts reads the lsuite tokens from their CSS (`?raw`),
+    // which Vitest otherwise replaces with an empty module.
+    css: { include: [/lsuite-tokens\.css/] },
   },
 } satisfies TestProjectInlineConfiguration;
 

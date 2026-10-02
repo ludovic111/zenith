@@ -1,7 +1,7 @@
 @import "tailwindcss";
-/* zenith: self-hosted zenith fonts (no CDN request). */
-@import "@fontsource-variable/geist";
-@import "@fontsource-variable/jetbrains-mono";
+/* zenith: the lsuite design system (tokens, bundled fonts, glass tiers). */
+@import "./lsuite-tokens.css";
+@import "./lsuite.css";
 
 @custom-variant dark (&:is(.dark, .dark *));
 @custom-variant light (&:not(.dark, .dark *));
@@ -152,19 +152,13 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
   );
 }
 
-/* zenith: zenith.app lays its traffic lights over the top bar (zenith/app.ts); they
-   leave in full screen. Same room as the macOS Electron app. */
-html[data-zenith-app]:not([data-fullscreen]) {
-  --workspace-controls-left: 90px;
-}
-
 /* The font tokens are declared outside the inline theme so utilities reference
    the variables and Settings -> Appearance can override them at runtime. The
-   default stacks are mirrored in `appearanceFonts.ts`. */
+   default stacks are lsuite's (Manrope for the interface, IBM Plex Mono for
+   code), mirrored in `appearanceFonts.ts`. */
 @theme {
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --font-mono:
-    ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+  --font-sans: var(--ls-font-sans);
+  --font-mono: var(--ls-font-mono);
 }
 
 @theme inline {
@@ -1033,11 +1027,17 @@ html[data-zenith-app]:not([data-fullscreen]) {
   animation-duration: 0s !important;
 }
 
+/* zenith's default theme: the lsuite design system (lsuite-tokens.css, lsuite.css),
+   in zenith's blue. The --ls-* tokens follow <html data-mode>, which the theme code
+   keeps in step with the `.dark` class, so most roles need no dark variant.
+   Work surfaces (the thread log, code, terminals) are solid; the glass tiers are
+   in lsuite.css. lsuiteTheme.ts mirrors this mapping as a theme palette (the theme
+   editor's starting point and the settings preview): change both together. */
 :root {
   color-scheme: light;
   --radius: 0.625rem;
-  --background: var(--color-zinc-25);
-  --app-chrome-background: var(--background);
+  --background: var(--ls-bg-raised);
+  --app-chrome-background: var(--ls-bg);
   --toolbar-background: var(--app-chrome-background);
   --toolbar-foreground: var(--foreground);
   --toolbar-border: var(--border);
@@ -1045,150 +1045,107 @@ html[data-zenith-app]:not([data-fullscreen]) {
   --toolbar-control-foreground: var(--foreground);
   --toolbar-control-hover: var(--accent);
   --surface-raised: color-mix(in srgb, var(--card) 20%, transparent);
-  --foreground: var(--color-zinc-800);
-  --card: var(--color-white);
-  --card-foreground: var(--color-zinc-800);
-  --popover: var(--color-white);
-  --popover-foreground: var(--color-zinc-800);
-  --primary: oklch(0.488 0.217 264);
-  --primary-foreground: var(--color-white);
-  --secondary: var(--color-zinc-50);
-  --secondary-foreground: var(--color-zinc-800);
-  --muted: var(--color-zinc-50);
-  --muted-foreground: var(--color-zinc-500);
+  --foreground: var(--ls-text);
+  --card: color-mix(in srgb, var(--ls-bg-sunken) 35%, var(--ls-bg-raised));
+  --card-foreground: var(--ls-text);
+  --popover: var(--ls-glass-opaque);
+  --popover-foreground: var(--ls-text);
+  /* Filled accent surfaces carry text: in light mode the accent step (600) is
+     under 4.5:1 with white, so they take step 700. */
+  --primary: var(--ls-zenith-700);
+  --primary-foreground: var(--ls-text-on-accent);
+  --secondary: color-mix(in srgb, var(--ls-text) 5%, transparent);
+  --secondary-foreground: var(--ls-text);
+  --muted: color-mix(in srgb, var(--ls-text) 5%, transparent);
+  --muted-foreground: var(--ls-text-2);
   --placeholder: var(--muted-foreground);
   --secondary-label: var(--muted-foreground);
-  --icon-muted: var(--muted-foreground);
+  /* text-3 is for icons and large text only (3:1). */
+  --icon-muted: var(--ls-text-3);
   --message-surface: var(--accent);
   --message-foreground: var(--foreground);
   --message-action: var(--primary);
   --message-action-foreground: var(--primary-foreground);
   --message-action-hover: color-mix(in srgb, var(--primary) 90%, var(--background));
-  --accent: var(--color-zinc-100);
-  --accent-foreground: var(--color-zinc-900);
-  --error: var(--color-red-500);
-  --error-foreground: var(--color-red-700);
+  --accent: var(--ls-accent-soft);
+  --accent-foreground: var(--ls-text);
+  /* States keep their own colors. As text on light surfaces they are deepened
+     toward the text color to stay at 4.5:1. */
+  --error: var(--ls-danger);
+  --error-foreground: color-mix(in srgb, var(--ls-danger) 80%, var(--ls-text));
   --tool-error-icon: var(--error);
   --error-surface: color-mix(in srgb, var(--error) 8%, transparent);
   --destructive: var(--error);
-  --border: var(--color-zinc-200);
-  --input: var(--color-zinc-300);
-  --ring: var(--primary);
+  --border: var(--ls-line);
+  --input: var(--ls-line-strong);
+  --ring: var(--ls-accent-ring);
   --destructive-foreground: var(--error-foreground);
   --info: var(--color-blue-500);
   --info-foreground: var(--color-blue-700);
-  --success: var(--color-emerald-500);
-  --success-foreground: var(--color-emerald-700);
-  --warning: var(--color-amber-500);
-  --warning-foreground: var(--color-amber-700);
+  --success: var(--ls-success);
+  --success-foreground: color-mix(in srgb, var(--ls-success) 80%, var(--ls-text));
+  --warning: var(--ls-warning);
+  --warning-foreground: color-mix(in srgb, var(--ls-warning) 80%, var(--ls-text));
   --warning-surface: color-mix(in srgb, var(--warning) 8%, transparent);
   --update: var(--primary);
-  --update-foreground: var(--primary);
+  --update-foreground: var(--ls-accent-text);
   --update-surface: color-mix(in srgb, var(--update) 12%, transparent);
-  /* Keep every sidebar primitive on the same light surface hierarchy, including
-     portaled mobile sheets and settings navigation outside the app sidebar. */
-  --sidebar: var(--color-zinc-50);
+  /* Fallback for sidebar primitives outside the app sidebar; the app sidebar
+     itself is glass (lsuite.css) and takes its roles from [data-app-sidebar]. */
+  --sidebar: var(--ls-glass-opaque);
   --sidebar-foreground: var(--foreground);
   --sidebar-muted-foreground: var(--muted-foreground);
-  --sidebar-control-surface: var(--color-zinc-100);
-  --sidebar-row-hover: var(--color-zinc-25);
-  --sidebar-row-active: var(--color-white);
-  --sidebar-row-selected: var(--color-white);
+  --sidebar-control-surface: color-mix(in srgb, var(--ls-text) 6%, transparent);
+  --sidebar-row-hover: color-mix(in srgb, var(--ls-text) 6%, transparent);
+  --sidebar-row-active: var(--ls-accent-soft);
+  --sidebar-row-selected: color-mix(in srgb, var(--ls-text) 9%, transparent);
   --sidebar-border: var(--border);
   --sidebar-stage-fade: var(--sidebar);
-  --code-background: color-mix(in srgb, var(--card) 90%, var(--background));
+  --code-background: color-mix(in srgb, var(--ls-bg-sunken) 50%, var(--ls-bg-raised));
   --code-foreground: var(--foreground);
   --terminal-background: var(--background);
   --terminal-foreground: var(--foreground);
-  --terminal-cursor: rgb(38 56 78);
-  --terminal-selection-background: rgb(37 63 99 / 20%);
+  --terminal-cursor: var(--ls-accent);
+  --terminal-selection-background: color-mix(in srgb, var(--ls-accent) 25%, transparent);
 
   @variant dark {
     color-scheme: dark;
-    /* Keep controls and floating surfaces close to the neutral-black canvas.
-       Borders and hover states provide separation without milky gray fills. */
-    --background: var(--color-neutral-950);
-    --surface-raised: color-mix(in srgb, var(--background) 97%, var(--color-white));
-    --foreground: var(--color-neutral-100);
-    --card: color-mix(in srgb, var(--background) 97%, var(--color-white));
-    --card-foreground: var(--color-neutral-100);
-    --popover: color-mix(in srgb, var(--background) 97%, var(--color-white));
-    --popover-foreground: var(--color-neutral-100);
-    --primary: oklch(0.571 0.21 264);
-    --secondary: --alpha(var(--color-white) / 3%);
-    --secondary-foreground: var(--color-neutral-100);
-    --muted: --alpha(var(--color-white) / 3%);
-    --muted-foreground: color-mix(in srgb, var(--color-neutral-500) 90%, var(--color-white));
-    --accent: --alpha(var(--color-white) / 4%);
-    --accent-foreground: var(--color-neutral-100);
-    --error: color-mix(in srgb, var(--color-red-500) 90%, var(--color-white));
-    --error-foreground: var(--color-red-400);
-    --tool-error-icon: #fca5a5;
+    --primary: var(--ls-accent);
+    --error-foreground: var(--ls-danger);
+    --tool-error-icon: var(--ls-danger);
     --error-surface: color-mix(in srgb, var(--error) 16%, transparent);
-    --border: --alpha(var(--color-white) / 6%);
-    --input: --alpha(var(--color-white) / 8%);
     --info-foreground: var(--color-blue-400);
-    --success-foreground: var(--color-emerald-400);
-    --warning-foreground: var(--color-amber-400);
+    --success-foreground: var(--ls-success);
+    --warning-foreground: var(--ls-warning);
     --warning-surface: color-mix(in srgb, var(--warning) 16%, transparent);
-    --update-foreground: var(--color-blue-400);
     --update-surface: color-mix(in srgb, var(--update) 18%, transparent);
-    --sidebar: var(--card);
-    --sidebar-control-surface: var(--muted);
-    --sidebar-row-hover: var(--accent);
-    --sidebar-row-active: var(--accent);
-    --sidebar-row-selected: var(--muted);
-    --sidebar-stage-fade: var(--card);
-    --terminal-cursor: rgb(180 203 255);
-    --terminal-selection-background: rgb(180 203 255 / 25%);
   }
 }
 
-/* Keep both sidebar implementations (default and legacy) on the same quiet
-   zinc hierarchy: zinc-50 navigation, zinc-25 hover, and white selected/raised
-   surfaces. */
+/* The app sidebar (default and legacy implementations) is glass 1 in the
+   default theme; these are its roles. --background and --sidebar are the
+   tier's opaque equivalent, for anything inside it that must cover what
+   scrolls beneath. A palette theme overrides every one of them below. */
 [data-app-sidebar] {
-  --background: var(--color-zinc-25);
-  --foreground: var(--color-zinc-800);
-  --card: var(--color-white);
-  --card-foreground: var(--color-zinc-800);
-  --accent: var(--color-zinc-100);
-  --accent-foreground: var(--color-zinc-900);
-  --muted: var(--color-zinc-50);
-  --muted-foreground: var(--color-zinc-500);
-  --border: var(--color-zinc-200);
-  --input: var(--color-zinc-300);
-  --sidebar: var(--color-zinc-50);
-  --sidebar-foreground: var(--color-zinc-800);
-  --sidebar-muted-foreground: var(--color-zinc-500);
-  --sidebar-control-surface: var(--color-zinc-100);
-  --sidebar-row-hover: var(--color-zinc-25);
-  --sidebar-row-active: var(--color-white);
-  --sidebar-row-selected: var(--color-white);
-  --sidebar-border: var(--color-zinc-200);
+  --background: var(--ls-glass-opaque);
+  --foreground: var(--ls-text);
+  --card: var(--ls-glass-opaque);
+  --card-foreground: var(--ls-text);
+  --accent: var(--ls-accent-soft);
+  --accent-foreground: var(--ls-text);
+  --muted: color-mix(in srgb, var(--ls-text) 5%, transparent);
+  --muted-foreground: var(--ls-text-2);
+  --border: var(--ls-line);
+  --input: var(--ls-line-strong);
+  --sidebar: var(--ls-glass-opaque);
+  --sidebar-foreground: var(--ls-text);
+  --sidebar-muted-foreground: var(--ls-text-2);
+  --sidebar-control-surface: color-mix(in srgb, var(--ls-text) 6%, transparent);
+  --sidebar-row-hover: color-mix(in srgb, var(--ls-text) 6%, transparent);
+  --sidebar-row-active: var(--ls-accent-soft);
+  --sidebar-row-selected: color-mix(in srgb, var(--ls-text) 9%, transparent);
+  --sidebar-border: var(--ls-line);
   --sidebar-stage-fade: var(--sidebar);
-
-  @variant dark {
-    --background: #000;
-    --foreground: #f1f3f7;
-    --card: #000;
-    --card-foreground: var(--foreground);
-    --accent: #191a1d;
-    --accent-foreground: #f7f9ff;
-    --muted: #0a0a0a;
-    --muted-foreground: #a3a3a3;
-    --border: rgb(255 255 255 / 8%);
-    --input: rgb(255 255 255 / 18%);
-    --sidebar: var(--card);
-    --sidebar-foreground: var(--foreground);
-    --sidebar-muted-foreground: var(--muted-foreground);
-    --sidebar-control-surface: var(--muted);
-    --sidebar-row-hover: color-mix(in srgb, var(--contrast-foreground) 8%, transparent);
-    --sidebar-row-active: color-mix(in srgb, var(--contrast-foreground) 11%, transparent);
-    --sidebar-row-selected: color-mix(in srgb, var(--contrast-foreground) 7%, transparent);
-    --sidebar-border: var(--border);
-    --sidebar-stage-fade: var(--card);
-  }
 }
 
 /* Theme files are expressed in app color roles and mapped to the existing
@@ -1586,15 +1543,6 @@ html[data-theme-id="t3-chat"] [data-app-sidebar] {
     color-mix(in srgb, var(--sidebar-border) var(--appearance-contrast-base), transparent),
     var(--sidebar-foreground) var(--appearance-contrast-border-boost)
   );
-}
-
-/* zenith theme typography: Geist for text, JetBrains Mono for code. A font
-   picked in Settings -> Appearance still wins (inline). */
-html[data-theme-id="zenith"] {
-  --font-sans:
-    "Geist Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --font-mono:
-    "JetBrains Mono Variable", ui-monospace, "SF Mono", "SFMono-Regular", Menlo, monospace;
 }
 
 .zenith-display {

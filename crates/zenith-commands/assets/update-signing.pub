@@ -1,0 +1,3 @@
+# zenith release signing public key (Ed25519, hex). The secret half signs SHA256SUMS in
+# .github/workflows/release.yml (secret ZENITH_UPDATE_SIGNING_KEY).
+865bfc7a83722e492a0967e2ced7493fdbc78d9dc3389f0d57ac9cd2423a2c44

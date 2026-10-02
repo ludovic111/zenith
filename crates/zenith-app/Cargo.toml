@@ -3,17 +3,39 @@ name = "zenith-app"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "zenith.app: zenith, the coding-agents workspace, in a window of its own"
+description = "zenith.app: the window of zenith, the coding-agents workspace, native (GPUI)"
 
 [[bin]]
 name = "zenith"
 path = "src/main.rs"
 
-[build-dependencies]
-tauri-build = { version = "2", features = [] }
-
 [dependencies]
-tauri = { version = "2", features = ["macos-private-api"] }
-tauri-plugin-opener = "2"
+zenith-client = { path = "../zenith-client" }
+zenith-model = { path = "../zenith-model" }
+zenith-commands = { path = "../zenith-commands" }
+zc-contracts = { path = "../zenith-code/crates/zc-contracts" }
+# GPUI from crates.io (gpui.rs). `runtime_shaders` compiles the Metal shaders when the app
+# starts, so building needs Xcode's SDK but not its separate Metal toolchain.
+gpui = { version = "0.2.2", features = ["runtime_shaders"] }
+anyhow = { workspace = true }
+futures = { workspace = true }
+jiff = { workspace = true }
+pulldown-cmark = { version = "0.13", default-features = false }
+serde = { workspace = true }
 serde_json = { workspace = true }
-ureq = "3"
+tokio = { workspace = true }
+tracing = { workspace = true }
+unicode-segmentation = "1"
+# The terminal panel's emulator.
+vt100 = "0.16"
+
+[dev-dependencies]
+gpui = { version = "0.2.2", features = ["runtime_shaders", "test-support"] }
+# The icon renderer (examples/render_icon.rs), the same resvg GPUI uses.
+resvg = "0.45"
+
+# The window's native material (NSVisualEffectView), as the lsuite design asks for macOS.
+[target.'cfg(target_os = "macos")'.dependencies]
+cocoa = "0.26"
+objc = "0.2"
+raw-window-handle = "0.6"

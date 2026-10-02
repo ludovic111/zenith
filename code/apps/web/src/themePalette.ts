@@ -9,8 +9,6 @@ import {
   IRIS_THEME,
   OCEAN_THEME,
   T3_CHAT_THEME,
-  T3_CODE_LIGHT_THEME_COLORS,
-  T3_CODE_DARK_THEME_COLORS,
   RESERVED_THEME_IDS,
   THEME_COLOR_ROLES,
   type ThemeAppearance,
@@ -19,6 +17,7 @@ import {
   type ThemeDefinition,
   type ThemeVariants,
 } from "@t3tools/shared/themePalettes";
+import { lsuiteThemeColors } from "./lsuiteTheme";
 
 export { EMBER_THEME, GROVE_THEME, IRIS_THEME, OCEAN_THEME, T3_CHAT_THEME, THEME_COLOR_ROLES };
 export type { ThemeAppearance, ThemeColorRole, ThemeColors, ThemeDefinition, ThemeVariants };
@@ -329,16 +328,16 @@ function legacyThemeMode(theme: ThemePreference): ThemeAppearance | null {
 }
 
 /**
- * The standard T3 Code look as a theme palette, for seeding a new theme when
- * no theme is installed. Distinct from {@link getDefaultThemeColors}, which
- * carries the flagship T3 Chat palette used to fill roles omitted by theme
- * files.
+ * zenith's default look (the lsuite design system, see lsuiteTheme.ts) as a
+ * theme palette, for seeding a new theme when no theme is installed.
+ * Distinct from {@link getDefaultThemeColors}, which carries the flagship
+ * T3 Chat palette used to fill roles omitted by theme files.
  */
 export function getStandardThemeColors(appearance: ThemeAppearance): ThemeColors {
   if (appearance === "dark") {
-    return (standardDarkThemeColors ??= decodeThemeColors(T3_CODE_DARK_THEME_COLORS));
+    return (standardDarkThemeColors ??= decodeThemeColors(lsuiteThemeColors("dark")));
   }
-  return (standardLightThemeColors ??= decodeThemeColors(T3_CODE_LIGHT_THEME_COLORS));
+  return (standardLightThemeColors ??= decodeThemeColors(lsuiteThemeColors("light")));
 }
 
 type ThemeRgbColor = {
@@ -1507,6 +1506,7 @@ export function applyThemeColorPreview(colors: ThemeColors, appearance: ThemeApp
   setThemePreviewSidebarArtwork(false);
   root.dataset.themeId = THEME_PREVIEW_ID;
   root.classList.toggle("dark", appearance === "dark");
+  root.dataset.mode = appearance;
   for (const [role, value] of Object.entries(colors) as Array<[ThemeColorRole, string]>) {
     // A half-typed hex keeps the last good value instead of blanking the role.
     if (isThemeColor(value)) root.style.setProperty(APP_THEME_VARIABLES[role], value);

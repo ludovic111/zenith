@@ -1,0 +1,12 @@
+[package]
+name = "zenith-model"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "zenith: what clients derive from the server's data (sidebar sections and order, thread state, work log, pending requests, timeline), shared by the window, zenith-cli and zenith-mcp"
+
+[dependencies]
+zc-contracts = { path = "../zenith-code/crates/zc-contracts" }
+zc-orchestration = { path = "../zenith-code/crates/zc-orchestration" }
+serde = { workspace = true }
+serde_json = { workspace = true }

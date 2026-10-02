@@ -68,3 +68,6 @@ yarn-error.log*
 /target/
 /crates/zenith-app/gen/
 /crates/zenith-app/Info.plist
+
+# zenith.app and release archives (scripts/mac/package.sh)
+/dist/

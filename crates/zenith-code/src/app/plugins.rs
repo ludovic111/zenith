@@ -133,10 +133,14 @@ pub fn drivers(env: &DriverEnv) -> Vec<Arc<dyn Driver>> {
     let drivers: Vec<Arc<dyn Driver>> = vec![
         // WP-27: each turn hands the agent its thread's `t3-code` MCP session.
         Arc::new(
-            zc_provider_codex::CodexProviderDriver::new(env.clone()).with_mcp_sessions(env.mcp_sessions.clone().map(super::mcp::CodexMcpSessions::shared)),
+            zc_provider_codex::CodexProviderDriver::new(env.clone())
+                .with_mcp_sessions(env.mcp_sessions.clone().map(super::mcp::CodexMcpSessions::shared))
+                .with_lsuite_mcp(true),
         ),
         Arc::new(
-            zc_provider_claude::ClaudeProviderDriver::new(env.clone()).with_mcp_sessions(env.mcp_sessions.clone().map(super::mcp::ClaudeMcpSessions::shared)),
+            zc_provider_claude::ClaudeProviderDriver::new(env.clone())
+                .with_mcp_sessions(env.mcp_sessions.clone().map(super::mcp::ClaudeMcpSessions::shared))
+                .with_lsuite_mcp(true),
         ),
     ];
     zc_textgen::with_text_generation(drivers, env)

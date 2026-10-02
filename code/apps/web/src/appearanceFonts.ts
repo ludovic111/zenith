@@ -17,13 +17,15 @@ import {
   MIN_PROMPT_FONT_SIZE,
 } from "@t3tools/contracts";
 
+// zenith: lsuite's interface font (--ls-font-sans), bundled (lsuite.css).
 export const DEFAULT_SANS_FONT_STACK =
-  '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif';
+  'Manrope, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif';
 
-// Concrete names first: some engines alias `ui-monospace` to the
-// proportional system UI font, which would break every code surface.
+// zenith: lsuite's code font (--ls-font-mono), bundled (lsuite.css). Concrete
+// names before `ui-monospace`: some engines alias it to the proportional
+// system UI font, which would break every code surface.
 export const DEFAULT_CODE_FONT_STACK =
-  '"SF Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace';
+  '"IBM Plex Mono", "SF Mono", SFMono-Regular, Menlo, ui-monospace, monospace';
 
 export const TYPOGRAPHY_ADVANCED_STORAGE_KEY = "t3code:typography-advanced";
 
