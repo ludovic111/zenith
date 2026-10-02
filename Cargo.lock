@@ -8744,7 +8744,7 @@ dependencies = [
 
 [[package]]
 name = "zc-assets"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum",
@@ -8779,7 +8779,7 @@ dependencies = [
 
 [[package]]
 name = "zc-auth"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum",
@@ -8812,7 +8812,7 @@ dependencies = [
 
 [[package]]
 name = "zc-checkpoints"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -8838,7 +8838,7 @@ dependencies = [
 
 [[package]]
 name = "zc-codex-protocol"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -8846,7 +8846,7 @@ dependencies = [
 
 [[package]]
 name = "zc-contracts"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "base64 0.22.1",
  "jiff",
@@ -8856,7 +8856,7 @@ dependencies = [
 
 [[package]]
 name = "zc-core"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "futures",
@@ -8876,7 +8876,7 @@ dependencies = [
 
 [[package]]
 name = "zc-db"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "futures",
  "jiff",
@@ -8894,7 +8894,7 @@ dependencies = [
 
 [[package]]
 name = "zc-git"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "futures",
@@ -8919,7 +8919,7 @@ dependencies = [
 
 [[package]]
 name = "zc-http"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum",
@@ -8944,7 +8944,7 @@ dependencies = [
 
 [[package]]
 name = "zc-mcp"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum",
@@ -8974,7 +8974,7 @@ dependencies = [
 
 [[package]]
 name = "zc-orchestration"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -8997,7 +8997,7 @@ dependencies = [
 
 [[package]]
 name = "zc-ports"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "futures",
@@ -9010,7 +9010,7 @@ dependencies = [
 
 [[package]]
 name = "zc-preview"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum",
@@ -9031,7 +9031,7 @@ dependencies = [
 
 [[package]]
 name = "zc-project"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "futures",
@@ -9059,7 +9059,7 @@ dependencies = [
 
 [[package]]
 name = "zc-projections"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum",
@@ -9087,7 +9087,7 @@ dependencies = [
 
 [[package]]
 name = "zc-provider-claude"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -9114,7 +9114,7 @@ dependencies = [
 
 [[package]]
 name = "zc-provider-codex"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "futures",
@@ -9138,7 +9138,7 @@ dependencies = [
 
 [[package]]
 name = "zc-providers"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "futures",
@@ -9162,7 +9162,7 @@ dependencies = [
 
 [[package]]
 name = "zc-pullrequest"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum",
@@ -9201,7 +9201,7 @@ dependencies = [
 
 [[package]]
 name = "zc-reactors"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "futures",
@@ -9224,7 +9224,7 @@ dependencies = [
 
 [[package]]
 name = "zc-rpc"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "futures",
  "http",
@@ -9237,7 +9237,7 @@ dependencies = [
 
 [[package]]
 name = "zc-sessions"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum",
@@ -9257,7 +9257,7 @@ dependencies = [
 
 [[package]]
 name = "zc-settings"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -9281,7 +9281,7 @@ dependencies = [
 
 [[package]]
 name = "zc-sourcecontrol"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -9305,7 +9305,7 @@ dependencies = [
 
 [[package]]
 name = "zc-telemetry"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "futures",
@@ -9328,7 +9328,7 @@ dependencies = [
 
 [[package]]
 name = "zc-terminal"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum",
@@ -9350,7 +9350,7 @@ dependencies = [
 
 [[package]]
 name = "zc-textgen"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "futures",
@@ -9373,7 +9373,7 @@ dependencies = [
 
 [[package]]
 name = "zc-usage"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -9405,7 +9405,7 @@ dependencies = [
 
 [[package]]
 name = "zc-vcs"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "futures",
@@ -9428,7 +9428,7 @@ dependencies = [
 
 [[package]]
 name = "zc-workspace"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "base64 0.22.1",
  "fff-search",
@@ -9583,7 +9583,7 @@ dependencies = [
 
 [[package]]
 name = "zenith-app"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "cocoa 0.26.0",
@@ -9608,7 +9608,7 @@ dependencies = [
 
 [[package]]
 name = "zenith-client"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "futures",
@@ -9625,7 +9625,7 @@ dependencies = [
 
 [[package]]
 name = "zenith-code"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -9679,7 +9679,7 @@ dependencies = [
 
 [[package]]
 name = "zenith-commands"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -9699,7 +9699,7 @@ dependencies = [
 
 [[package]]
 name = "zenith-model"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "serde",
  "serde_json",
