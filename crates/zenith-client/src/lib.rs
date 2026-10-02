@@ -10,10 +10,14 @@
 //! - [`Client`]: both together, plus typed helpers over `zc_contracts` for the calls every
 //!   client makes (dispatching orchestration commands, reading the shell).
 //!
-//! The client never listens on anything, and only ever talks to the loopback server it
-//! was given.
+//! - [`remote`]: a server on another machine (paired with `zenith-cli remote`), used instead
+//!   of the local one.
+//!
+//! The client never listens on anything, and only ever talks to the server it was given:
+//! the loopback one, or the remote server this machine was paired with.
 
 pub mod local;
+pub mod remote;
 pub mod rpc;
 
 use std::sync::Arc;
@@ -44,6 +48,7 @@ pub struct Client {
     rpc: rpc::RpcClient,
     base_url: Arc<str>,
     tokens: Arc<dyn rpc::Tokens>,
+    remote: bool,
 }
 
 impl Client {
@@ -55,7 +60,21 @@ impl Client {
         Self::connect(base_url, identity, Arc::new(tokens))
     }
 
-    /// Connects to `base_url` (`http://127.0.0.1:PORT`), getting bearer tokens from `tokens`.
+    /// Connects to this machine's server: the remote one when `zenith-cli remote` paired one
+    /// ([`remote::url`]), else the local server.
+    pub fn connect_default(identity: ClientIdentity) -> Self {
+        match remote::url() {
+            Some(url) => {
+                let mut client = Self::connect(url, identity, remote::RemoteToken::shared());
+                client.remote = true;
+                client
+            }
+            None => Self::connect_local(identity),
+        }
+    }
+
+    /// Connects to `base_url` (`http://127.0.0.1:PORT`, or a remote `https://` server), getting
+    /// bearer tokens from `tokens`.
     pub fn connect(base_url: String, identity: ClientIdentity, tokens: Arc<dyn rpc::Tokens>) -> Self {
         let rpc = rpc::RpcClient::spawn(rpc::RpcConfig {
             base_url: base_url.clone(),
@@ -66,11 +85,57 @@ impl Client {
             rpc,
             base_url: base_url.into(),
             tokens,
+            remote: false,
         }
     }
 
     pub fn base_url(&self) -> &str {
         &self.base_url
+    }
+
+    /// Whether this is a server on another machine: it cannot be woken up from here, its
+    /// folders are not this machine's, and its log is not here.
+    pub fn is_remote(&self) -> bool {
+        self.remote
+    }
+
+    /// A one-time pairing code for a browser, with the owner's scopes (`POST
+    /// /api/auth/pairing-token`). Works with any server this client is signed in to.
+    pub async fn browser_pairing_code(&self, label: &str) -> anyhow::Result<String> {
+        const OWNER: [&str; 8] = [
+            "orchestration:read",
+            "orchestration:operate",
+            "terminal:operate",
+            "review:write",
+            "relay:read",
+            "relay:write",
+            "access:read",
+            "access:write",
+        ];
+        let http = reqwest::Client::builder().timeout(std::time::Duration::from_secs(20)).build()?;
+        let url = format!("{}/api/auth/pairing-token", self.base_url);
+        let mut refused = false;
+        loop {
+            let token = self.tokens.token(refused).await?;
+            let response = http
+                .post(&url)
+                .bearer_auth(token)
+                .json(&serde_json::json!({"label": label, "scopes": OWNER}))
+                .send()
+                .await?;
+            if response.status() == reqwest::StatusCode::UNAUTHORIZED && !refused {
+                refused = true;
+                continue;
+            }
+            let status = response.status();
+            anyhow::ensure!(status.is_success(), "/api/auth/pairing-token: HTTP {status}");
+            let body: Value = response.json().await?;
+            return body["credential"]
+                .as_str()
+                .filter(|c| !c.is_empty())
+                .map(String::from)
+                .ok_or_else(|| anyhow::anyhow!("no pairing code in the answer"));
+        }
     }
 
     /// The connection's state now and as it changes.
