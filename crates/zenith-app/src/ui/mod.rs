@@ -68,6 +68,17 @@ pub fn icon_button(
         )
 }
 
+/// One line of text ending in "…" when too long. GPUI's `truncate` keeps the first measure
+/// of text that does not wrap, taken before a flex row knows its width; text clamped to one
+/// line is measured again once the width is known.
+pub trait OneLine: Styled + Sized {
+    fn one_line(self) -> Self {
+        self.overflow_hidden().line_clamp(1).text_ellipsis()
+    }
+}
+
+impl<T: Styled> OneLine for T {}
+
 /// A small status dot.
 pub fn dot(color: Hsla) -> gpui::Div {
     div().size(px(7.)).flex_none().rounded_full().bg(color)

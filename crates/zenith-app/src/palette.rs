@@ -11,6 +11,7 @@ use crate::assets::Icon;
 use crate::store;
 use crate::theme::{radius, text, ActiveTheme, Appearance};
 use crate::ui::text_area::{TextArea, TextAreaEvent};
+use crate::ui::OneLine;
 use crate::ui::{icon, kbd};
 use crate::workspace::Route;
 
@@ -318,13 +319,13 @@ impl Render for Palette {
                         div()
                             .flex_none()
                             .max_w(px(380.))
-                            .truncate()
+                            .one_line()
                             .text_size(px(text::BASE))
                             .text_color(c.text)
                             .child(item.label.clone()),
                     )
                     .when_some(item.detail.clone(), |this, detail| {
-                        this.child(div().flex_1().min_w_0().truncate().text_size(px(text::SM)).text_color(c.text_3).child(detail))
+                        this.child(div().flex_1().min_w_0().one_line().text_size(px(text::SM)).text_color(c.text_3).child(detail))
                     })
                     .when(item.detail.is_none(), |this| this.child(div().flex_1()))
                     .when_some(item.keys, |this, keys| this.child(kbd(keys, cx)))

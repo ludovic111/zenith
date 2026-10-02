@@ -222,6 +222,14 @@ impl TextArea {
         self
     }
 
+    pub fn set_placeholder(&mut self, placeholder: impl Into<SharedString>, cx: &mut Context<Self>) {
+        let placeholder = placeholder.into();
+        if placeholder != self.placeholder {
+            self.placeholder = placeholder;
+            cx.notify();
+        }
+    }
+
     pub fn with_font(mut self, font_size: f32, line_height: f32) -> Self {
         self.font_size = font_size;
         self.line_height = line_height;
@@ -972,8 +980,8 @@ impl Element for TextAreaElement {
             input.content.clone()
         };
         let color = if showing_placeholder {
-            // The web's `--placeholder`: muted text.
-            theme.text_2
+            // The web's `--placeholder` at 75% (`text-placeholder/75`).
+            theme.text_2.opacity(0.75)
         } else if input.disabled {
             theme.text_2
         } else {

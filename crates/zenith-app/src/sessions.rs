@@ -11,6 +11,7 @@ use serde_json::{json, Value};
 use crate::assets::{Icon, MONO_FONT};
 use crate::store::{self, Store};
 use crate::theme::{radius, text, ActiveTheme};
+use crate::ui::OneLine;
 use crate::ui::{caps_label, dot, icon, pill, spinner, Button, Variant};
 
 pub struct SessionsView {
@@ -186,9 +187,9 @@ impl Render for SessionsView {
                         .min_w_0()
                         .flex()
                         .flex_col()
-                        .child(div().truncate().text_size(px(text::BASE)).text_color(c.text).child(SharedString::from(title)))
+                        .child(div().one_line().text_size(px(text::BASE)).text_color(c.text).child(SharedString::from(title)))
                         .child(
-                            div().truncate().text_size(px(text::XS)).text_color(c.text_3).child(SharedString::from(
+                            div().one_line().text_size(px(text::XS)).text_color(c.text_3).child(SharedString::from(
                                 [if agent == "claude" { "Claude Code" } else { "Codex" }, &project, &model]
                                     .iter()
                                     .filter(|s| !s.is_empty())
@@ -303,7 +304,7 @@ impl Render for SessionsView {
                                             .px(px(16.))
                                             .py(px(6.))
                                             .text_size(px(text::BASE))
-                                            .child(div().flex_1().truncate().text_color(c.text).child(SharedString::from(title)))
+                                            .child(div().flex_1().one_line().text_color(c.text).child(SharedString::from(title)))
                                             .child(
                                                 div()
                                                     .text_color(c.text_3)

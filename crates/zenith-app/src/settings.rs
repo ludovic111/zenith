@@ -12,6 +12,7 @@ use crate::assets::{Icon, MONO_FONT};
 use crate::composer::{provider_name, runtime_mode_label, RUNTIME_MODES};
 use crate::store::{self, Store};
 use crate::theme::{radius, text, ActiveTheme, Appearance};
+use crate::ui::OneLine;
 use crate::ui::{caps_label, dot, icon, pill, Button, Variant};
 use crate::update::{self, UpdateState};
 use crate::workspace::Workspace;
@@ -279,7 +280,7 @@ impl Render for SettingsView {
                         div()
                             .flex_1()
                             .min_w_0()
-                            .truncate()
+                            .one_line()
                             .font_family(MONO_FONT)
                             .text_size(px(text::SM))
                             .text_color(c.text_2)
