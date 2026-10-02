@@ -23,7 +23,7 @@ use crate::theme::{radius, ActiveTheme};
 use crate::ui::badges::{project_badge, provider_icon, pull_request_badge};
 use crate::ui::menu::{Entry, OpenMenu};
 use crate::ui::text_area::{TextArea, TextAreaEvent};
-use crate::ui::{icon_button, Tooltip};
+use crate::ui::{icon_button, OneLine, Tooltip};
 use crate::workspace::title_bar;
 
 pub enum SidebarEvent {
@@ -317,7 +317,16 @@ impl Sidebar {
                     .text_size(px(12.))
                     .line_height(px(16.))
                     .text_color(c.text_2)
-                    .child(SharedString::from(sidebar_age(shell::activity_at(thread), now)))
+                    // From the last message sent, else the last change (`threadTimeLabel`).
+                    .child(SharedString::from(sidebar_age(
+                        thread
+                            .latest_user_message_at
+                            .as_deref()
+                            .or(Some(thread.updated_at.as_str()))
+                            .and_then(zenith_model::time::millis)
+                            .unwrap_or(now),
+                        now,
+                    )))
                     .into_any_element(),
             }
         };
@@ -364,7 +373,7 @@ impl Sidebar {
                                 div()
                                     .flex_1()
                                     .min_w_0()
-                                    .truncate()
+                                    .one_line()
                                     .text_size(px(12.))
                                     .line_height(px(16.))
                                     .font_weight(weight)
@@ -392,7 +401,7 @@ impl Sidebar {
                             Some(field) => div().w_full().child(field).into_any_element(),
                             None => div()
                                 .w_full()
-                                .truncate()
+                                .one_line()
                                 .text_size(px(14.))
                                 .line_height(px(20.))
                                 .font_weight(weight)
@@ -419,7 +428,7 @@ impl Sidebar {
                                 div()
                                     .flex_1()
                                     .min_w_0()
-                                    .truncate()
+                                    .one_line()
                                     .text_color(c.text_2.opacity(0.4))
                                     .children(thread.branch.clone().map(|b| SharedString::from(middle_truncate(&b)))),
                             )
@@ -495,14 +504,16 @@ impl Sidebar {
             )
             .child(div().flex_none().when(!lit, |this| this.opacity(0.4)).child(project_badge(&project, 16., cx)))
             .child(
-                div()
-                    .flex_1()
-                    .min_w_0()
-                    .truncate()
-                    .text_size(px(14.))
-                    .line_height(px(20.))
-                    .text_color(if lit { c.text } else { dim })
-                    .child(thread.title.clone()),
+                // A block at full width inside, so GPUI knows the width and adds the ellipsis.
+                div().flex_1().min_w_0().child(
+                    div()
+                        .w_full()
+                        .one_line()
+                        .text_size(px(14.))
+                        .line_height(px(20.))
+                        .text_color(if lit { c.text } else { dim })
+                        .child(thread.title.clone()),
+                ),
             )
             .children(shell::pull_request_badge(thread).map(|badge| pull_request_badge(&badge, cx)))
             .child(

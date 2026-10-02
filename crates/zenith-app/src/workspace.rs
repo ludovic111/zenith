@@ -60,7 +60,16 @@ impl Workspace {
         let sidebar = cx.new(|cx| Sidebar::new(window, cx));
         let mut subscriptions = vec![
             cx.subscribe_in(&sidebar, window, Self::on_sidebar_event),
-            cx.observe(&store, |_, _, cx| cx.notify()),
+            cx.observe_in(&store, window, |this, _, window, cx| {
+                // As on the web, the home page is a new thread in the current project, once
+                // there is one.
+                if this.route == Route::Home {
+                    if let Some(project) = this.default_project(cx) {
+                        this.navigate(Route::NewThread(project), window, cx);
+                    }
+                }
+                cx.notify()
+            }),
             cx.observe_window_appearance(window, |this, window, cx| this.apply_appearance(window, cx)),
         ];
         // Leaving the window hides the app instead of closing it: the Dock icon brings it back.
@@ -153,6 +162,10 @@ impl Workspace {
 
     /// Shows a page; threads stay open (and subscribed) for a quick return.
     pub fn navigate(&mut self, route: Route, window: &mut Window, cx: &mut Context<Self>) {
+        let route = match route {
+            Route::Home => self.default_project(cx).map(Route::NewThread).unwrap_or(Route::Home),
+            other => other,
+        };
         match &route {
             Route::Thread(id) => {
                 // Subscribed again if the store let it go while the view stayed cached.

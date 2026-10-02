@@ -12,6 +12,7 @@ use gpui::{
 
 use crate::assets::Icon;
 use crate::theme::{radius, text, ActiveTheme};
+use crate::ui::OneLine;
 use crate::ui::{icon, kbd};
 
 actions!(menu, [SelectNext, SelectPrevious, Confirm, Dismiss]);
@@ -240,9 +241,9 @@ impl Render for Menu {
                                 Some(i) => icon(*i, if *danger { c.danger } else { c.text_2 }).into_any_element(),
                                 None => div().w(px(14.)).into_any_element(),
                             })
-                            .child(div().flex_1().truncate().child(label.clone()))
+                            .child(div().flex_1().one_line().child(label.clone()))
                             .when_some(detail.clone(), |this, detail| {
-                                this.child(div().text_size(px(text::SM)).text_color(c.text_3).truncate().child(detail))
+                                this.child(div().text_size(px(text::SM)).text_color(c.text_3).one_line().child(detail))
                             })
                             .when_some(keys.clone(), |this, keys| this.child(kbd(keys, cx)))
                             .when(*checked, |this| this.child(icon(Icon::Check, c.accent_text)))

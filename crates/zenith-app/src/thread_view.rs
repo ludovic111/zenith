@@ -29,7 +29,7 @@ use zenith_model::timeline;
 use zenith_model::worklog::{self, WorkEntry};
 
 use crate::assets::{Icon, MONO_FONT};
-use crate::composer::{Composer, ComposerEvent, EnvMode, ModelChoice};
+use crate::composer::{Composer, ComposerContext, ComposerEvent, EnvMode, ModelChoice};
 use crate::store::{self, Store, StoreEvent};
 use crate::terminal::{TermStatus, TerminalPanel};
 use crate::theme::{radius, text, ActiveTheme};
@@ -37,10 +37,12 @@ use crate::ui::badges::project_badge;
 use crate::ui::controls::{header_toggle, outline_button, split_separator, Part};
 use crate::ui::markdown::MdStyle;
 use crate::ui::menu::{Entry, OpenMenu};
+use crate::ui::OneLine;
 use crate::ui::{caps_label, icon, markdown, pill, spinner, Button, Tooltip, Variant};
 
 /// The timeline's reading width.
-const COLUMN: f32 = 780.;
+/// The web's `--chat-max-width` (48rem).
+const COLUMN: f32 = 768.;
 
 pub enum ThreadViewEvent {
     /// The draft's first message created this thread.
@@ -214,27 +216,59 @@ impl ThreadView {
         self.composer.read(cx).focus(window, cx);
     }
 
-    /// The composer starts from the thread's model and modes, once they are known.
+    /// The composer starts from the thread's model and modes, once they are known; what is
+    /// around it (strip, banner, placeholder) follows the thread.
     fn sync_composer(&mut self, cx: &mut Context<Self>) {
+        let running = self.store.read(cx).thread(self.thread_id()).is_some_and(|t| t.is_running());
+        let shell_thread = self.store.read(cx).shell.thread(self.thread_id()).cloned();
+        let session = self.thread(cx).and_then(|t| t.session.as_ref().map(|s| s.status));
+        // The web's phase: no session, or a stopped one, is "disconnected".
+        let disconnected = matches!(
+            session,
+            None | Some(
+                zc_contracts::OrchestrationSessionStatus::Stopped
+                    | zc_contracts::OrchestrationSessionStatus::Interrupted
+                    | zc_contracts::OrchestrationSessionStatus::Error
+            )
+        );
+        let git_ref = self.git.as_ref().and_then(|g| g.get("refName")).and_then(Value::as_str).map(String::from);
+        let context = ComposerContext {
+            draft: self.is_draft(),
+            // A new thread starts from the checkout's branch.
+            branch: shell_thread.as_ref().and_then(|t| t.branch.clone()).or(git_ref),
+            worktree: shell_thread.as_ref().is_some_and(|t| t.worktree_path.is_some()),
+            pull_request: shell_thread.as_ref().and_then(zenith_model::shell::pull_request_badge),
+            monitoring: shell_thread
+                .as_ref()
+                .is_some_and(|t| zenith_model::shell::status(t) == zenith_model::shell::ThreadStatus::Monitoring),
+            settled: shell_thread
+                .as_ref()
+                .is_some_and(|t| zenith_model::shell::section(t, now_millis()) == zenith_model::shell::Section::Settled),
+            snoozed: shell_thread
+                .as_ref()
+                .is_some_and(|t| zenith_model::shell::section(t, now_millis()) == zenith_model::shell::Section::Snoozed),
+        };
+        let placeholder = if disconnected {
+            "Ask for changes, send follow-ups, or attach images"
+        } else {
+            "Ask anything, @tag files/folders, $use skills, or / for commands"
+        };
+        self.composer.update(cx, |c, cx| {
+            c.running = running;
+            c.context = context;
+            c.editor.update(cx, |e, cx| e.set_placeholder(placeholder, cx));
+            cx.notify();
+        });
         if self.composer_synced || self.is_draft() {
-            let running = self.store.read(cx).thread(self.thread_id()).is_some_and(|t| t.is_running());
-            self.composer.update(cx, |c, cx| {
-                if c.running != running {
-                    c.running = running;
-                    cx.notify();
-                }
-            });
             return;
         }
         let Some(thread) = self.thread(cx).cloned() else { return };
         self.composer_synced = true;
         let model = serde_json::to_value(&thread.model_selection).ok().and_then(|v| ModelChoice::from_json(&v));
-        let running = self.store.read(cx).thread(self.thread_id()).is_some_and(|t| t.is_running());
         self.composer.update(cx, |c, cx| {
             c.model = model;
             c.runtime_mode = thread.runtime_mode.as_str().to_owned();
             c.plan_mode = thread.interaction_mode.as_str() == "plan";
-            c.running = running;
             cx.notify();
         });
     }
@@ -372,6 +406,10 @@ impl ThreadView {
         match event {
             ComposerEvent::Send(text) => self.send(text.clone(), None, window, cx),
             ComposerEvent::Stop => self.stop(cx),
+            ComposerEvent::Command(name) => {
+                let params = json!({"threadId": self.thread_id().as_str()});
+                self.command(name, params, cx).detach();
+            }
         }
     }
 
@@ -518,6 +556,8 @@ impl ThreadView {
             this.update(cx, |this, cx| {
                 if let Ok(value) = result {
                     this.git = value.get("status").cloned();
+                    // The strip under the composer shows the checkout's branch.
+                    this.sync_composer(cx);
                     cx.notify();
                 }
             })
@@ -1070,7 +1110,7 @@ impl ThreadView {
                         })
                         .on_click(|_, window, cx| window.dispatch_action(Box::new(crate::actions::NewThread), cx))
                         .child(project_badge(&name, 14., cx))
-                        .child(div().max_w(px(160.)).truncate().child(SharedString::from(name))),
+                        .child(div().max_w(px(160.)).one_line().child(SharedString::from(name))),
                 )
                 .child(div().flex_none().font_weight(FontWeight::NORMAL).text_color(c.text_3).child("/"))
             })
@@ -1090,7 +1130,7 @@ impl ThreadView {
                             this.update(cx, |v, cx| v.open_thread_menu(&thread, at, window, cx)).ok();
                         })
                     })
-                    .child(div().min_w_0().truncate().child(title))
+                    .child(div().min_w_0().one_line().child(title))
                     .when(!self.is_draft(), |this| {
                         this.child(
                             svg()
@@ -1508,7 +1548,7 @@ impl ThreadView {
                 div()
                     .flex_1()
                     .min_w_0()
-                    .truncate()
+                    .one_line()
                     .text_color(c.text_2)
                     .child(SharedString::from(summary.to_owned())),
             )
@@ -1597,7 +1637,7 @@ impl ThreadView {
                         div()
                             .flex_1()
                             .min_w_0()
-                            .when(!open, |el| el.truncate())
+                            .when(!open, |el| el.one_line())
                             .text_size(px(14.))
                             .line_height(px(22.75))
                             .font_weight(weight)
@@ -1882,7 +1922,7 @@ impl ThreadView {
                             div()
                                 .flex()
                                 .gap(px(8.))
-                                .child(div().flex_1().truncate().text_color(c.text_2).child(SharedString::from(f.path.clone())))
+                                .child(div().flex_1().one_line().text_color(c.text_2).child(SharedString::from(f.path.clone())))
                                 .child(div().text_color(c.success).child(SharedString::from(format!("+{}", f.additions))))
                                 .child(div().text_color(c.danger).child(SharedString::from(format!("−{}", f.deletions))))
                         }))
@@ -2095,7 +2135,7 @@ impl ThreadView {
                 .text_size(px(text::SM))
                 .text_color(c.danger)
                 .child(icon(Icon::CircleAlert, c.danger))
-                .child(div().truncate().child(SharedString::from(error)))
+                .child(div().one_line().child(SharedString::from(error)))
                 .into_any_element()
         })
     }
@@ -2152,6 +2192,12 @@ fn render_patch(key: &str, patch: &str, cx: &App) -> AnyElement {
 
 impl Render for ThreadView {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        self.render_page(cx)
+    }
+}
+
+impl ThreadView {
+    fn render_page(&mut self, cx: &mut Context<Self>) -> AnyElement {
         let c = cx.theme().colors.clone();
         let draft = self.is_draft();
         let loaded = self.store.read(cx).thread(self.thread_id()).is_some_and(|t| t.loaded);
@@ -2165,33 +2211,56 @@ impl Render for ThreadView {
         let view = cx.entity().downgrade();
         let pending = self.pending_send.clone();
 
-        let body: AnyElement = if draft && self.pending_send.is_none() {
-            div()
-                .flex_1()
+        // The new thread page (`DraftHeroHeadline`): the composer in the middle, the question
+        // 32 px over it.
+        if draft && self.pending_send.is_none() {
+            let project = project_title.unwrap_or_default();
+            let text = c.text;
+            let heading = div()
+                .absolute()
+                .left_0()
+                .right_0()
+                .bottom(relative(1.))
+                .pb(px(32.))
+                .flex()
+                .justify_center()
+                .text_size(px(text::XXL))
+                .line_height(px(36.))
+                .text_color(c.text)
+                .child("What should we build in\u{a0}")
+                .child(
+                    div()
+                        .id("draft-project")
+                        .font_weight(FontWeight::MEDIUM)
+                        .cursor_pointer()
+                        .border_b_1()
+                        .border_dashed()
+                        .border_color(c.text.opacity(0.3))
+                        .hover(move |s| s.border_color(text))
+                        .child(SharedString::from(project)),
+                )
+                .child("?");
+            return div()
+                .size_full()
                 .flex()
                 .flex_col()
-                .items_center()
                 .justify_center()
-                .gap(px(8.))
-                .px(px(24.))
+                .px(px(20.))
                 .child(
                     div()
-                        .text_size(px(text::XXL))
-                        .font_weight(FontWeight::BOLD)
-                        .text_color(c.text)
-                        .child("What should we build?"),
+                        .relative()
+                        .w_full()
+                        .max_w(px(COLUMN))
+                        .mx_auto()
+                        .child(heading)
+                        .when_some(requests, |el, requests| el.child(requests))
+                        .child(self.composer.clone())
+                        .child(div().h(px(20.))),
                 )
-                .child(
-                    div()
-                        .text_size(px(text::BASE))
-                        .text_color(c.text_2)
-                        .child(SharedString::from(match project_title {
-                            Some(p) => format!("A new thread in {p}. Pick the model and how much it may do on its own below."),
-                            None => "A new thread.".to_owned(),
-                        })),
-                )
-                .into_any_element()
-        } else if !loaded && !draft {
+                .when_some(self.menu.as_ref(), |el, menu| el.child(menu.render()))
+                .into_any_element();
+        }
+        let body: AnyElement = if !loaded && !draft {
             div()
                 .flex_1()
                 .flex()
@@ -2225,7 +2294,7 @@ impl Render for ThreadView {
             .child(
                 canvas(
                     move |bounds, _, cx| {
-                        let width = (bounds.size.width - px(48.)).max(px(200.));
+                        let width = (bounds.size.width - px(40.)).max(px(200.));
                         this.update(cx, |this, cx| {
                             if this.width != Some(width) {
                                 this.width = Some(width);
@@ -2262,7 +2331,8 @@ impl Render for ThreadView {
                 // The column gets a definite width (the view's, from the last frame): wrapped
                 // text in it is then measured as it is painted, and the area is as tall as
                 // what it shows.
-                div().flex().flex_col().px(px(24.)).pt(px(8.)).pb(px(20.)).child(
+                // The web's composer stack: 8 px over it, 20 under it, 20 px gutters.
+                div().flex().flex_col().px(px(20.)).pt(px(8.)).pb(px(20.)).child(
                     div()
                         .map(|this| match self.width {
                             Some(width) => this.w(width.min(px(COLUMN))),
@@ -2271,7 +2341,6 @@ impl Render for ThreadView {
                         .mx_auto()
                         .flex()
                         .flex_col()
-                        .gap(px(10.))
                         .when_some(requests, |this, requests| {
                             this.child(div().id("thread-requests").min_w_0().max_h(px(420.)).overflow_y_scroll().child(requests))
                         })
@@ -2281,6 +2350,7 @@ impl Render for ThreadView {
             )
             .when_some(terminals, |this, terminals| this.child(terminals))
             .when_some(self.menu.as_ref(), |this, menu| this.child(menu.render()))
+            .into_any_element()
     }
 }
 
@@ -2353,7 +2423,7 @@ fn live_row(glyph: Icon, label: SharedString, cx: &App) -> gpui::Div {
         .child(
             div()
                 .min_w_0()
-                .truncate()
+                .one_line()
                 .child(SharedString::from(label.split_whitespace().collect::<Vec<_>>().join(" "))),
         )
 }

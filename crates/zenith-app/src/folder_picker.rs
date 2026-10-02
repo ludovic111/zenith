@@ -12,6 +12,7 @@ use crate::store;
 use crate::theme::{radius, text, ActiveTheme};
 use crate::ui::icon;
 use crate::ui::text_area::{TextArea, TextAreaEvent};
+use crate::ui::OneLine;
 
 pub enum FolderPickerEvent {
     Dismissed,
@@ -165,7 +166,7 @@ impl Render for FolderPicker {
                     div()
                         .flex_none()
                         .max_w(px(380.))
-                        .truncate()
+                        .one_line()
                         .text_size(px(text::BASE))
                         .text_color(c.text)
                         .child(label),
@@ -174,7 +175,7 @@ impl Render for FolderPicker {
                     div()
                         .flex_1()
                         .min_w_0()
-                        .truncate()
+                        .one_line()
                         .text_size(px(text::SM))
                         .text_color(c.text_3)
                         .children(detail),
