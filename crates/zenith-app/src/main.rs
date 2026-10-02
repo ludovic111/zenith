@@ -11,6 +11,7 @@
 mod actions;
 mod assets;
 mod composer;
+mod folder_picker;
 mod native;
 mod palette;
 mod prefs;
@@ -73,7 +74,21 @@ fn register_app_actions(cx: &mut App) {
     cx.on_action(|_: &actions::Hide, cx| cx.hide());
     cx.on_action(|_: &actions::HideOthers, cx| cx.hide_other_apps());
     cx.on_action(|_: &actions::ShowAll, cx| cx.unhide_other_apps());
-    cx.on_action(|_: &actions::ShowServerLog, cx| cx.reveal_path(&zenith_client::local::server_log()));
+    cx.on_action(|_: &actions::ShowServerLog, cx| {
+        let store = store::store(cx);
+        if store.read(cx).is_remote() {
+            // The log is on the server's machine, not here.
+            store.update(cx, |s, cx| {
+                let message = format!(
+                    "The server's log is on {}: ~/.local/state/zenith/server.log there (journalctl --user -u zenith).",
+                    s.server_name()
+                );
+                s.notify_info(message, cx)
+            });
+        } else {
+            cx.reveal_path(&zenith_client::local::server_log());
+        }
+    });
     cx.on_action(|_: &actions::CheckForUpdates, cx| update::check_now(cx));
     cx.on_action(|_: &actions::About, cx| {
         let version = env!("CARGO_PKG_VERSION");
@@ -123,6 +138,10 @@ fn open_window(prefs: prefs::Prefs, cx: &mut App) {
 
 /// The server's LaunchAgent, when this zenith.app carries the server (a release).
 fn ensure_server() {
+    // Paired with a server on another machine (`zenith-cli remote`): no local one to run.
+    if zenith_client::remote::url().is_some() {
+        return;
+    }
     std::thread::spawn(|| match zenith_commands::agent::ensure() {
         Ok(true) => eprintln!("zenith: the server's LaunchAgent now runs this app's server"),
         Ok(false) => {}

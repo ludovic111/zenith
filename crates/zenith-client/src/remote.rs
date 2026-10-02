@@ -51,16 +51,20 @@ fn from_config(text: &str) -> Option<String> {
 
 /// `https://host[:port]`, without a trailing slash or path. A bare host gets `https://`.
 pub fn normalize(url: &str) -> anyhow::Result<String> {
-    let url = url.trim().trim_end_matches('/');
-    let url = if url.contains("://") { url.to_owned() } else { format!("https://{url}") };
-    let rest = url
-        .strip_prefix("https://")
-        .or_else(|| url.strip_prefix("http://"))
-        .ok_or_else(|| anyhow::anyhow!("{url}: the address must start with https:// or http://"))?;
-    if rest.is_empty() || rest.contains('/') || rest.contains('?') || rest.contains('#') {
+    let url = url.trim();
+    // The scheme is split off before trailing slashes go, so `https://` stays empty.
+    let (scheme, rest) = match url.split_once("://") {
+        Some((scheme, rest)) => (scheme, rest),
+        None => ("https", url),
+    };
+    if !scheme.eq_ignore_ascii_case("https") && !scheme.eq_ignore_ascii_case("http") {
+        anyhow::bail!("{url}: the address must start with https:// or http://");
+    }
+    let rest = rest.trim_end_matches('/');
+    if rest.is_empty() || rest.contains(['/', '?', '#', '@']) || rest.chars().any(char::is_whitespace) {
         anyhow::bail!("{url}: give the server's address only (https://host or https://host:port)");
     }
-    Ok(url)
+    Ok(format!("{}://{rest}", scheme.to_ascii_lowercase()))
 }
 
 /// The saved session for the remote server.
@@ -156,11 +160,17 @@ mod tests {
         assert!(normalize("https://box.example/pair#token=x").is_err());
         assert!(normalize("ftp://box").is_err());
         assert!(normalize("https://").is_err());
+        assert!(normalize("https:///").is_err());
+        assert!(normalize("").is_err());
+        assert_eq!(normalize("HTTPS://box.example").unwrap(), "https://box.example");
     }
 
     #[test]
     fn the_config_names_the_server() {
-        assert_eq!(from_config(r#"{"url":"https://box.example-tailnet.ts.net"}"#).as_deref(), Some("https://box.example-tailnet.ts.net"));
+        assert_eq!(
+            from_config(r#"{"url":"https://box.example-tailnet.ts.net"}"#).as_deref(),
+            Some("https://box.example-tailnet.ts.net")
+        );
         assert_eq!(from_config(r#"{"url":""}"#), None);
         assert_eq!(from_config("not json"), None);
     }
@@ -169,6 +179,9 @@ mod tests {
     fn the_override_can_force_the_local_server() {
         assert_eq!(from_override("local"), None);
         assert_eq!(from_override(""), None);
-        assert_eq!(from_override("box.example-tailnet.ts.net").as_deref(), Some("https://box.example-tailnet.ts.net"));
+        assert_eq!(
+            from_override("box.example-tailnet.ts.net").as_deref(),
+            Some("https://box.example-tailnet.ts.net")
+        );
     }
 }

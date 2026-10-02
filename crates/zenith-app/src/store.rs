@@ -1,7 +1,8 @@
 //! The window's view of the server: the connection, the server's configuration (providers,
 //! models, settings), the shell (projects and thread summaries) and the threads open in
 //! full. Streams are reopened whenever the connection comes back, resuming after the last
-//! sequence seen; the server is woken up (launchd) when it does not answer.
+//! sequence seen; this machine's server is woken up (launchd) when it does not answer. A
+//! remote server (`zenith-cli remote`) cannot be woken from here: the connection only retries.
 
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
@@ -37,6 +38,8 @@ pub struct Store {
     /// The server answered at least once since the window opened.
     pub ever_connected: bool,
     pub config: Option<ServerConfig>,
+    /// The server's machine (its environment's label), once it answered.
+    pub machine: Option<SharedString>,
     pub shell: Shell,
     threads: HashMap<ThreadId, OpenThread>,
     pub notices: Vec<Notice>,
@@ -56,7 +59,7 @@ impl Store {
     pub fn new(cx: &mut Context<Self>) -> Self {
         let client = {
             let _guard = crate::runtime::runtime().enter();
-            Client::connect_local(ClientIdentity {
+            Client::connect_default(ClientIdentity {
                 surface: "desktop",
                 app_version: env!("CARGO_PKG_VERSION").into(),
                 session_label: "zenith",
@@ -77,6 +80,7 @@ impl Store {
             status: ConnectionStatus::Connecting,
             ever_connected: false,
             config: None,
+            machine: None,
             shell: Shell::default(),
             threads: HashMap::new(),
             notices: Vec::new(),
@@ -94,6 +98,7 @@ impl Store {
         match status {
             ConnectionStatus::Connected if !was_connected => {
                 self.ever_connected = true;
+                self.load_machine(cx);
                 self.subscribe_config(cx);
                 self.subscribe_shell(cx);
                 let ids: Vec<ThreadId> = self.threads.keys().cloned().collect();
@@ -103,7 +108,7 @@ impl Store {
             }
             ConnectionStatus::Failed(_)
                 // Asleep or crashed: launchd brings it back; ask at most once a minute.
-                if self.woke_at.is_none_or(|at| at.elapsed() > Duration::from_secs(60)) => {
+                if !self.client.is_remote() && self.woke_at.is_none_or(|at| at.elapsed() > Duration::from_secs(60)) => {
                     self.woke_at = Some(Instant::now());
                     zenith_client::local::kickstart();
                 }
@@ -114,6 +119,37 @@ impl Store {
 
     pub fn connected(&self) -> bool {
         self.status == ConnectionStatus::Connected
+    }
+
+    /// Whether the server is on another machine (`zenith-cli remote`).
+    pub fn is_remote(&self) -> bool {
+        self.client.is_remote()
+    }
+
+    /// Where the server is, for people: its machine's name, else its address.
+    pub fn server_name(&self) -> SharedString {
+        self.machine.clone().unwrap_or_else(|| {
+            let url = self.client.base_url();
+            url.split_once("://").map_or(url, |(_, host)| host).to_owned().into()
+        })
+    }
+
+    fn load_machine(&mut self, cx: &mut Context<Self>) {
+        let client = self.client.clone();
+        let task = crate::runtime::spawn(async move { client.get_json("/.well-known/t3/environment").await });
+        cx.spawn(async move |this, cx| {
+            let Ok(Ok(descriptor)) = task.await else { return };
+            let label = descriptor["label"]
+                .as_str()
+                .map(str::trim)
+                .filter(|l| !l.is_empty())
+                .map(|l| SharedString::from(l.to_owned()));
+            let _ = this.update(cx, |store, cx| {
+                store.machine = label;
+                cx.notify();
+            });
+        })
+        .detach();
     }
 
     fn subscribe_config(&mut self, cx: &mut Context<Self>) {

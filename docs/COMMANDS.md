@@ -18,7 +18,7 @@ Asks GitHub Releases for a newer zenith (signed releases only).
 
 ### `server.status` (read)
 
-Whether the local server answers, where, and its environment.
+Whether the server answers, where, whether it is this machine's or a remote one (`zenith-cli remote`), and its environment.
 
 ## project
 
@@ -43,6 +43,14 @@ Adds a folder as a project.
 | `path` | string | yes | Absolute path of the folder. |
 | `title` | string |  | Defaults to the folder's name. |
 | `create` | bool |  | Create the folder if it does not exist. |
+
+### `project.browse` (read)
+
+Folders on the server's machine whose path starts with `path` (`~/` lists the home folder): what to give `project.add` when the server is on another machine.
+
+| Parameter | Type | Required | |
+|---|---|---|---|
+| `path` | string | yes | A folder ending in `/` lists its folders; otherwise the folders it starts. |
 
 ### `project.rename` (write)
 

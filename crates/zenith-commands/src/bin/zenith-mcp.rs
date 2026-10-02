@@ -7,7 +7,6 @@
 //! zenith › Settings › Agents (off, read, full) and checked for every call.
 
 use std::io::{BufRead, Write};
-use std::time::Duration;
 
 use serde_json::{json, Value};
 use zenith_client::{Client, ClientIdentity};
@@ -115,15 +114,12 @@ fn main() {
         .build()
         .expect("runtime");
     runtime.block_on(async {
-        let client = Client::connect_local(ClientIdentity {
+        let client = Client::connect_default(ClientIdentity {
             surface: "cli",
             app_version: env!("CARGO_PKG_VERSION").into(),
             session_label: "zenith",
         });
-        if client.wait_connected(Duration::from_secs(4)).await.is_err() {
-            zenith_client::local::kickstart();
-            let _ = client.wait_connected(Duration::from_secs(20)).await;
-        }
+        let _ = client.wait_ready().await;
         let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<String>();
         std::thread::spawn(move || {
             let stdin = std::io::stdin();

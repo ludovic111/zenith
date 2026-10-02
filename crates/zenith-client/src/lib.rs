@@ -143,6 +143,20 @@ impl Client {
         self.rpc.status()
     }
 
+    /// Waits for the server like a command-line client does: a local server that does not
+    /// answer is woken up ([`local::kickstart`]) and given 20 more seconds; a remote one cannot
+    /// be woken from here, it only gets more time.
+    pub async fn wait_ready(&self) -> Result<(), RpcError> {
+        let quick = self.wait_connected(std::time::Duration::from_secs(4)).await;
+        if quick.is_ok() {
+            return quick;
+        }
+        if !self.remote {
+            local::kickstart();
+        }
+        self.wait_connected(std::time::Duration::from_secs(20)).await
+    }
+
     /// Waits until the socket is up (or `timeout` passes).
     pub async fn wait_connected(&self, timeout: std::time::Duration) -> Result<(), RpcError> {
         let mut status = self.status();
