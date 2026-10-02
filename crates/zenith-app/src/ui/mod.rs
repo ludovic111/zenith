@@ -84,21 +84,6 @@ pub fn dot(color: Hsla) -> gpui::Div {
     div().size(px(7.)).flex_none().rounded_full().bg(color)
 }
 
-/// A keyboard shortcut, in the mono font.
-pub fn kbd(keys: impl Into<SharedString>, cx: &App) -> gpui::Div {
-    let c = &cx.theme().colors;
-    div()
-        .px(px(5.))
-        .py(px(1.))
-        .rounded(px(radius::XS))
-        .border_1()
-        .border_color(c.line_strong)
-        .font_family(MONO_FONT)
-        .text_size(px(text::XS))
-        .text_color(c.text_3)
-        .child(keys.into())
-}
-
 /// A tooltip bubble.
 pub struct Tooltip {
     text: SharedString,
@@ -113,24 +98,32 @@ impl Tooltip {
 }
 
 impl Render for Tooltip {
+    /// The web's tooltip: 8 px corners, a border, on --popover, 12 px text; the shortcut
+    /// follows in parentheses ("Toggle main sidebar (⌘B)").
     fn render(&mut self, _window: &mut Window, cx: &mut gpui::Context<Self>) -> impl IntoElement {
-        let theme = cx.theme();
-        let c = &theme.colors;
+        let c = &cx.theme().colors;
+        let text: SharedString = match &self.keys {
+            Some(keys) => format!("{} ({keys})", self.text).into(),
+            None => self.text.clone(),
+        };
         div()
-            .flex()
-            .items_center()
-            .gap_2()
-            .px_2()
-            .py_1()
-            .rounded(px(radius::SM))
-            .bg(theme.floating_bg())
+            .max_w(px(320.))
+            .px(px(8.))
+            .py(px(4.))
+            .rounded(px(radius::MD))
+            .bg(c.glass_opaque)
             .border_1()
-            .border_color(c.glass_edge)
-            .shadow(theme.floating_shadow())
-            .text_size(px(text::SM))
+            .border_color(c.line)
+            .shadow(vec![gpui::BoxShadow {
+                color: gpui::hsla(0., 0., 0., 0.05),
+                offset: gpui::point(px(0.), px(4.)),
+                blur_radius: px(6.),
+                spread_radius: px(-1.),
+            }])
+            .text_size(px(12.))
+            .line_height(px(16.))
             .text_color(c.text)
-            .child(self.text.clone())
-            .when_some(self.keys.clone(), |this, keys| this.child(kbd(keys, cx)))
+            .child(text)
     }
 }
 

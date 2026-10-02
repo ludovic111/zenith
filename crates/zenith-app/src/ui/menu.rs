@@ -11,9 +11,9 @@ use gpui::{
 };
 
 use crate::assets::Icon;
-use crate::theme::{radius, text, ActiveTheme};
+use crate::theme::{radius, ActiveTheme};
+use crate::ui::icon;
 use crate::ui::OneLine;
-use crate::ui::{icon, kbd};
 
 actions!(menu, [SelectNext, SelectPrevious, Confirm, Dismiss]);
 
@@ -188,24 +188,28 @@ impl Render for Menu {
             .occlude()
             .flex()
             .flex_col()
-            .min_w(self.min_width)
+            .min_w(self.min_width.max(px(160.)))
             .max_w(px(360.))
             .p(px(4.))
-            .rounded(px(radius::MD))
-            .bg(theme.floating_bg())
+            .rounded(px(radius::LG))
+            .bg(crate::composer::composer_surface(cx).0)
             .border_1()
             .border_color(c.glass_edge)
             .shadow(theme.floating_shadow())
+            .text_size(px(14.))
+            .line_height(px(20.))
             .children(self.entries.iter().enumerate().map(|(index, entry)| {
                 match entry {
-                    Entry::Separator => div().my(px(4.)).h(px(1.)).bg(c.line).into_any_element(),
+                    // `MenuSeparator`: 1 px of --border, 8 px in, 4 px above and under.
+                    Entry::Separator => div().mx(px(8.)).my(px(4.)).h(px(1.)).bg(c.line).into_any_element(),
+                    // `MenuGroupLabel`: 12 px medium muted text.
                     Entry::Header(label) => div()
                         .px(px(8.))
-                        .pt(px(6.))
-                        .pb(px(2.))
-                        .text_size(px(text::XS))
-                        .font_weight(FontWeight::SEMIBOLD)
-                        .text_color(c.text_3)
+                        .py(px(6.))
+                        .text_size(px(12.))
+                        .line_height(px(16.))
+                        .font_weight(FontWeight::MEDIUM)
+                        .text_color(c.text_2)
                         .child(label.clone())
                         .into_any_element(),
                     Entry::Item {
@@ -220,33 +224,51 @@ impl Render for Menu {
                     } => {
                         let selected = self.selected == Some(index);
                         let fg = if *danger { c.danger } else { c.text };
+                        // `MenuItem`: 28 px, 8 px across, 6 px corners; its icon at 80% of the
+                        // muted color; highlighted on --accent.
                         div()
                             .id(index)
                             .flex()
                             .items_center()
                             .gap(px(8.))
-                            .h(px(28.))
+                            .min_h(px(28.))
                             .px(px(8.))
+                            .py(px(4.))
                             .rounded(px(radius::SM))
-                            .text_size(px(text::BASE))
                             .text_color(fg)
                             .when(selected, |this| this.bg(c.accent_soft))
-                            .when(*disabled, |this| this.opacity(0.4))
+                            .when(*disabled, |this| this.opacity(0.64))
                             .when(!*disabled, |this| {
                                 this.cursor_pointer()
                                     .hover(|s| s.bg(c.accent_soft))
                                     .on_click(cx.listener(move |menu, _, window, cx| menu.run(index, window, cx)))
                             })
-                            .child(match item_icon {
-                                Some(i) => icon(*i, if *danger { c.danger } else { c.text_2 }).into_any_element(),
-                                None => div().w(px(14.)).into_any_element(),
+                            .when_some(*item_icon, |this, i| {
+                                this.child(icon(i, if *danger { c.danger } else { c.text_2.opacity(0.8) }).size(px(16.)))
                             })
                             .child(div().flex_1().one_line().child(label.clone()))
                             .when_some(detail.clone(), |this, detail| {
-                                this.child(div().text_size(px(text::SM)).text_color(c.text_3).one_line().child(detail))
+                                this.child(
+                                    div()
+                                        .max_w(px(200.))
+                                        .text_size(px(12.))
+                                        .text_color(c.text_2.opacity(0.8))
+                                        .one_line()
+                                        .child(detail),
+                                )
                             })
-                            .when_some(keys.clone(), |this, keys| this.child(kbd(keys, cx)))
-                            .when(*checked, |this| this.child(icon(Icon::Check, c.accent_text)))
+                            // `MenuShortcut`: 12 px medium in --secondary-label.
+                            .when_some(keys.clone(), |this, keys| {
+                                this.child(
+                                    div()
+                                        .ml(px(16.))
+                                        .text_size(px(12.))
+                                        .font_weight(FontWeight::MEDIUM)
+                                        .text_color(c.text_2)
+                                        .child(keys),
+                                )
+                            })
+                            .when(*checked, |this| this.child(icon(Icon::Check, c.text).size(px(16.))))
                             .into_any_element()
                     }
                 }

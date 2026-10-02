@@ -7,9 +7,10 @@ const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, d
 const page = await ctx.newPage();
 const base = process.env.ZENITH_URL ?? 'http://127.0.0.1:4747';
 const env = await (await fetch(`${base}/.well-known/t3/environment`)).json();
-await page.goto(which === 'thread' ? `${base}/${env.environmentId}/${process.env.THREAD}` : which === 'home' ? `${base}/` : `${base}/${which}`);
+await page.goto(which === 'thread' ? `${base}/${env.environmentId}/${process.env.THREAD}` : which === 'home' || which === 'palette' ? `${base}/` : `${base}/${which}`);
 await page.waitForTimeout(4000);
 if (which === 'thread') await page.waitForTimeout(4000);
+if (which === 'palette') { await page.waitForTimeout(2500); await page.keyboard.press('Control+K'); await page.waitForTimeout(800); }
 const out = await page.evaluate(() => {
   const rows = [];
   const root = getComputedStyle(document.documentElement);
