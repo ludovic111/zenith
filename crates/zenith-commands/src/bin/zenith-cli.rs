@@ -7,7 +7,9 @@
 //! zenith-cli <command> [--param value …]       run it (--flag alone means true)
 //! zenith-cli <command> --json '{"param": …}'   run it with JSON parameters
 //! zenith-cli docs                              docs/COMMANDS.md
-//! zenith-cli setup                             run the server from this zenith.app at login
+//! zenith-cli setup                             run the server from this zenith.app at login (macOS)
+//! zenith-cli setup [--tailscale-serve]         run the server next to zenith-cli at boot (Linux:
+//!                                              a systemd user service; see README, "Linux")
 //! zenith-cli release keygen <secret-file>      make the update signing key pair
 //! zenith-cli release sign <file> [--key <secret-file>]   sign (or ZENITH_UPDATE_SIGNING_KEY)
 //! ```
@@ -173,16 +175,16 @@ fn main() -> ExitCode {
         }
         "release" => return release(&args[1..]),
         "setup" => {
-            return match zenith_commands::agent::install(true) {
-                Ok(true) => {
-                    println!(
-                        "The server now starts at login from {}.",
-                        zenith_commands::lsuite::bundle_path().map(|p| p.display().to_string()).unwrap_or_default()
-                    );
-                    ExitCode::SUCCESS
+            let setup = match zenith_commands::agent::Setup::parse(&args[1..]) {
+                Ok(setup) => setup,
+                Err(error) => {
+                    eprintln!("Error: {error}\nzenith-cli setup [--tailscale-serve [--tailscale-serve-port <port>]]");
+                    return ExitCode::from(2);
                 }
-                Ok(false) => {
-                    println!("Nothing to do (already set up, or not run from an installed zenith.app).");
+            };
+            return match zenith_commands::agent::setup(&setup) {
+                Ok(message) => {
+                    println!("{message}");
                     ExitCode::SUCCESS
                 }
                 Err(error) => {
@@ -215,10 +217,16 @@ fn main() -> ExitCode {
         });
         if client.wait_connected(Duration::from_secs(4)).await.is_err() {
             zenith_client::local::kickstart();
-            client
-                .wait_connected(Duration::from_secs(20))
-                .await
-                .map_err(|e| format!("{e}. Is zenith installed? (npm run mac:install)"))?;
+            client.wait_connected(Duration::from_secs(20)).await.map_err(|e| {
+                format!(
+                    "{e}. Is zenith installed? ({})",
+                    if cfg!(target_os = "macos") {
+                        "npm run mac:install"
+                    } else {
+                        "zenith-cli setup"
+                    }
+                )
+            })?;
         }
         registry::run(&client, Caller::Cli, &command, params).await.map_err(|e| e.to_string())
     });
