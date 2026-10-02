@@ -71,9 +71,12 @@ pub struct WorkEntry {
     pub tool_call_id: Option<String>,
     pub status: Option<ToolStatus>,
     pub exit_code: Option<i64>,
+    /// The tool's own title (`payload.title`).
+    pub tool_title: Option<String>,
 }
 
 impl WorkEntry {
+    /// What the entry did, for summaries and icons (`toolGroupAction`).
     pub fn action(&self) -> Action {
         if matches!(
             self.kind.as_str(),
@@ -83,7 +86,10 @@ impl WorkEntry {
         }
         let item = self.item_type.as_deref();
         let request = self.request_kind.as_deref();
-        if request == Some("file-read") || item == Some("image_view") {
+        if request == Some("file-read")
+            || item == Some("image_view")
+            || (item == Some("dynamic_tool_call") && self.tool_title.as_deref().is_some_and(|t| t.trim().eq_ignore_ascii_case("read file")))
+        {
             return Action::Read;
         }
         if request == Some("file-change") || item == Some("file_change") || !self.changed_files.is_empty() {
@@ -93,17 +99,12 @@ impl WorkEntry {
             return Action::Command;
         }
         if item == Some("web_search") {
-            return Action::WebSearch;
-        }
-        let label = self.label.to_lowercase();
-        if label.starts_with("read") {
-            return Action::Read;
-        }
-        if label.starts_with("grep") || label.starts_with("glob") || label.starts_with("search") || label.starts_with("find") {
-            return Action::CodeSearch;
-        }
-        if label.starts_with("edit") || label.starts_with("write") {
-            return Action::Edit;
+            let label = compact_label(self.tool_title.as_deref().unwrap_or(&self.label)).to_lowercase();
+            return if label.split(|c: char| !c.is_alphanumeric()).any(|w| w == "grep") {
+                Action::CodeSearch
+            } else {
+                Action::WebSearch
+            };
         }
         if self.is_tool_like() {
             Action::Other
@@ -112,22 +113,108 @@ impl WorkEntry {
         }
     }
 
+    /// `workLogEntryIsToolLike`: tool, thinking or error tone, a command, a request, or a tool's
+    /// own item type.
     pub fn is_tool_like(&self) -> bool {
-        self.tone == Tone::Tool || self.item_type.is_some() || self.command.is_some() || self.tool_call_id.is_some()
+        matches!(self.tone, Tone::Tool | Tone::Thinking | Tone::Error)
+            || self.command.as_deref().is_some_and(|c| !c.trim().is_empty())
+            || self.request_kind.is_some()
+            || self.item_type.as_deref().is_some_and(is_tool_item_type)
     }
 
-    /// Failed, by status or by what its output says (`workEntryIndicatesToolFailure`).
-    pub fn failed(&self) -> bool {
+    fn failed_with(&self, include_command: bool) -> bool {
         if self.tone == Tone::Error || matches!(self.status, Some(ToolStatus::Failed | ToolStatus::Declined)) {
             return true;
         }
-        if self.exit_code.is_some_and(|c| c != 0) {
-            return true;
+        if !self.is_tool_like() {
+            return false;
         }
-        self.detail.as_deref().is_some_and(|d| {
-            let d = d.to_lowercase();
-            d.contains("command not found") || d.contains("permission denied") || d.starts_with("error:")
-        })
+        let mut output = self.detail.clone().unwrap_or_default();
+        if let Some(code) = self.exit_code.filter(|c| *c != 0) {
+            output.push_str(&format!("\n<exited with exit code {code}>"));
+        }
+        if include_command {
+            if let Some(command) = &self.command {
+                output.push('\n');
+                output.push_str(command);
+            }
+        }
+        !output.trim().is_empty() && looks_like_failure(&output)
+    }
+
+    /// Failed, by status or by what its output and command say (`workEntryIndicatesToolFailure`).
+    pub fn failed(&self) -> bool {
+        self.failed_with(true)
+    }
+
+    /// Failed by what is shown, not counting the command itself
+    /// (`workEntryDisplayIndicatesToolFailure`).
+    pub fn display_failed(&self) -> bool {
+        self.failed_with(false)
+    }
+
+    /// `workEntryIndicatesToolSuccess`.
+    pub fn succeeded(&self) -> bool {
+        self.is_tool_like() && !self.failed() && self.tone != Tone::Thinking && !matches!(self.status, Some(ToolStatus::InProgress | ToolStatus::Stopped))
+    }
+
+    /// A tool-like entry with neither success nor failure (`workEntryIndicatesToolNeutralStatus`).
+    pub fn neutral(&self) -> bool {
+        self.is_tool_like() && !self.failed() && !self.succeeded()
+    }
+
+    /// Whether a group shows it (`workEntryIsVisibleInGroup`): neutral entries only while their
+    /// run is live.
+    pub fn visible_in_group(&self, live: bool) -> bool {
+        (live && (self.status == Some(ToolStatus::InProgress) || self.kind == "task.progress")) || !self.neutral()
+    }
+
+    /// The label of a lone tool call (`singleToolCallLabel`): its command, else its title.
+    pub fn single_label(&self) -> String {
+        if let Some(command) = self.command.as_deref().map(str::trim).filter(|c| !c.is_empty()) {
+            return command.to_owned();
+        }
+        capitalize(&compact_label(self.tool_title.as_deref().unwrap_or(&self.label)))
+    }
+
+    /// The label of an entry in an open group (`workEntryDisplayLabel`).
+    pub fn display_label(&self, workspace_root: Option<&str>) -> String {
+        if let Some(command) = &self.command {
+            return command.clone();
+        }
+        if let Some(detail) = &self.detail {
+            return detail.clone();
+        }
+        if let Some(first) = self.changed_files.first() {
+            let path = relative_path(first, workspace_root);
+            return if self.changed_files.len() == 1 {
+                path
+            } else {
+                format!("{path} +{} more", self.changed_files.len() - 1)
+            };
+        }
+        capitalize(&compact_label(self.tool_title.as_deref().unwrap_or(&self.label)))
+    }
+
+    /// "Running npm", "Ran npm", "Failed npm"… (`liveWorkEntryLabel`).
+    pub fn live_label(&self, workspace_root: Option<&str>, active: bool) -> String {
+        if let Some(command) = self.command.as_deref().map(str::trim).filter(|c| !c.is_empty()) {
+            let status = if active {
+                self.status.unwrap_or(ToolStatus::InProgress)
+            } else {
+                self.status.unwrap_or(ToolStatus::Completed)
+            };
+            let verb = match status {
+                ToolStatus::InProgress => "Running",
+                ToolStatus::Failed => "Failed",
+                ToolStatus::Declined => "Declined",
+                ToolStatus::Stopped => "Stopped",
+                ToolStatus::Completed => "Ran",
+            };
+            let program = command.split_whitespace().next().map(|p| p.rsplit('/').next().unwrap_or(p).to_owned());
+            return format!("{verb} {}", program.unwrap_or_else(|| "command".into()));
+        }
+        self.display_label(workspace_root)
     }
 
     pub fn running(&self) -> bool {
@@ -141,6 +228,86 @@ impl WorkEntry {
         }
         self.detail.as_deref().map(first_line).filter(|d| !d.is_empty())
     }
+}
+
+/// Item types that are a tool's own lifecycle (`isToolLifecycleItemType`).
+fn is_tool_item_type(item: &str) -> bool {
+    matches!(
+        item,
+        "command_execution" | "file_change" | "mcp_tool_call" | "dynamic_tool_call" | "collab_agent_tool_call" | "web_search" | "image_view"
+    )
+}
+
+/// `normalizeCompactToolLabel`: without a trailing "complete(d)".
+pub fn compact_label(value: &str) -> String {
+    let trimmed = value.trim();
+    let lower = trimmed.to_lowercase();
+    for suffix in [" completed", " complete"] {
+        if lower.ends_with(suffix) {
+            return trimmed[..trimmed.len() - suffix.len()].trim().to_owned();
+        }
+    }
+    trimmed.to_owned()
+}
+
+fn capitalize(text: &str) -> String {
+    let mut chars = text.chars();
+    chars.next().map(|c| c.to_uppercase().chain(chars).collect()).unwrap_or_default()
+}
+
+fn relative_path(path: &str, root: Option<&str>) -> String {
+    match root.and_then(|r| path.strip_prefix(r.trim_end_matches('/'))) {
+        Some(rest) if rest.starts_with('/') => rest[1..].to_owned(),
+        _ => path.to_owned(),
+    }
+}
+
+/// Some providers report success while the output says it failed
+/// (`toolDetailTextLooksLikeFailure`).
+fn looks_like_failure(text: &str) -> bool {
+    let n = text.to_lowercase();
+    let exit_code = |prefix: &str| {
+        n.match_indices(prefix).any(|(i, m)| {
+            let rest = n[i + m.len()..].trim_start_matches([' ', ':']);
+            rest.chars().next().is_some_and(|c| ('1'..='9').contains(&c))
+        })
+    };
+    n.contains("file not found")
+        || n.contains("no files found")
+        || n.contains("enoent")
+        || n.contains("no such file")
+        || n.contains("commandnotfoundexception")
+        || n.contains("command not found")
+        || (n.contains("cannot find path") && n.contains("because it does not exist"))
+        || (n.contains("is not recognized") && n.contains("the term '"))
+        || n.contains("is not recognized as the name of a cmdlet")
+        || n.contains("a parameter cannot be found that matches parameter name")
+        || exit_code("exit code")
+}
+
+/// `omitSupersededLifecycleMarkers`: a marker without status or id gives way to a later finished
+/// entry of the same tool.
+pub fn omit_superseded<'a>(entries: &[&'a WorkEntry]) -> Vec<&'a WorkEntry> {
+    let mut later_terminal: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let mut kept = Vec::new();
+    for entry in entries.iter().rev() {
+        let identity = format!(
+            "{}\u{1f}{}\u{1f}{}",
+            entry.turn_id.as_deref().unwrap_or("no-turn"),
+            entry.item_type.as_deref().unwrap_or(""),
+            compact_label(entry.tool_title.as_deref().unwrap_or(&entry.label))
+        );
+        let marker = entry.tool_call_id.is_none() && entry.status.is_none() && matches!(entry.kind.as_str(), "tool.started" | "tool.updated");
+        if marker && later_terminal.contains(&identity) {
+            continue;
+        }
+        kept.push(*entry);
+        if entry.kind == "tool.completed" || entry.status.is_some_and(|s| s != ToolStatus::InProgress) {
+            later_terminal.insert(identity);
+        }
+    }
+    kept.reverse();
+    kept
 }
 
 fn first_line(text: &str) -> String {
@@ -272,11 +439,9 @@ fn skipped(activity: &OrchestrationThreadActivity) -> bool {
     if activity.summary == "Checkpoint captured" {
         return true;
     }
-    // Requests show as their own panel while open, and leave nothing to read once answered.
-    if matches!(
-        kind,
-        "approval.requested" | "approval.resolved" | "user-input.requested" | "user-input.resolved"
-    ) {
+    // Questions show as their own panel while open. Approvals stay: the web lists them as
+    // "Received N updates".
+    if matches!(kind, "user-input.requested" | "user-input.resolved") {
         return true;
     }
     if kind == "runtime.warning" && activity.summary.ends_with("(no displayable text content)") {
@@ -316,14 +481,16 @@ fn to_entry(activity: &OrchestrationThreadActivity) -> WorkEntry {
     } else {
         activity.summary.clone()
     };
+    // Approvals read as information (`toDerivedWorkLogEntry`).
     let tone = match (kind.as_str(), activity.tone) {
         ("task.progress", _) => Tone::Thinking,
         (_, OrchestrationThreadActivityTone::Error) => Tone::Error,
         (_, OrchestrationThreadActivityTone::Tool) => Tone::Tool,
         _ => Tone::Info,
     };
+    let tool_title = text(payload.get("title"));
     let command = extract_command(payload);
-    let item_type = text(payload.get("itemType"));
+    let item_type = text(payload.get("itemType")).filter(|t| is_tool_item_type(t));
     let is_command_tool =
         item_type.as_deref() == Some("command_execution") || payload.get("data").and_then(|d| d.get("kind")).and_then(Value::as_str) == Some("execute");
     let (raw_detail, mut exit_code) = text(payload.get("detail")).map(|d| strip_exit_code(&d)).unwrap_or((None, None));
@@ -376,6 +543,7 @@ fn to_entry(activity: &OrchestrationThreadActivity) -> WorkEntry {
         tool_call_id,
         status,
         exit_code,
+        tool_title,
     }
 }
 
@@ -428,6 +596,7 @@ fn merge(previous: &WorkEntry, next: WorkEntry) -> WorkEntry {
         request_kind: next.request_kind.or_else(|| previous.request_kind.clone()),
         status: next.status.or(previous.status),
         exit_code: next.exit_code.or(previous.exit_code),
+        tool_title: next.tool_title.or_else(|| previous.tool_title.clone()),
         ..next
     }
 }
@@ -462,7 +631,7 @@ fn plural(count: usize, one: &str, many: &str) -> String {
 /// One sentence for a group of entries (`summarizeToolGroup`).
 pub fn summarize(entries: &[&WorkEntry]) -> String {
     let mut groups: Vec<(Action, Vec<&WorkEntry>)> = Vec::new();
-    for entry in entries {
+    for entry in omit_superseded(entries) {
         let action = entry.action();
         match groups.iter_mut().find(|(a, _)| *a == action) {
             Some((_, list)) => list.push(entry),
