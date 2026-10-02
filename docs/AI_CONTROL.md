@@ -17,6 +17,13 @@ running zenith (its server, which runs from login). The full list, with every pa
 `zenith-cli` and `zenith-mcp` live in `zenith.app/Contents/MacOS` (and `~/.local/bin` after
 `npm run mac:install`). Both wake the server up if it sleeps.
 
+They can also drive a server on another machine: after `zenith-cli remote <url> <code>` (the
+code from `zenith-code auth pairing create --admin` on that server), the window, `zenith-cli`
+and `zenith-mcp` all talk to it over `wss://` (`zenith-cli remote` shows which one;
+`zenith-cli remote --off` goes back to this machine's; `ZENITH_REMOTE_URL` overrides it for one
+run). `server.status` then answers `"remote": true`, and `project.browse` lists that machine's
+folders for `project.add`. A remote server is never woken up from here.
+
 On Linux they are in the folder the release archive was extracted in, next to the server.
 `zenith-cli setup` makes that server a systemd user service that starts when the machine boots
 (`zenith.service`, on `127.0.0.1:4747`, log in `~/.local/state/zenith/server.log`), which is all

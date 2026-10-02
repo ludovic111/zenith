@@ -53,6 +53,17 @@ curl -L https://github.com/ludovic111/zenith/releases/latest/download/zenith-lin
 zenith-code auth pairing create --admin --base-dir ~/.zenith/code --base-url https://my-server.example-tailnet.ts.net
 ```
 
+**The window on your other machines, with this server.** zenith on a Mac (or any other machine) can show and drive the threads of a server elsewhere on your tailnet instead of its own. On the server, make a one-time code; on the other machine, pair with it:
+
+```bash
+# on the server
+zenith-code auth pairing create --admin --ttl 10m --base-dir ~/.zenith/code
+# on the Mac
+zenith-cli remote https://my-server.example-tailnet.ts.net <code>
+```
+
+From then on the window, `zenith-cli` and `zenith-mcp` there use that server (its address is in `~/.zenith/app/remote.json`, its session in `~/.zenith/app/remote.token`, 0600), and the Mac runs no server of its own. The sidebar's corner shows which machine the window is on. "Add Project" then lists the server's folders, "Open in Browser" opens the server's web interface already signed in. `zenith-cli remote` shows which server is used; `zenith-cli remote --off` goes back to the Mac's own server. `ZENITH_REMOTE_URL=<url>` uses another server for one run (`local` forces the machine's own).
+
 If you start `zenith-code serve` yourself, never pass `--tailscale-serve` without `--host 127.0.0.1`: without `--host` the server listens on every network interface (`0.0.0.0`), not only for Tailscale.
 
 ## How it is built

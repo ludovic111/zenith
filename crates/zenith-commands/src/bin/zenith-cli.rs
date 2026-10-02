@@ -15,14 +15,13 @@
 //! ```
 
 use std::process::ExitCode;
-use std::time::Duration;
 
 use serde_json::{Map, Value};
 use zenith_client::{Client, ClientIdentity};
 use zenith_commands::registry::{self, Caller, Ty, COMMANDS};
 
 fn usage() -> String {
-    let mut out = String::from("zenith-cli: drive zenith from a terminal.\n\nUsage:\n  zenith-cli <command> [--param value …]\n  zenith-cli <command> --json '{…}'\n  zenith-cli list | help <command> | docs | setup | --version\n\nCommands:\n");
+    let mut out = String::from("zenith-cli: drive zenith from a terminal.\n\nUsage:\n  zenith-cli <command> [--param value …]\n  zenith-cli <command> --json '{…}'\n  zenith-cli list | help <command> | docs | setup | --version\n  zenith-cli remote [<url> <code> | --off]\n\nCommands:\n");
     for spec in COMMANDS {
         out.push_str(&format!("  {:<28} {}\n", spec.name, spec.summary));
     }
@@ -142,6 +141,75 @@ fn release(args: &[String]) -> ExitCode {
     }
 }
 
+/// `zenith-cli remote`: which server this machine uses; `remote <url> <code>` pairs it with
+/// a server on another machine (the code comes from `zenith-code auth pairing create --admin`
+/// there); `remote --off` goes back to the local server.
+fn remote(args: &[String]) -> ExitCode {
+    use zenith_client::remote;
+    let usage = "zenith-cli remote [<url> <code> | --off]";
+    match args {
+        [] => {
+            match remote::url() {
+                Some(url) => println!("{url} (remote; `zenith-cli remote --off` goes back to this machine's server)"),
+                None => println!("{} (this machine's server)", zenith_client::local::base_url()),
+            }
+            ExitCode::SUCCESS
+        }
+        [off] if off == "--off" || off == "off" => match remote::forget() {
+            Ok(true) => {
+                println!("Back to this machine's server ({}).", zenith_client::local::base_url());
+                ExitCode::SUCCESS
+            }
+            Ok(false) => {
+                println!("Already on this machine's server ({}).", zenith_client::local::base_url());
+                ExitCode::SUCCESS
+            }
+            Err(error) => {
+                eprintln!("Error: {error}");
+                ExitCode::from(1)
+            }
+        },
+        [url, code] if !url.starts_with('-') => {
+            let runtime = match tokio::runtime::Builder::new_current_thread().enable_all().build() {
+                Ok(runtime) => runtime,
+                Err(error) => {
+                    eprintln!("Error: {error}");
+                    return ExitCode::from(1);
+                }
+            };
+            let label = format!("zenith on {}", machine_name());
+            match runtime.block_on(remote::pair(url, code, &label)) {
+                Ok(url) => {
+                    println!("Paired: the window, zenith-cli and zenith-mcp now use {url}.");
+                    if std::env::var_os("ZENITH_REMOTE_URL").is_some() {
+                        eprintln!("ZENITH_REMOTE_URL is set and still wins over this until it is unset.");
+                    }
+                    ExitCode::SUCCESS
+                }
+                Err(error) => {
+                    eprintln!("Error: {error:#}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        _ => {
+            eprintln!("{usage}");
+            ExitCode::from(2)
+        }
+    }
+}
+
+/// This machine's name, for the server's list of paired clients.
+fn machine_name() -> String {
+    std::process::Command::new("hostname")
+        .arg("-s")
+        .output()
+        .ok()
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_owned())
+        .filter(|name| !name.is_empty())
+        .unwrap_or_else(|| std::env::consts::OS.to_owned())
+}
+
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let Some(command) = args.first().cloned() else {
@@ -174,6 +242,7 @@ fn main() -> ExitCode {
             return ExitCode::SUCCESS;
         }
         "release" => return release(&args[1..]),
+        "remote" => return remote(&args[1..]),
         "setup" => {
             let setup = match zenith_commands::agent::Setup::parse(&args[1..]) {
                 Ok(setup) => setup,
@@ -210,14 +279,18 @@ fn main() -> ExitCode {
         }
     };
     let result = runtime.block_on(async move {
-        let client = Client::connect_local(ClientIdentity {
+        let client = Client::connect_default(ClientIdentity {
             surface: "cli",
             app_version: env!("CARGO_PKG_VERSION").into(),
             session_label: "zenith",
         });
-        if client.wait_connected(Duration::from_secs(4)).await.is_err() {
-            zenith_client::local::kickstart();
-            client.wait_connected(Duration::from_secs(20)).await.map_err(|e| {
+        client.wait_ready().await.map_err(|e| {
+            if client.is_remote() {
+                format!(
+                    "{e}. The server is {} (`zenith-cli remote --off` goes back to this machine's)",
+                    client.base_url()
+                )
+            } else {
                 format!(
                     "{e}. Is zenith installed? ({})",
                     if cfg!(target_os = "macos") {
@@ -226,8 +299,8 @@ fn main() -> ExitCode {
                         "zenith-cli setup"
                     }
                 )
-            })?;
-        }
+            }
+        })?;
         registry::run(&client, Caller::Cli, &command, params).await.map_err(|e| e.to_string())
     });
     match result {

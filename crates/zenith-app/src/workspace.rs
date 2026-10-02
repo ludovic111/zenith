@@ -13,6 +13,7 @@ use zenith_model::time::now_millis;
 
 use crate::actions;
 use crate::assets::Icon;
+use crate::folder_picker::{FolderPicker, FolderPickerEvent};
 use crate::palette::{Palette, PaletteEvent};
 use crate::prefs::Prefs;
 use crate::sessions::SessionsView;
@@ -47,6 +48,7 @@ pub struct Workspace {
     settings: Option<Entity<SettingsView>>,
     sessions: Option<Entity<SessionsView>>,
     palette: Option<(Entity<Palette>, Subscription)>,
+    folder_picker: Option<(Entity<FolderPicker>, Subscription)>,
     focus_handle: FocusHandle,
     _subscriptions: Vec<Subscription>,
 }
@@ -81,6 +83,7 @@ impl Workspace {
             settings: None,
             sessions: None,
             palette: None,
+            folder_picker: None,
             focus_handle: cx.focus_handle(),
             _subscriptions: subscriptions,
         };
@@ -267,8 +270,13 @@ impl Workspace {
         }
     }
 
-    /// Asks for a folder and adds it as a project.
+    /// Asks for a folder and adds it as a project: in the Mac's folder picker, or among the
+    /// server's folders when it is on another machine.
     pub fn add_project(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.store.read(cx).is_remote() {
+            self.open_folder_picker(window, cx);
+            return;
+        }
         let paths = cx.prompt_for_paths(PathPromptOptions {
             files: false,
             directories: true,
@@ -278,21 +286,39 @@ impl Workspace {
         cx.spawn_in(window, async move |this, cx| {
             let Ok(Ok(Some(paths))) = paths.await else { return };
             let Some(path) = paths.into_iter().next() else { return };
-            let _ = this.update_in(cx, |this, window, cx| {
-                let params = json!({"path": path.to_string_lossy()});
-                let task = this.store.update(cx, |store, cx| store.run_command("project.add", params, cx));
-                cx.spawn_in(window, async move |this, cx| {
-                    if let Ok(added) = task.await {
-                        let Some(project_id) = added.get("projectId").and_then(|v| v.as_str()).map(ProjectId::from) else {
-                            return;
-                        };
-                        let _ = this.update_in(cx, |this, window, cx| this.navigate(Route::NewThread(project_id), window, cx));
-                    }
-                })
-                .detach();
-            });
+            let _ = this.update_in(cx, |this, window, cx| this.add_project_at(path.to_string_lossy().into_owned(), window, cx));
         })
         .detach();
+    }
+
+    fn add_project_at(&mut self, path: String, window: &mut Window, cx: &mut Context<Self>) {
+        let params = json!({"path": path});
+        let task = self.store.update(cx, |store, cx| store.run_command("project.add", params, cx));
+        cx.spawn_in(window, async move |this, cx| {
+            if let Ok(added) = task.await {
+                let Some(project_id) = added.get("projectId").and_then(|v| v.as_str()).map(ProjectId::from) else {
+                    return;
+                };
+                let _ = this.update_in(cx, |this, window, cx| this.navigate(Route::NewThread(project_id), window, cx));
+            }
+        })
+        .detach();
+    }
+
+    fn open_folder_picker(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.palette = None;
+        let picker = cx.new(|cx| FolderPicker::new(window, cx));
+        let subscription = cx.subscribe_in(&picker, window, |this, _, event: &FolderPickerEvent, window, cx| {
+            this.folder_picker = None;
+            match event {
+                FolderPickerEvent::Dismissed => this.focus_page(window, cx),
+                FolderPickerEvent::Picked(path) => this.add_project_at(path.clone(), window, cx),
+            }
+            cx.notify();
+        });
+        picker.update(cx, |p, cx| p.focus(window, cx));
+        self.folder_picker = Some((picker, subscription));
+        cx.notify();
     }
 
     fn on_sidebar_event(&mut self, _: &Entity<Sidebar>, event: &SidebarEvent, window: &mut Window, cx: &mut Context<Self>) {
@@ -410,6 +436,25 @@ impl Workspace {
     fn open_in_browser(&mut self, _: &actions::OpenInBrowser, _: &mut Window, cx: &mut Context<Self>) {
         // The browser has no session of its own: it gets a one-time pairing token.
         let base = self.store.read(cx).client.base_url().to_owned();
+        if self.store.read(cx).is_remote() {
+            // A remote server mints the code itself for this machine's session.
+            let client = self.store.read(cx).client.clone();
+            let task = crate::runtime::spawn(async move { client.browser_pairing_code("zenith browser").await });
+            cx.spawn(async move |this, cx| {
+                let url = match task.await {
+                    Ok(Ok(code)) => format!("{base}/pair#token={code}"),
+                    Ok(Err(error)) => {
+                        let message = format!("No pairing code for the browser ({error:#}): sign in there by hand.");
+                        let _ = this.update(cx, |this, cx| this.store.update(cx, |s, cx| s.notify_error(message, cx)));
+                        format!("{base}/")
+                    }
+                    Err(_) => format!("{base}/"),
+                };
+                let _ = cx.update(|cx| cx.open_url(&url));
+            })
+            .detach();
+            return;
+        }
         let task = crate::runtime::spawn(async move {
             let binary = zenith_client::local::server_binary();
             let output = tokio::process::Command::new(binary)
@@ -653,8 +698,16 @@ impl Render for Workspace {
             .on_action(cx.listener(|_, _: &actions::Zoom, window, _| window.zoom_window()))
             .on_action(cx.listener(|_, _: &actions::ToggleFullScreen, window, _| window.toggle_fullscreen()))
             .on_action(cx.listener(|this, _: &actions::ReloadConnection, _, cx| {
-                zenith_client::local::kickstart();
-                this.store.update(cx, |s, cx| s.notify_info("Asked the server to start", cx));
+                this.store.update(cx, |s, cx| {
+                    if s.is_remote() {
+                        // Nothing to wake up from here: the connection retries on its own.
+                        let message = format!("The server is on {}: zenith reconnects to it by itself", s.server_name());
+                        s.notify_info(message, cx);
+                    } else {
+                        zenith_client::local::kickstart();
+                        s.notify_info("Asked the server to start", cx);
+                    }
+                });
             }))
             .when(sidebar_visible, |this| {
                 this.child(
@@ -714,6 +767,26 @@ impl Render for Workspace {
                             }),
                         )
                         .child(palette.clone()),
+                )
+            })
+            .when_some(self.folder_picker.as_ref(), |this, (picker, _)| {
+                this.child(
+                    div()
+                        .absolute()
+                        .inset_0()
+                        .flex()
+                        .justify_center()
+                        .pt(px(96.))
+                        .bg(c.scrim)
+                        .on_mouse_down(
+                            MouseButton::Left,
+                            cx.listener(|this, _, window, cx| {
+                                this.folder_picker = None;
+                                this.focus_page(window, cx);
+                                cx.notify();
+                            }),
+                        )
+                        .child(picker.clone()),
                 )
             })
     }

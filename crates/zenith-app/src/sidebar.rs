@@ -452,10 +452,13 @@ impl Render for Sidebar {
             .map(|p| p.title.clone().into())
             .unwrap_or_else(|| "All projects".into());
         let connected = store.connected();
+        let server = store.server_name();
+        let remote = store.is_remote();
         let status: SharedString = match &store.status {
-            zenith_client::ConnectionStatus::Connected => "Connected".into(),
-            zenith_client::ConnectionStatus::Connecting => "Connecting…".into(),
-            zenith_client::ConnectionStatus::Failed(reason) => SharedString::from(reason.clone()),
+            zenith_client::ConnectionStatus::Connected if remote => format!("Connected to {server} ({})", store.client.base_url()).into(),
+            zenith_client::ConnectionStatus::Connected => format!("Connected to this machine's server ({server})").into(),
+            zenith_client::ConnectionStatus::Connecting => format!("Connecting to {}…", store.client.base_url()).into(),
+            zenith_client::ConnectionStatus::Failed(reason) => SharedString::from(format!("{}: {reason}", store.client.base_url())),
         };
         let shell_loaded = store.shell.loaded;
         let empty = sections.is_empty();
@@ -614,7 +617,8 @@ impl Render for Sidebar {
                             .text_color(c.text_3)
                             .tooltip(move |_, cx| Tooltip::view(status.clone(), None, cx))
                             .child(dot(if connected { c.success } else { c.warning }))
-                            .child(if connected { "zenith" } else { "Offline" }),
+                            .when(remote, |this| this.child(icon(Icon::Globe, c.text_3).size(px(12.))))
+                            .child(div().max_w(px(140.)).truncate().child(if connected { server } else { "Offline".into() })),
                     ),
             )
             .when_some(self.menu.as_ref(), |this, menu| this.child(menu.render()))

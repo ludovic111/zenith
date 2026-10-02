@@ -121,7 +121,7 @@ pub static COMMANDS: &[Spec] = &[
     },
     Spec {
         name: "server.status",
-        summary: "Whether the local server answers, where, and its environment.",
+        summary: "Whether the server answers, where, whether it is this machine's or a remote one (`zenith-cli remote`), and its environment.",
         effect: Effect::Read,
         params: &[],
     },
@@ -146,6 +146,12 @@ pub static COMMANDS: &[Spec] = &[
             opt("title", Ty::String, "Defaults to the folder's name."),
             opt("create", Ty::Bool, "Create the folder if it does not exist."),
         ],
+    },
+    Spec {
+        name: "project.browse",
+        summary: "Folders on the server's machine whose path starts with `path` (`~/` lists the home folder): what to give `project.add` when the server is on another machine.",
+        effect: Effect::Read,
+        params: &[req("path", Ty::String, "A folder ending in `/` lists its folders; otherwise the folders it starts.")],
     },
     Spec {
         name: "project.rename",
@@ -662,6 +668,7 @@ pub async fn run(client: &Client, caller: Caller, name: &str, params: Value) -> 
             let descriptor = server_descriptor(client).await;
             Ok(json!({
                 "url": client.base_url(),
+                "remote": client.is_remote(),
                 "answers": descriptor.is_ok(),
                 "connection": format!("{:?}", *client.status().borrow()),
                 "environment": descriptor.ok(),
@@ -720,6 +727,7 @@ pub async fn run(client: &Client, caller: Caller, name: &str, params: Value) -> 
             client.dispatch(command).await?;
             Ok(json!({"projectId": project_id, "title": title, "path": path}))
         }
+        "project.browse" => Ok(client.call("filesystem.browse", json!({"partialPath": p.req_str("path")?})).await?),
         "project.rename" => {
             dispatch(
                 client,
