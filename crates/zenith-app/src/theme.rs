@@ -126,6 +126,7 @@ pub struct Theme {
 
 impl Global for Theme {}
 
+#[allow(dead_code)]
 /// The web's type scale (Tailwind, px): xs 12/16 · sm 14/20 · base 16/24; the window's names
 /// are kept (`BASE` was its control size, 13 before).
 pub mod text {

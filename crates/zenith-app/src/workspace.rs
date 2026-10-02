@@ -50,6 +50,7 @@ pub struct Workspace {
     palette: Option<(Entity<Palette>, Subscription)>,
     folder_picker: Option<(Entity<FolderPicker>, Subscription)>,
     script_editor: Option<(Entity<ScriptEditor>, Subscription)>,
+    this: gpui::WeakEntity<Self>,
     focus_handle: FocusHandle,
     _subscriptions: Vec<Subscription>,
 }
@@ -95,6 +96,7 @@ impl Workspace {
             palette: None,
             folder_picker: None,
             script_editor: None,
+            this: cx.entity().downgrade(),
             focus_handle: cx.focus_handle(),
             _subscriptions: subscriptions,
         };
@@ -166,6 +168,11 @@ impl Workspace {
             Route::Home => self.default_project(cx).map(Route::NewThread).unwrap_or(Route::Home),
             other => other,
         };
+        let settings_page = match &route {
+            Route::Settings => Some(self.settings.as_ref().map(|s| s.read(cx).page).unwrap_or_default()),
+            _ => None,
+        };
+        self.sidebar.update(cx, |s, cx| s.set_settings_page(settings_page, cx));
         match &route {
             Route::Thread(id) => {
                 // Subscribed again if the store let it go while the view stayed cached.
@@ -344,6 +351,23 @@ impl Workspace {
             SidebarEvent::OpenSettings => self.navigate(Route::Settings, window, cx),
             SidebarEvent::OpenSessions => self.navigate(Route::Sessions, window, cx),
             SidebarEvent::OpenPullRequests => self.open_web_page("/pull-requests", cx),
+            SidebarEvent::SettingsPage(page) => {
+                let page = *page;
+                if let Some(settings) = self.settings.as_ref() {
+                    settings.update(cx, |s, cx| s.set_page(page, cx));
+                }
+                self.sidebar.update(cx, |s, cx| s.set_settings_page(Some(page), cx));
+                cx.notify();
+            }
+            SidebarEvent::Back => {
+                let back = self
+                    .prefs
+                    .last_thread
+                    .clone()
+                    .map(|id| Route::Thread(ThreadId::from(id.as_str())))
+                    .unwrap_or(Route::Home);
+                self.navigate(back, window, cx);
+            }
             SidebarEvent::Removed(id) => self.left_thread(id, window, cx),
         }
     }
@@ -889,6 +913,54 @@ impl Render for Workspace {
 }
 
 impl Workspace {
+    /// "Settings / General", and the web's "Restore device defaults".
+    fn settings_header(&self, cx: &App) -> AnyElement {
+        let c = cx.theme().colors.clone();
+        let page = self.settings.as_ref().map(|s| s.read(cx).page).unwrap_or_default();
+        let this = self.this.clone();
+        div()
+            .flex()
+            .flex_1()
+            .items_center()
+            .gap(px(12.))
+            .text_size(px(14.))
+            .line_height(px(20.))
+            .font_weight(FontWeight::MEDIUM)
+            .child(div().text_color(c.text_2).child("Settings"))
+            .child(div().font_weight(FontWeight::NORMAL).text_color(c.text_3).child("/"))
+            .child(div().flex_1().text_color(c.text).child(page.label()))
+            .child(
+                // A ghost `xs` button on the web: no border, no fill until hovered.
+                crate::ui::controls::outline_button(
+                    "restore-defaults",
+                    Some(Icon::Revert),
+                    Some("Restore device defaults".into()),
+                    crate::ui::controls::Part::Whole,
+                    false,
+                    cx,
+                )
+                .bg(gpui::transparent_black())
+                .border_color(gpui::transparent_black())
+                .shadow(Vec::new())
+                .on_click(move |_, window, cx| {
+                    let _ = this.update(cx, |w, cx| w.restore_device_defaults(window, cx));
+                }),
+            )
+            .into_any_element()
+    }
+
+    /// This window's own preferences back to their defaults (appearance, sidebar, updates).
+    fn restore_device_defaults(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let last_thread = self.prefs.last_thread.clone();
+        self.prefs = Prefs {
+            last_thread,
+            ..Prefs::default()
+        };
+        self.prefs.save();
+        self.apply_appearance(window, cx);
+        cx.notify();
+    }
+
     /// The page's title in the shared title bar.
     fn page_title(&self, cx: &App) -> AnyElement {
         match &self.route {
@@ -900,7 +972,7 @@ impl Workspace {
                 Some(view) => view.read(cx).render_header(cx),
                 None => div().into_any_element(),
             },
-            Route::Settings => header_text("Settings", cx),
+            Route::Settings => self.settings_header(cx),
             Route::Sessions => header_text("Sessions & costs", cx),
             Route::Home => div().into_any_element(),
         }
