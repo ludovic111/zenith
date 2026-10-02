@@ -389,7 +389,25 @@ fn install_archive(archive: &Path, dir: &Path, version: &str) -> Result<PathBuf>
         }
         std::fs::rename(staging.join(name), &target).map_err(|e| format!("{name}: {e}"))?;
     }
+    replace_web(&staging, &install_dir)?;
     Ok(install_dir.join("zenith"))
+}
+
+/// The web interface the server serves from next to itself (`client`), when the archive has
+/// one (the first releases did not).
+#[cfg(not(target_os = "macos"))]
+fn replace_web(staging: &Path, install_dir: &Path) -> Result<()> {
+    let new = staging.join("client");
+    if !new.join("index.html").is_file() {
+        return Ok(());
+    }
+    let target = install_dir.join("client");
+    let backup = install_dir.join(".client.previous");
+    let _ = std::fs::remove_dir_all(&backup);
+    if target.exists() {
+        std::fs::rename(&target, &backup).map_err(|e| format!("client: {e}"))?;
+    }
+    std::fs::rename(&new, &target).map_err(|e| format!("client: {e}"))
 }
 
 /// After a successful start on a new version: the previous copy can go.
@@ -405,6 +423,24 @@ pub fn forget_previous() {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[cfg(not(target_os = "macos"))]
+    #[test]
+    fn the_web_interface_is_replaced_with_the_binaries() {
+        let dir = std::env::temp_dir().join(format!("zenith-update-test-{}", zenith_client::new_id()));
+        let (staging, install) = (dir.join("staged"), dir.join("install"));
+        std::fs::create_dir_all(staging.join("client")).unwrap();
+        std::fs::create_dir_all(install.join("client")).unwrap();
+        std::fs::write(install.join("client/index.html"), "old").unwrap();
+        // An archive without the web interface leaves the installed one alone.
+        replace_web(&staging, &install).unwrap();
+        assert_eq!(std::fs::read_to_string(install.join("client/index.html")).unwrap(), "old");
+        std::fs::write(staging.join("client/index.html"), "new").unwrap();
+        replace_web(&staging, &install).unwrap();
+        assert_eq!(std::fs::read_to_string(install.join("client/index.html")).unwrap(), "new");
+        assert_eq!(std::fs::read_to_string(install.join(".client.previous/index.html")).unwrap(), "old");
+        std::fs::remove_dir_all(dir).unwrap();
+    }
 
     #[test]
     fn versions() {

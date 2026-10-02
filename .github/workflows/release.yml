@@ -1,6 +1,6 @@
 # Publishes a release from a vX.Y.Z tag (lsuite standard §3): zenith.app for macOS arm64 and
 # x86_64 (Developer ID signed and notarized when the six APPLE_* secrets are set), a Linux
-# x86_64 archive, SHA256SUMS and its Ed25519 signature SHA256SUMS.sig, which the in-app updater
+# x86_64 archive (the four programs and the web interface, `client`), SHA256SUMS and its Ed25519 signature SHA256SUMS.sig, which the in-app updater
 # checks against crates/zenith-commands/assets/update-signing.pub before installing anything.
 # Asset names are stable: lsuite.xyz/zenith/download/<platform> and the updater find them.
 name: Release
@@ -80,8 +80,15 @@ jobs:
       - name: Package for Linux
         if: runner.os == 'Linux'
         run: |
-          mkdir -p dist
-          tar -czf dist/zenith-linux-x86_64.tar.gz -C target/release zenith zenith-code zenith-cli zenith-mcp
+          # The binaries and, next to them, the web interface (the server serves `client`
+          # beside itself). Member names stay bare: the release job extracts `zenith-cli`.
+          mkdir -p dist/linux
+          cp target/release/zenith target/release/zenith-code target/release/zenith-cli target/release/zenith-mcp dist/linux/
+          for web in code/apps/server/dist/client code/apps/web/dist; do
+            if [ -f "$web/index.html" ]; then cp -R "$web" dist/linux/client; break; fi
+          done
+          test -f dist/linux/client/index.html || { echo 'The web interface was not built' >&2; exit 1; }
+          tar -czf dist/zenith-linux-x86_64.tar.gz -C dist/linux zenith zenith-code zenith-cli zenith-mcp client
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset }}
