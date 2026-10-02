@@ -201,11 +201,6 @@ impl Button {
         self
     }
 
-    pub fn selected(mut self, selected: bool) -> Self {
-        self.selected = selected;
-        self
-    }
-
     pub fn tooltip(mut self, text: impl Into<SharedString>) -> Self {
         self.tooltip = Some((text.into(), None));
         self

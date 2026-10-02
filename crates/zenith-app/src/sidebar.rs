@@ -33,6 +33,9 @@ pub enum SidebarEvent {
     OpenSettings,
     OpenSessions,
     OpenPullRequests,
+    SettingsPage(crate::settings::SettingsPage),
+    /// Leave the settings.
+    Back,
     /// A thread was archived or deleted from the sidebar.
     Removed(ThreadId),
 }
@@ -45,6 +48,8 @@ pub struct Sidebar {
     collapsed: HashSet<Section>,
     /// The row under the pointer (its status gives way to its actions).
     hovered: Option<ThreadId>,
+    /// On the settings, the sidebar lists their pages (`SettingsSidebarNav`).
+    settings: Option<crate::settings::SettingsPage>,
     renaming: Option<(ThreadId, Entity<TextArea>, Subscription)>,
     menu: Option<OpenMenu>,
     _tick: Task<()>,
@@ -90,11 +95,107 @@ impl Sidebar {
             selected: None,
             collapsed,
             hovered: None,
+            settings: None,
             renaming: None,
             menu: None,
             _tick: tick,
             _subscriptions: subscriptions,
         }
+    }
+
+    pub fn set_settings_page(&mut self, page: Option<crate::settings::SettingsPage>, cx: &mut Context<Self>) {
+        self.settings = page;
+        cx.notify();
+    }
+
+    /// The settings' pages, as the web lists them in its sidebar.
+    fn render_settings_nav(&self, current: crate::settings::SettingsPage, cx: &mut Context<Self>) -> gpui::AnyElement {
+        let c = cx.theme().colors.clone();
+        let query = self.search.read(cx).text().trim().to_lowercase();
+        let hover = c.hover;
+        let item = |id: SharedString, glyph: Icon, label: &'static str, active: bool| {
+            div()
+                .id(id)
+                .h(px(32.))
+                .px(px(10.))
+                .flex()
+                .items_center()
+                .gap(px(8.))
+                .rounded(px(radius::MD))
+                .cursor_pointer()
+                .when(active, |el| el.bg(c.sidebar_row_selected))
+                .when(!active, |el| el.hover(move |s| s.bg(hover)))
+                .child(
+                    svg()
+                        .path(glyph.path())
+                        .size(px(16.))
+                        .flex_none()
+                        .text_color(if active { c.text } else { c.sidebar_icon }),
+                )
+                .child(
+                    div()
+                        .text_size(px(14.))
+                        .line_height(px(20.))
+                        .font_weight(FontWeight::MEDIUM)
+                        .text_color(if active { c.text } else { c.text_2.opacity(0.8) })
+                        .child(label),
+                )
+        };
+        let pages = crate::settings::SettingsPage::ALL
+            .into_iter()
+            .filter(|p| query.is_empty() || p.label().to_lowercase().contains(&query))
+            .map(|page| {
+                item(
+                    SharedString::from(format!("settings-{}", page.label())),
+                    page.icon(),
+                    page.label(),
+                    page == current,
+                )
+                .on_click(cx.listener(move |_, _, _, cx| cx.emit(SidebarEvent::SettingsPage(page))))
+                .into_any_element()
+            })
+            .collect::<Vec<_>>();
+        div()
+            .flex_1()
+            .min_h_0()
+            .flex()
+            .flex_col()
+            .child(
+                div().p(px(8.)).child(
+                    div()
+                        .h(px(32.))
+                        .flex()
+                        .items_center()
+                        .gap(px(8.))
+                        .px(px(8.))
+                        .rounded(px(radius::MD))
+                        .hover(move |s| s.bg(hover))
+                        .child(svg().path(Icon::Search.path()).size(px(16.)).flex_none().text_color(c.text_2.opacity(0.8)))
+                        .child(div().flex_1().min_w_0().font_weight(FontWeight::MEDIUM).child(self.search.clone()))
+                        .child(
+                            div()
+                                .size(px(20.))
+                                .flex()
+                                .items_center()
+                                .justify_center()
+                                .rounded(px(4.))
+                                .bg(c.muted)
+                                .text_size(px(12.))
+                                .font_weight(FontWeight::MEDIUM)
+                                .text_color(c.text_2)
+                                .child("/"),
+                        ),
+                ),
+            )
+            .child(div().px(px(8.)).flex().flex_col().gap(px(4.)).children(pages))
+            .child(div().flex_1())
+            .child(
+                div()
+                    .px(px(8.))
+                    .py(px(4.))
+                    .child(item("settings-back".into(), Icon::ArrowLeft, "Back", false).on_click(cx.listener(|_, _, _, cx| cx.emit(SidebarEvent::Back)))),
+            )
+            .into_any_element()
     }
 
     pub fn set_selected(&mut self, id: Option<ThreadId>, cx: &mut Context<Self>) {
@@ -934,129 +1035,133 @@ impl Render for Sidebar {
                         )
                     }),
             )
-            .child(
-                div()
-                    .p(px(8.))
-                    .flex()
-                    .items_center()
-                    .gap(px(4.))
+            .map(|this| match self.settings {
+                Some(page) => this.child(self.render_settings_nav(page, cx)),
+                None => this
                     .child(
                         div()
-                            .id("search")
-                            .flex_1()
-                            .min_w_0()
-                            .h(px(32.))
+                            .p(px(8.))
                             .flex()
                             .items_center()
-                            .gap(px(8.))
-                            .px(px(8.))
-                            .rounded(px(radius::MD))
-                            .hover(move |s| s.bg(hover))
-                            .child(svg().path(Icon::Search.path()).size(px(16.)).flex_none().text_color(icon_color))
-                            .child(div().flex_1().min_w_0().font_weight(FontWeight::MEDIUM).child(self.search.clone())),
+                            .gap(px(4.))
+                            .child(
+                                div()
+                                    .id("search")
+                                    .flex_1()
+                                    .min_w_0()
+                                    .h(px(32.))
+                                    .flex()
+                                    .items_center()
+                                    .gap(px(8.))
+                                    .px(px(8.))
+                                    .rounded(px(radius::MD))
+                                    .hover(move |s| s.bg(hover))
+                                    .child(svg().path(Icon::Search.path()).size(px(16.)).flex_none().text_color(icon_color))
+                                    .child(div().flex_1().min_w_0().font_weight(FontWeight::MEDIUM).child(self.search.clone())),
+                            )
+                            .child(
+                                div()
+                                    .flex()
+                                    .flex_none()
+                                    .items_center()
+                                    .when(has_projects, |this| {
+                                        this.child(
+                                            icon_button("filter-projects", Icon::Folder, 28., 16., radius::MD, icon_color, hover, c.text)
+                                                .tooltip(move |_, cx| {
+                                                    Tooltip::view(
+                                                        scoped.clone().map(|p| format!("Showing {p}")).unwrap_or_else(|| "Filter by project".into()),
+                                                        None,
+                                                        cx,
+                                                    )
+                                                })
+                                                .on_mouse_down(
+                                                    MouseButton::Left,
+                                                    cx.listener(|this, event: &MouseDownEvent, window, cx| this.open_project_menu(event.position, window, cx)),
+                                                ),
+                                        )
+                                        .child(
+                                            icon_button("new-project", Icon::FolderPlus, 28., 16., radius::MD, icon_color, hover, c.text)
+                                                .tooltip(|_, cx| Tooltip::view("New project", Some("⌘O".into()), cx))
+                                                .on_click(cx.listener(|_, _, _, cx| cx.emit(SidebarEvent::AddProject))),
+                                        )
+                                    })
+                                    .child(
+                                        icon_button("new-thread", Icon::NewThread, 28., 16., radius::MD, icon_color, hover, c.text)
+                                            .when(!has_projects, |this| this.opacity(0.64))
+                                            .tooltip(|_, cx| Tooltip::view("New thread", Some("⌘N".into()), cx))
+                                            .on_click(cx.listener(|this, _, _, cx| cx.emit(SidebarEvent::NewThread(this.project.clone())))),
+                                    ),
+                            ),
                     )
                     .child(
                         div()
+                            .id("threads")
+                            .flex_1()
+                            .min_h_0()
+                            .overflow_y_scroll()
                             .flex()
-                            .flex_none()
-                            .items_center()
-                            .when(has_projects, |this| {
+                            .flex_col()
+                            .px(px(8.))
+                            .pb(px(8.))
+                            .gap(px(1.))
+                            .children(rows)
+                            .when(empty && shell_loaded, |this| {
                                 this.child(
-                                    icon_button("filter-projects", Icon::Folder, 28., 16., radius::MD, icon_color, hover, c.text)
-                                        .tooltip(move |_, cx| {
-                                            Tooltip::view(
-                                                scoped.clone().map(|p| format!("Showing {p}")).unwrap_or_else(|| "Filter by project".into()),
-                                                None,
-                                                cx,
-                                            )
-                                        })
-                                        .on_mouse_down(
-                                            MouseButton::Left,
-                                            cx.listener(|this, event: &MouseDownEvent, window, cx| this.open_project_menu(event.position, window, cx)),
-                                        ),
-                                )
-                                .child(
-                                    icon_button("new-project", Icon::FolderPlus, 28., 16., radius::MD, icon_color, hover, c.text)
-                                        .tooltip(|_, cx| Tooltip::view("New project", Some("⌘O".into()), cx))
-                                        .on_click(cx.listener(|_, _, _, cx| cx.emit(SidebarEvent::AddProject))),
+                                    div()
+                                        .flex()
+                                        .flex_col()
+                                        .items_center()
+                                        .gap(px(8.))
+                                        .px(px(8.))
+                                        .py(px(24.))
+                                        .text_size(px(12.))
+                                        .line_height(px(16.))
+                                        .text_color(c.text_2.opacity(0.6))
+                                        .child(if !has_projects {
+                                            "No projects yet".to_owned()
+                                        } else if !query.is_empty() {
+                                            "No threads found".to_owned()
+                                        } else {
+                                            match &self.project.as_ref().and_then(|p| self.store.read(cx).shell.project(p)) {
+                                                Some(p) => format!("No threads in {} yet", p.title),
+                                                None => "No threads yet".to_owned(),
+                                            }
+                                        }),
                                 )
                             })
+                            // The shelves sit at the bottom while the list is short (`mt-auto`).
+                            .child(div().flex_1())
+                            .children(shelves),
+                    )
+                    .child(
+                        div()
+                            .flex()
+                            .items_center()
+                            .gap(px(4.))
+                            .px(px(8.))
+                            .py(px(4.))
                             .child(
-                                icon_button("new-thread", Icon::NewThread, 28., 16., radius::MD, icon_color, hover, c.text)
-                                    .when(!has_projects, |this| this.opacity(0.64))
-                                    .tooltip(|_, cx| Tooltip::view("New thread", Some("⌘N".into()), cx))
-                                    .on_click(cx.listener(|this, _, _, cx| cx.emit(SidebarEvent::NewThread(this.project.clone())))),
+                                icon_button("open-settings", Icon::Settings, 32., 16., radius::MD, icon_color, hover, c.text)
+                                    .tooltip(|_, cx| Tooltip::view("Settings", Some("⌘,".into()), cx))
+                                    .on_click(cx.listener(|_, _, _, cx| cx.emit(SidebarEvent::OpenSettings))),
+                            )
+                            .child(
+                                icon_button("open-pull-requests", Icon::PullRequestArrow, 32., 16., radius::MD, icon_color, hover, c.text)
+                                    .tooltip(|_, cx| Tooltip::view("Pull Requests", None, cx))
+                                    .on_click(cx.listener(|_, _, _, cx| cx.emit(SidebarEvent::OpenPullRequests))),
+                            )
+                            .child(
+                                icon_button("open-usage", Icon::ChartNoAxesColumn, 32., 16., radius::MD, icon_color, hover, c.text)
+                                    .tooltip(|_, cx| Tooltip::view("Usage", Some("⌘U".into()), cx))
+                                    .on_click(cx.listener(|_, _, _, cx| cx.emit(SidebarEvent::OpenSessions))),
+                            )
+                            .child(
+                                icon_button("open-sessions", Icon::History, 32., 16., radius::MD, icon_color, hover, c.text)
+                                    .tooltip(|_, cx| Tooltip::view("Sessions", None, cx))
+                                    .on_click(cx.listener(|_, _, _, cx| cx.emit(SidebarEvent::OpenSessions))),
                             ),
                     ),
-            )
-            .child(
-                div()
-                    .id("threads")
-                    .flex_1()
-                    .min_h_0()
-                    .overflow_y_scroll()
-                    .flex()
-                    .flex_col()
-                    .px(px(8.))
-                    .pb(px(8.))
-                    .gap(px(1.))
-                    .children(rows)
-                    .when(empty && shell_loaded, |this| {
-                        this.child(
-                            div()
-                                .flex()
-                                .flex_col()
-                                .items_center()
-                                .gap(px(8.))
-                                .px(px(8.))
-                                .py(px(24.))
-                                .text_size(px(12.))
-                                .line_height(px(16.))
-                                .text_color(c.text_2.opacity(0.6))
-                                .child(if !has_projects {
-                                    "No projects yet".to_owned()
-                                } else if !query.is_empty() {
-                                    "No threads found".to_owned()
-                                } else {
-                                    match &self.project.as_ref().and_then(|p| self.store.read(cx).shell.project(p)) {
-                                        Some(p) => format!("No threads in {} yet", p.title),
-                                        None => "No threads yet".to_owned(),
-                                    }
-                                }),
-                        )
-                    })
-                    // The shelves sit at the bottom while the list is short (`mt-auto`).
-                    .child(div().flex_1())
-                    .children(shelves),
-            )
-            .child(
-                div()
-                    .flex()
-                    .items_center()
-                    .gap(px(4.))
-                    .px(px(8.))
-                    .py(px(4.))
-                    .child(
-                        icon_button("open-settings", Icon::Settings, 32., 16., radius::MD, icon_color, hover, c.text)
-                            .tooltip(|_, cx| Tooltip::view("Settings", Some("⌘,".into()), cx))
-                            .on_click(cx.listener(|_, _, _, cx| cx.emit(SidebarEvent::OpenSettings))),
-                    )
-                    .child(
-                        icon_button("open-pull-requests", Icon::PullRequestArrow, 32., 16., radius::MD, icon_color, hover, c.text)
-                            .tooltip(|_, cx| Tooltip::view("Pull Requests", None, cx))
-                            .on_click(cx.listener(|_, _, _, cx| cx.emit(SidebarEvent::OpenPullRequests))),
-                    )
-                    .child(
-                        icon_button("open-usage", Icon::ChartNoAxesColumn, 32., 16., radius::MD, icon_color, hover, c.text)
-                            .tooltip(|_, cx| Tooltip::view("Usage", Some("⌘U".into()), cx))
-                            .on_click(cx.listener(|_, _, _, cx| cx.emit(SidebarEvent::OpenSessions))),
-                    )
-                    .child(
-                        icon_button("open-sessions", Icon::History, 32., 16., radius::MD, icon_color, hover, c.text)
-                            .tooltip(|_, cx| Tooltip::view("Sessions", None, cx))
-                            .on_click(cx.listener(|_, _, _, cx| cx.emit(SidebarEvent::OpenSessions))),
-                    ),
-            )
+            })
             .when_some(self.menu.as_ref(), |this, menu| this.child(menu.render()))
     }
 }
