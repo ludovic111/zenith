@@ -313,7 +313,6 @@ impl Theme {
             Mode::Light => "material-light.png",
         })
     }
-
 }
 
 /// The Tailwind colors the web's components name directly (Tailwind 4.3.3, shades 300 to 700,
