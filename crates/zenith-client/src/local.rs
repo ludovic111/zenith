@@ -226,7 +226,11 @@ pub fn saved_token() -> Option<String> {
 }
 
 fn save_token(token: &str) -> std::io::Result<()> {
-    let path = token_path();
+    write_private(&token_path(), token)
+}
+
+/// Writes `text` to `path` readable by this user only (0600, in a 0700 folder), atomically.
+pub fn write_private(path: &Path, text: &str) -> std::io::Result<()> {
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir)?;
         #[cfg(unix)]
@@ -246,7 +250,7 @@ fn save_token(token: &str) -> std::io::Result<()> {
         }
         use std::io::Write;
         let mut file = options.open(&tmp)?;
-        file.write_all(token.as_bytes())?;
+        file.write_all(text.as_bytes())?;
         file.sync_all()?;
     }
     std::fs::rename(tmp, path)
