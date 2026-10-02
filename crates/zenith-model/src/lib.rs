@@ -10,6 +10,7 @@
 //! - [`requests`]: the approvals and questions a thread waits on.
 //! - [`timeline`]: messages, plans and work merged in order, grouped per turn.
 
+pub mod git;
 pub mod requests;
 pub mod shell;
 pub mod thread;

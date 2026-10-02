@@ -16,6 +16,7 @@ use crate::assets::Icon;
 use crate::folder_picker::{FolderPicker, FolderPickerEvent};
 use crate::palette::{Palette, PaletteEvent};
 use crate::prefs::Prefs;
+use crate::script_editor::{ScriptEditor, ScriptEditorEvent};
 use crate::sessions::SessionsView;
 use crate::settings::SettingsView;
 use crate::sidebar::{Sidebar, SidebarEvent};
@@ -48,6 +49,7 @@ pub struct Workspace {
     sessions: Option<Entity<SessionsView>>,
     palette: Option<(Entity<Palette>, Subscription)>,
     folder_picker: Option<(Entity<FolderPicker>, Subscription)>,
+    script_editor: Option<(Entity<ScriptEditor>, Subscription)>,
     focus_handle: FocusHandle,
     _subscriptions: Vec<Subscription>,
 }
@@ -83,6 +85,7 @@ impl Workspace {
             sessions: None,
             palette: None,
             folder_picker: None,
+            script_editor: None,
             focus_handle: cx.focus_handle(),
             _subscriptions: subscriptions,
         };
@@ -332,7 +335,7 @@ impl Workspace {
         }
     }
 
-    fn on_thread_event(&mut self, view: &Entity<ThreadView>, event: &ThreadViewEvent, _: &mut Window, cx: &mut Context<Self>) {
+    fn on_thread_event(&mut self, view: &Entity<ThreadView>, event: &ThreadViewEvent, window: &mut Window, cx: &mut Context<Self>) {
         match event {
             ThreadViewEvent::Created(id) => {
                 // The draft became a real thread: keep its view, as that thread's.
@@ -346,7 +349,36 @@ impl Workspace {
                 self.sidebar.update(cx, |s, cx| s.set_selected(Some(id.clone()), cx));
                 cx.notify();
             }
+            ThreadViewEvent::Rename => {
+                if let Some(id) = self.current_thread() {
+                    if !self.prefs.sidebar_visible {
+                        self.prefs.sidebar_visible = true;
+                        self.prefs.save();
+                    }
+                    let title = self.store.read(cx).shell.thread(&id).map(|t| t.title.clone()).unwrap_or_default();
+                    self.sidebar.update(cx, |s, cx| s.start_rename(id, &title, window, cx));
+                    cx.notify();
+                }
+            }
+            ThreadViewEvent::Removed => {
+                if let Some(id) = self.current_thread() {
+                    self.left_thread(&id, window, cx);
+                }
+            }
+            ThreadViewEvent::AddAction(project) => self.open_script_editor(project.clone(), window, cx),
         }
+    }
+
+    fn open_script_editor(&mut self, project: ProjectId, window: &mut Window, cx: &mut Context<Self>) {
+        let editor = cx.new(|cx| ScriptEditor::new(project, window, cx));
+        let subscription = cx.subscribe_in(&editor, window, |this, _, _: &ScriptEditorEvent, window, cx| {
+            this.script_editor = None;
+            this.focus_page(window, cx);
+            cx.notify();
+        });
+        editor.update(cx, |e, cx| e.focus(window, cx));
+        self.script_editor = Some((editor, subscription));
+        cx.notify();
     }
 
     /// The thread on screen was archived or deleted: show the next one.
@@ -798,6 +830,26 @@ impl Render for Workspace {
                             }),
                         )
                         .child(palette.clone()),
+                )
+            })
+            .when_some(self.script_editor.as_ref(), |this, (editor, _)| {
+                this.child(
+                    div()
+                        .absolute()
+                        .inset_0()
+                        .flex()
+                        .justify_center()
+                        .pt(px(120.))
+                        .bg(c.scrim)
+                        .on_mouse_down(
+                            MouseButton::Left,
+                            cx.listener(|this, _, window, cx| {
+                                this.script_editor = None;
+                                this.focus_page(window, cx);
+                                cx.notify();
+                            }),
+                        )
+                        .child(editor.clone()),
                 )
             })
             .when_some(self.folder_picker.as_ref(), |this, (picker, _)| {

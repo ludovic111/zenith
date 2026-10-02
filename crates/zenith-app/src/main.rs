@@ -16,6 +16,7 @@ mod native;
 mod palette;
 mod prefs;
 mod runtime;
+mod script_editor;
 mod sessions;
 mod settings;
 mod sidebar;

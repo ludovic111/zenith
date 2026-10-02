@@ -576,11 +576,7 @@ pub fn pull_request_badge(thread: &OrchestrationThreadShell) -> Option<PullReque
     } else {
         PullRequestTone::Closed
     };
-    let one_stack = visible.len() > 1
-        && visible
-            .iter()
-            .all(|l| l.stack.as_ref().map(|s| &s.id) == first.stack.as_ref().map(|s| &s.id) && l.stack.is_some());
-    if one_stack {
+    if visible.len() > 1 && pull_request_chains(&visible) == 1 {
         return Some(PullRequestBadge {
             tone: folded,
             text: visible.len().to_string(),
@@ -611,4 +607,59 @@ pub fn pull_request_badge(thread: &OrchestrationThreadShell) -> Option<PullReque
         stack: false,
         url: first.url.to_string(),
     })
+}
+
+/// How many chains the links form (`resolveThreadPullRequestChains`): each native stack is one,
+/// then links are chained by branches (one's base is another's head, in the same repository),
+/// walking down from each link nothing builds on; links left in a cycle count alone.
+fn pull_request_chains(links: &[&zc_contracts::ThreadPullRequestLink]) -> usize {
+    use std::collections::{HashMap, HashSet};
+    type Link = zc_contracts::ThreadPullRequestLink;
+    let repo = |l: &Link| format!("{}/{}", l.host.to_lowercase(), l.repository.to_lowercase());
+    let key = |l: &Link| format!("{}#{}", repo(l), l.number);
+    let branch = |l: &Link, b: &str| format!("{}:{b}", repo(l));
+    let mut placed: HashSet<String> = HashSet::new();
+    let mut stacks: HashSet<String> = HashSet::new();
+    for link in links {
+        if let Some(stack) = &link.stack {
+            stacks.insert(format!("{}#stack:{}", repo(link), stack.id));
+            placed.insert(key(link));
+        }
+    }
+    let mut chains = stacks.len();
+    let remaining: Vec<&Link> = links.iter().copied().filter(|l| !placed.contains(&key(l))).collect();
+    // A head name used twice cannot name a parent.
+    let mut by_head: HashMap<String, Option<&Link>> = HashMap::new();
+    for link in &remaining {
+        if let Some(snapshot) = &link.snapshot {
+            let k = branch(link, &snapshot.head_branch);
+            let seen = by_head.contains_key(&k);
+            by_head.insert(k, if seen { None } else { Some(*link) });
+        }
+    }
+    let parent = |l: &Link| l.snapshot.as_ref().and_then(|s| by_head.get(&branch(l, &s.base_branch)).copied().flatten());
+    let mut has_child: HashSet<String> = HashSet::new();
+    for link in &remaining {
+        if let Some(p) = parent(link).filter(|p| key(p) != key(link)) {
+            has_child.insert(key(p));
+        }
+    }
+    for top in &remaining {
+        if has_child.contains(&key(top)) {
+            continue;
+        }
+        let mut layers = 0;
+        let mut cursor = Some(*top);
+        while let Some(link) = cursor {
+            if !placed.insert(key(link)) {
+                break;
+            }
+            layers += 1;
+            cursor = parent(link);
+        }
+        if layers > 0 {
+            chains += 1;
+        }
+    }
+    chains + remaining.iter().filter(|l| !placed.contains(&key(l))).count()
 }

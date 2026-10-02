@@ -1,6 +1,7 @@
 //! zenith's controls, drawn with GPUI's elements and the lsuite tokens.
 
 pub mod badges;
+pub mod controls;
 pub mod markdown;
 pub mod menu;
 pub mod text_area;
