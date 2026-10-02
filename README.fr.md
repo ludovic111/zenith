@@ -50,7 +50,7 @@ curl -L https://github.com/ludovic111/zenith/releases/latest/download/zenith-lin
 **Depuis tes autres machines, avec Tailscale.** `zenith-cli setup --tailscale-serve` garde le serveur sur `127.0.0.1` et demande à [Tailscale Serve](https://tailscale.com/kb/1312/serve) de le publier en HTTPS sur ton tailnet, et nulle part ailleurs : `https://mon-serveur.exemple-tailnet.ts.net` (`tailscale serve status` montre la vraie adresse ; `--tailscale-serve-port 8443` choisit un autre port que 443). Tailscale doit laisser ton utilisateur le configurer (`sudo tailscale set --operator=$USER`, une fois). Un navigateur sur une autre machine s'associe avec un lien à usage unique :
 
 ```bash
-zenith-code auth pairing create --base-dir ~/.zenith/code --base-url https://mon-serveur.exemple-tailnet.ts.net
+zenith-code auth pairing create --admin --base-dir ~/.zenith/code --base-url https://mon-serveur.exemple-tailnet.ts.net
 ```
 
 Si tu lances `zenith-code serve` toi-même, ne passe jamais `--tailscale-serve` sans `--host 127.0.0.1` : sans `--host`, le serveur écoute sur toutes les interfaces réseau (`0.0.0.0`), pas seulement pour Tailscale.
