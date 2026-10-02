@@ -479,6 +479,34 @@ pub static COMMANDS: &[Spec] = &[
         params: &[THREAD, req("scriptId", Ty::String, "The script's id (see project.scripts).")],
     },
     Spec {
+        name: "project.saveScript",
+        summary: "Adds a script (an action of the header's \"Add action\") to a project, or changes one.",
+        effect: Effect::Write,
+        params: &[
+            req("projectId", Ty::String, "The project's id."),
+            req("name", Ty::String, "What the button says."),
+            req("command", Ty::String, "The shell command it runs."),
+            opt(
+                "icon",
+                Ty::Enum(&["play", "test", "lint", "configure", "build", "debug"]),
+                "Its icon (play by default).",
+            ),
+            opt("scriptId", Ty::String, "Change this script instead of adding one."),
+        ],
+    },
+    Spec {
+        name: "project.openInEditor",
+        summary: "Opens a thread's folder (its worktree, else its project's) in an editor installed on the server's machine.",
+        effect: Effect::Write,
+        params: &[THREAD, opt("editor", Ty::String, "cursor, vscode, zed…; default: the first available (see app.editors).")],
+    },
+    Spec {
+        name: "app.editors",
+        summary: "The editors installed on the server's machine, that project.openInEditor can open.",
+        effect: Effect::Read,
+        params: &[],
+    },
+    Spec {
         name: "provider.list",
         summary: "The agents' providers: status, version, sign-in, models.",
         effect: Effect::Read,
@@ -1159,6 +1187,70 @@ pub async fn run(client: &Client, caller: Caller, name: &str, params: Value) -> 
                 .ok_or_else(|| CommandError::NotFound(format!("project {id}")))?;
             Ok(serde_json::to_value(&project.scripts).unwrap_or(Value::Null))
         }
+        "project.saveScript" => {
+            let shell = load_shell(client).await?;
+            let id = p.req_str("projectId")?;
+            let project = shell
+                .project(&zc_contracts::ProjectId::from(id))
+                .ok_or_else(|| CommandError::NotFound(format!("project {id}")))?;
+            let (name, command) = (p.req_str("name")?.trim(), p.req_str("command")?.trim());
+            if name.is_empty() || command.is_empty() {
+                return Err(CommandError::InvalidParams("name and command must not be empty".into()));
+            }
+            let mut scripts = serde_json::to_value(&project.scripts).unwrap_or_else(|_| json!([]));
+            let list = scripts.as_array_mut().ok_or_else(|| CommandError::Failed("unexpected scripts".into()))?;
+            let script_id = match p.str("scriptId") {
+                Some(existing) => {
+                    let script = list
+                        .iter_mut()
+                        .find(|s| s["id"] == existing)
+                        .ok_or_else(|| CommandError::NotFound(format!("script {existing}")))?;
+                    script["name"] = json!(name);
+                    script["command"] = json!(command);
+                    if let Some(icon) = p.str("icon") {
+                        script["icon"] = json!(icon);
+                    }
+                    existing.to_owned()
+                }
+                None => {
+                    let taken: Vec<String> = list.iter().filter_map(|s| s["id"].as_str().map(String::from)).collect();
+                    let new_id = next_script_id(name, &taken);
+                    list.push(json!({"id": new_id, "name": name, "command": command, "icon": p.str("icon").unwrap_or("play"), "runOnWorktreeCreate": false}));
+                    new_id
+                }
+            };
+            dispatch(client, json!({"type": "project.meta.update", "projectId": id, "scripts": scripts})).await?;
+            Ok(json!({"scriptId": script_id}))
+        }
+        "app.editors" => {
+            let config = load_config(client).await?;
+            Ok(config.get("availableEditors").cloned().unwrap_or_else(|| json!([])))
+        }
+        "project.openInEditor" => {
+            let shell = load_shell(client).await?;
+            let thread_id = p.req_str("threadId")?;
+            let thread = shell
+                .thread(&ThreadId::from(thread_id))
+                .ok_or_else(|| CommandError::NotFound(format!("thread {thread_id}")))?;
+            let cwd = thread
+                .worktree_path
+                .clone()
+                .or_else(|| shell.project(&thread.project_id).map(|p| p.workspace_root.clone()))
+                .ok_or_else(|| CommandError::NotFound("the thread's folder".into()))?;
+            let editor = match p.str("editor") {
+                Some(editor) => editor.to_owned(),
+                None => {
+                    let config = load_config(client).await?;
+                    config
+                        .pointer("/availableEditors/0")
+                        .and_then(Value::as_str)
+                        .map(String::from)
+                        .ok_or_else(|| CommandError::Failed("no editor is installed on the server's machine".into()))?
+                }
+            };
+            client.call("shell.openInEditor", json!({"cwd": cwd, "editor": editor})).await?;
+            Ok(json!({"ok": true, "cwd": cwd, "editor": editor}))
+        }
         "project.runScript" => {
             let shell = load_shell(client).await?;
             let thread_id = p.req_str("threadId")?;
@@ -1392,6 +1484,43 @@ pub fn strip_ansi(text: &str) -> String {
 async fn dispatch(client: &Client, command: Value) -> Result<Value, CommandError> {
     let sequence = client.dispatch(command).await?;
     Ok(json!({"ok": true, "sequence": sequence}))
+}
+
+/// A script's id from its name, as the web makes it (`nextProjectScriptId`): lowercase letters,
+/// digits and hyphens, 24 at most, with "-2", "-3"… when taken.
+fn next_script_id(name: &str, taken: &[String]) -> String {
+    const MAX: usize = 24;
+    let mut cleaned = String::new();
+    for c in name.trim().to_lowercase().chars() {
+        if c.is_ascii_lowercase() || c.is_ascii_digit() {
+            cleaned.push(c);
+        } else if !cleaned.ends_with('-') {
+            cleaned.push('-');
+        }
+    }
+    let mut base = cleaned.trim_matches('-').to_owned();
+    if base.len() > MAX {
+        base = base[..MAX].trim_end_matches('-').to_owned();
+    }
+    if base.is_empty() {
+        base = "script".into();
+    }
+    if !taken.contains(&base) {
+        return base;
+    }
+    for suffix in 2..10_000 {
+        let candidate = format!("{base}-{suffix}");
+        let candidate = if candidate.len() <= MAX {
+            candidate
+        } else {
+            let keep = MAX.saturating_sub(suffix.to_string().len() + 1).max(1);
+            format!("{}-{suffix}", &base[..keep.min(base.len())])
+        };
+        if !taken.contains(&candidate) {
+            return candidate;
+        }
+    }
+    base
 }
 
 async fn server_descriptor(client: &Client) -> anyhow::Result<Value> {
@@ -1631,6 +1760,15 @@ pub fn markdown() -> String {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn script_ids_follow_the_web() {
+        assert_eq!(super::next_script_id("Dev server", &[]), "dev-server");
+        assert_eq!(super::next_script_id("Dev server", &["dev-server".into()]), "dev-server-2");
+        assert_eq!(super::next_script_id("  !!  ", &[]), "script");
+        assert_eq!(super::next_script_id("A very long script name that goes on", &[]), "a-very-long-script-name");
+    }
+
     use super::*;
 
     #[test]

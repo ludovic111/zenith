@@ -91,6 +91,7 @@ icons! {
     PullRequestArrow => "git-pull-request-arrow",
     PullRequestClosed => "git-pull-request-closed",
     PullRequestDraft => "git-pull-request-draft",
+    GitHub => "github",
     Globe => "globe",
     Hammer => "hammer",
     Hand => "hand",

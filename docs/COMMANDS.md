@@ -429,6 +429,33 @@ Runs one of a project's scripts in a terminal of a thread of that project.
 | `threadId` | string | yes | The thread's id (see thread.list). |
 | `scriptId` | string | yes | The script's id (see project.scripts). |
 
+### `project.saveScript` (write)
+
+Adds a script (an action of the header's "Add action") to a project, or changes one.
+
+| Parameter | Type | Required | |
+|---|---|---|---|
+| `projectId` | string | yes | The project's id. |
+| `name` | string | yes | What the button says. |
+| `command` | string | yes | The shell command it runs. |
+| `icon` | `play` \| `test` \| `lint` \| `configure` \| `build` \| `debug` |  | Its icon (play by default). |
+| `scriptId` | string |  | Change this script instead of adding one. |
+
+### `project.openInEditor` (write)
+
+Opens a thread's folder (its worktree, else its project's) in an editor installed on the server's machine.
+
+| Parameter | Type | Required | |
+|---|---|---|---|
+| `threadId` | string | yes | The thread's id (see thread.list). |
+| `editor` | string |  | cursor, vscode, zed…; default: the first available (see app.editors). |
+
+## app
+
+### `app.editors` (read)
+
+The editors installed on the server's machine, that project.openInEditor can open.
+
 ## provider
 
 ### `provider.list` (read)

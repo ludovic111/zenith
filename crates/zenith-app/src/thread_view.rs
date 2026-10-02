@@ -12,16 +12,17 @@
 
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
+use std::rc::Rc;
 
 use gpui::prelude::*;
 use gpui::{
-    canvas, div, list, px, AnyElement, App, ClipboardItem, Context, Corner, Entity, EventEmitter, Focusable, FontWeight, Hsla, ListAlignment, ListState,
-    Pixels, Point, SharedString, Subscription, WeakEntity, Window,
+    canvas, div, list, px, svg, AnyElement, App, ClipboardItem, Context, Corner, Entity, EventEmitter, Focusable, FontWeight, Hsla, ListAlignment, ListState,
+    MouseButton, MouseDownEvent, Pixels, Point, SharedString, Subscription, WeakEntity, Window,
 };
 use serde_json::{json, Value};
-use zc_contracts::{OrchestrationMessageRole, OrchestrationThread, ProjectId, ThreadId};
+use zc_contracts::{OrchestrationMessageRole, OrchestrationThread, OrchestrationThreadShell, ProjectId, ThreadId};
+use zenith_model::git;
 use zenith_model::requests::{pending_requests, PendingApproval, PendingUserInput};
-use zenith_model::shell::{self, ThreadStatus};
 use zenith_model::time::{duration, millis, now_millis};
 use zenith_model::timeline::{self, TimelineItem, WorkGroup};
 use zenith_model::worklog::{self, Action, WorkEntry};
@@ -31,8 +32,10 @@ use crate::composer::{Composer, ComposerEvent, EnvMode, ModelChoice};
 use crate::store::{self, Store, StoreEvent};
 use crate::terminal::{TermStatus, TerminalPanel};
 use crate::theme::{radius, text, ActiveTheme};
+use crate::ui::badges::project_badge;
+use crate::ui::controls::{header_toggle, outline_button, split_separator, Part};
 use crate::ui::menu::{Entry, OpenMenu};
-use crate::ui::{caps_label, icon, markdown, pill, spinner, Button, Variant};
+use crate::ui::{caps_label, icon, markdown, pill, spinner, Button, Tooltip, Variant};
 
 /// The timeline's reading width.
 const COLUMN: f32 = 780.;
@@ -40,6 +43,12 @@ const COLUMN: f32 = 780.;
 pub enum ThreadViewEvent {
     /// The draft's first message created this thread.
     Created(ThreadId),
+    /// "Rename thread" from the title's menu: renamed where the sidebar shows it.
+    Rename,
+    /// Archived or deleted from the title's menu.
+    Removed,
+    /// "Add action": a new script for this project.
+    AddAction(ProjectId),
 }
 
 enum Target {
@@ -669,111 +678,157 @@ impl ThreadView {
     }
 
     /// The git state and the thread's tools, at the right of the title bar.
+    /// The header's actions (`ChatHeader`'s cluster): the project's script ("Add action" while
+    /// it has none), "Open" in an editor (this machine's server only), the git action and its
+    /// menu, then the panel toggles.
     fn render_tools(&self, cx: &App) -> AnyElement {
-        let c = cx.theme().colors.clone();
-        let git = self.git.as_ref().filter(|g| g.get("isRepo").and_then(Value::as_bool).unwrap_or(false));
-        let num = |key: &str| git.and_then(|g| g.get(key)).and_then(Value::as_i64).unwrap_or(0);
-        let files = git
-            .and_then(|g| g.pointer("/workingTree/files"))
-            .and_then(Value::as_array)
-            .map(Vec::len)
-            .unwrap_or(0);
-        let (insertions, deletions) = (
-            git.and_then(|g| g.pointer("/workingTree/insertions")).and_then(Value::as_i64).unwrap_or(0),
-            git.and_then(|g| g.pointer("/workingTree/deletions")).and_then(Value::as_i64).unwrap_or(0),
-        );
-        let (ahead, behind) = (num("aheadCount"), num("behindCount"));
-        let pr = git.and_then(|g| g.get("pr")).filter(|p| !p.is_null()).cloned();
-        let has_scripts = self
-            .project_id(cx)
-            .and_then(|p| self.store.read(cx).shell.project(&p).map(|p| !p.scripts.is_empty()))
-            .unwrap_or(false);
         let draft = self.is_draft();
-        let this = self.this.clone();
-        let this_scripts = self.this.clone();
-        let this_terminal = self.this.clone();
-        let small = |label: String, color: Hsla| div().flex_none().text_size(px(text::SM)).text_color(color).child(SharedString::from(label));
+        let store = self.store.read(cx);
+        let scripts = self
+            .project_id(cx)
+            .and_then(|p| store.shell.project(&p).map(|p| p.scripts.clone()))
+            .unwrap_or_default();
+        let editors = store.config.as_ref().map(|c| c.available_editors.len()).unwrap_or(0);
+        let local = !store.is_remote();
+        let git = self.git.as_ref().filter(|g| g.get("isRepo").and_then(Value::as_bool).unwrap_or(false));
+        let quick = git::quick_action(git, self.git_busy.is_some());
 
+        let this = self.this.clone();
+        // The primary script (`primaryProjectScript`): the first that is not a worktree's setup.
+        let script_control = match scripts.iter().find(|s| !s.run_on_worktree_create) {
+            None => outline_button("add-action", Some(Icon::Plus), Some("Add action".into()), Part::Whole, false, cx)
+                .tooltip(|_, cx| Tooltip::view("Add action", None, cx))
+                .on_click(move |_, window, cx| {
+                    this.update(cx, |v, cx| v.open_script_editor(window, cx)).ok();
+                })
+                .into_any_element(),
+            Some(primary) => {
+                let id = primary.id.to_string();
+                let name = primary.name.to_string();
+                let this_menu = this.clone();
+                div()
+                    .flex()
+                    .flex_none()
+                    .child(
+                        outline_button("run-script", Some(script_icon(primary.icon)), Some(name.clone().into()), Part::Main, draft, cx)
+                            .tooltip(move |_, cx| Tooltip::view(format!("Run {name}"), None, cx))
+                            .on_click(move |_, window, cx| {
+                                this.update(cx, |v, cx| v.run_script(id.clone(), window, cx)).ok();
+                            }),
+                    )
+                    .child(split_separator(cx))
+                    .child(
+                        outline_button("script-actions", None, None, Part::Chevron, false, cx).on_click(move |event, window, cx| {
+                            this_menu.update(cx, |v, cx| v.open_scripts_menu(event.position(), window, cx)).ok();
+                        }),
+                    )
+                    .into_any_element()
+            }
+        };
+
+        let open = local.then(|| {
+            let this = self.this.clone();
+            let disabled = editors == 0 || draft;
+            div()
+                .flex()
+                .flex_none()
+                .child(
+                    outline_button("open-editor", None, Some("Open".into()), Part::Main, disabled, cx)
+                        .pl(px(9.))
+                        .when(!disabled, |el| {
+                            el.on_click(move |_, _, cx| {
+                                this.update(cx, |v, cx| v.open_in_editor(None, cx)).ok();
+                            })
+                        }),
+                )
+                .child(split_separator(cx))
+                .child({
+                    let this = self.this.clone();
+                    outline_button("choose-editor", None, None, Part::Chevron, false, cx).on_click(move |event, window, cx| {
+                        this.update(cx, |v, cx| v.open_editors_menu(event.position(), window, cx)).ok();
+                    })
+                })
+        });
+
+        let git_control = git.is_some().then(|| {
+            let this = self.this.clone();
+            let disabled = quick.disabled();
+            let hint = match &quick.kind {
+                git::QuickKind::Hint(hint) => Some(hint.clone()),
+                _ => None,
+            };
+            let kind = quick.kind.clone();
+            let pr_url = git.and_then(|g| g.pointer("/pr/url")).and_then(Value::as_str).map(str::to_owned);
+            let this_menu = self.this.clone();
+            div()
+                .flex()
+                .flex_none()
+                .child(
+                    outline_button(
+                        "git-quick",
+                        Some(quick_icon(&quick)),
+                        Some(quick.label.clone().into()),
+                        Part::Main,
+                        disabled,
+                        cx,
+                    )
+                    .when_some(hint, |el, hint| el.tooltip(move |_, cx| Tooltip::view(hint.clone(), None, cx)))
+                    .when(!disabled, |el| {
+                        el.on_click(move |_, _, cx| {
+                            let kind = kind.clone();
+                            let pr_url = pr_url.clone();
+                            this.update(cx, |v, cx| match kind {
+                                git::QuickKind::Run(action) => v.git_action(if action == "create_pr" { "pr" } else { action }, cx),
+                                git::QuickKind::Pull => v.git_action("pull", cx),
+                                git::QuickKind::OpenPr => {
+                                    if let Some(url) = pr_url {
+                                        cx.open_url(&url);
+                                    }
+                                }
+                                git::QuickKind::Publish => v.git_action("push", cx),
+                                git::QuickKind::Hint(_) => {}
+                            })
+                            .ok();
+                        })
+                    }),
+                )
+                .child(split_separator(cx))
+                .child(
+                    outline_button("git-menu", None, None, Part::Chevron, self.git_busy.is_some(), cx).on_click(move |event, window, cx| {
+                        this_menu.update(cx, |v, cx| v.open_git_menu(event.position(), window, cx)).ok();
+                    }),
+                )
+        });
+
+        let this_terminal = self.this.clone();
         div()
             .flex()
             .flex_none()
             .items_center()
-            .gap(px(6.))
-            .when(files > 0, |this| {
-                this.child(
-                    div()
-                        .flex()
-                        .items_center()
-                        .gap(px(5.))
-                        .font_family(MONO_FONT)
-                        .child(small(format!("{files} file{}", if files == 1 { "" } else { "s" }), c.text_3))
-                        .when(insertions > 0, |this| this.child(small(format!("+{insertions}"), c.success)))
-                        .when(deletions > 0, |this| this.child(small(format!("−{deletions}"), c.danger))),
-                )
-            })
-            .when(ahead > 0, |this| this.child(small(format!("↑{ahead}"), c.text_2)))
-            .when(behind > 0, |this| this.child(small(format!("↓{behind}"), c.warning)))
-            .when_some(pr, |this, pr| {
-                let number = pr.get("number").and_then(Value::as_i64).unwrap_or_default();
-                let state = pr.get("state").and_then(Value::as_str).unwrap_or("open").to_owned();
-                let url = pr.get("url").and_then(Value::as_str).unwrap_or_default().to_owned();
-                let color = match state.as_str() {
-                    "merged" => c.accent_text,
-                    "closed" => c.danger,
-                    _ => c.success,
-                };
-                this.child(div().id("thread-pr").cursor_pointer().on_click(move |_, _, cx| cx.open_url(&url)).child(pill(
-                    format!("#{number} {state}"),
-                    color,
-                    Hsla { a: 0.14, ..color },
-                )))
-            })
-            .when_some(self.git_busy.clone(), |this, busy| {
-                this.child(
-                    div()
-                        .flex()
-                        .items_center()
-                        .gap(px(6.))
-                        .text_size(px(text::SM))
-                        .text_color(c.text_2)
-                        .child(spinner("git-busy", c.accent, 12.))
-                        .child(busy),
-                )
-            })
-            .when(git.is_some(), |el| {
-                el.child(
-                    Button::new("thread-git")
-                        .icon(Icon::GitCommit)
-                        .small()
-                        .tooltip("Commit, push, pull request")
-                        .on_click(move |event, window, cx| {
-                            this.update(cx, |v, cx| v.open_git_menu(event.position(), window, cx)).ok();
-                        }),
-                )
-            })
-            .when(has_scripts && !draft, |el| {
-                el.child(
-                    Button::new("thread-scripts")
-                        .icon(Icon::Play)
-                        .small()
-                        .tooltip("Run a project script")
-                        .on_click(move |event, window, cx| {
-                            this_scripts.update(cx, |v, cx| v.open_scripts_menu(event.position(), window, cx)).ok();
-                        }),
-                )
-            })
-            .when(!draft, |el| {
-                el.child(
-                    Button::new("thread-terminal")
-                        .icon(Icon::SquareTerminal)
-                        .small()
-                        .selected(self.terminal_visible)
-                        .tooltip_keys("Terminal", "⌘J")
-                        .on_click(move |_, window, cx| {
-                            this_terminal.update(cx, |v, cx| v.toggle_terminal(window, cx)).ok();
-                        }),
-                )
-            })
+            .gap(px(12.))
+            .child(script_control)
+            .children(open)
+            .children(git_control)
+            // The toggles end 13 px from the window's edge (the header's padding is 20).
+            .child(
+                div()
+                    .flex()
+                    .items_center()
+                    .gap(px(4.))
+                    .ml(px(-8.))
+                    .mr(px(-7.))
+                    .child(
+                        header_toggle("toggle-terminal", Icon::PanelBottom, self.terminal_visible, cx)
+                            .tooltip(|_, cx| Tooltip::view("Toggle terminal drawer", Some("⌘J".into()), cx))
+                            .when(!draft, |el| {
+                                el.on_click(move |_, window, cx| {
+                                    this_terminal.update(cx, |v, cx| v.toggle_terminal(window, cx)).ok();
+                                })
+                            }),
+                    )
+                    // The web's right panel (changes, previews) comes later; its place is kept.
+                    .child(div().size(px(28.)).flex_none()),
+            )
             .into_any_element()
     }
 
@@ -913,69 +968,160 @@ impl ThreadView {
         )
     }
 
-    /// The title bar's content for this thread.
+    /// The title bar's content for this thread, as the web's `ChatHeader`: the project and
+    /// the title, then the project's action, "Open", the git action and the terminal toggle.
     pub fn render_header(&self, cx: &App) -> AnyElement {
         let c = cx.theme().colors.clone();
         let store = self.store.read(cx);
-        let (title, project, branch, status): (SharedString, Option<String>, Option<String>, Option<ThreadStatus>) = match &self.target {
-            Target::Draft { project, .. } => ("New thread".into(), store.shell.project(project).map(|p| p.title.clone()), None, None),
+        let (title, project, thread): (SharedString, Option<(ProjectId, String)>, Option<OrchestrationThreadShell>) = match &self.target {
+            Target::Draft { project, .. } => ("New thread".into(), store.shell.project(project).map(|p| (p.id.clone(), p.title.clone())), None),
             Target::Thread(id) => match store.shell.thread(id) {
                 Some(t) => (
                     t.title.clone().into(),
-                    store.shell.project(&t.project_id).map(|p| p.title.clone()),
-                    t.branch.clone(),
-                    Some(shell::status(t)),
+                    store.shell.project(&t.project_id).map(|p| (p.id.clone(), p.title.clone())),
+                    Some(t.clone()),
                 ),
-                None => ("Loading…".into(), None, None, None),
+                None => ("Loading…".into(), None, None),
             },
         };
+        let this = self.this.clone();
+        let breadcrumb = div()
+            .flex_1()
+            .min_w_0()
+            .flex()
+            .items_center()
+            .gap(px(12.))
+            .text_size(px(14.))
+            .line_height(px(20.))
+            .font_weight(FontWeight::MEDIUM)
+            .when_some(project, |this, (_, name)| {
+                let text_2 = c.text_2;
+                let text = c.text;
+                this.child(
+                    div()
+                        .id("crumb-project")
+                        .flex()
+                        .flex_none()
+                        .items_center()
+                        .gap(px(6.))
+                        .max_w(px(180.))
+                        .cursor_pointer()
+                        .text_color(text_2)
+                        .hover(move |s| s.text_color(text))
+                        .tooltip({
+                            let name = name.clone();
+                            move |_, cx| Tooltip::view(format!("New thread in {name}"), None, cx)
+                        })
+                        .on_click(|_, window, cx| window.dispatch_action(Box::new(crate::actions::NewThread), cx))
+                        .child(project_badge(&name, 14., cx))
+                        .child(div().max_w(px(160.)).truncate().child(SharedString::from(name))),
+                )
+                .child(div().flex_none().font_weight(FontWeight::NORMAL).text_color(c.text_3).child("/"))
+            })
+            .child(
+                div()
+                    .id("crumb-title")
+                    .group("thread-title")
+                    .flex_1()
+                    .min_w(px(40.))
+                    .flex()
+                    .items_center()
+                    .gap(px(4.))
+                    .text_color(c.text)
+                    .when_some(thread, |el, thread| {
+                        el.cursor_pointer().on_mouse_down(MouseButton::Left, move |event: &MouseDownEvent, window, cx| {
+                            let at = event.position;
+                            this.update(cx, |v, cx| v.open_thread_menu(&thread, at, window, cx)).ok();
+                        })
+                    })
+                    .child(div().min_w_0().truncate().child(title))
+                    .when(!self.is_draft(), |this| {
+                        this.child(
+                            svg()
+                                .path(Icon::ChevronDown.path())
+                                .size(px(14.))
+                                .flex_none()
+                                .text_color(c.text_2)
+                                .invisible()
+                                .group_hover("thread-title", |s| s.visible()),
+                        )
+                    }),
+            );
         div()
             .flex()
             .flex_1()
             .min_w_0()
             .items_center()
-            .gap(px(10.))
-            .child(
-                div()
-                    .truncate()
-                    .text_size(px(text::MD))
-                    .font_weight(FontWeight::SEMIBOLD)
-                    .text_color(c.text)
-                    .child(title),
-            )
-            .when_some(project, |this, project| {
-                this.child(
-                    div()
-                        .flex()
-                        .items_center()
-                        .gap(px(4.))
-                        .flex_none()
-                        .text_size(px(text::SM))
-                        .text_color(c.text_3)
-                        .child(icon(Icon::Folder, c.text_3).size(px(12.)))
-                        .child(project),
-                )
-            })
-            .when_some(branch, |this, branch| {
-                this.child(
-                    div()
-                        .flex()
-                        .items_center()
-                        .gap(px(4.))
-                        .min_w_0()
-                        .text_size(px(text::SM))
-                        .text_color(c.text_3)
-                        .child(icon(Icon::GitBranch, c.text_3).size(px(12.)))
-                        .child(div().truncate().font_family(MONO_FONT).child(branch)),
-                )
-            })
-            .when_some(status.filter(|s| *s != ThreadStatus::Ready), |this, status| {
-                let color = crate::sidebar::status_color(status, cx);
-                this.child(pill(status.label(), color, Hsla { a: 0.14, ..color }))
-            })
-            .child(div().flex_1())
+            .gap(px(12.))
+            .child(breadcrumb)
             .child(self.render_tools(cx))
             .into_any_element()
+    }
+
+    fn open_script_editor(&mut self, _: &mut Window, cx: &mut Context<Self>) {
+        if let Some(project) = self.project_id(cx) {
+            cx.emit(ThreadViewEvent::AddAction(project));
+        }
+    }
+
+    /// Opens the thread's folder in an editor of the server's machine (`project.openInEditor`).
+    fn open_in_editor(&mut self, editor: Option<String>, cx: &mut Context<Self>) {
+        if self.is_draft() {
+            return;
+        }
+        let mut params = json!({"threadId": self.thread_id().as_str()});
+        if let Some(editor) = editor {
+            params["editor"] = json!(editor);
+        }
+        self.command("project.openInEditor", params, cx).detach();
+    }
+
+    fn open_editors_menu(&mut self, position: Point<Pixels>, window: &mut Window, cx: &mut Context<Self>) {
+        let editors: Vec<String> = self
+            .store
+            .read(cx)
+            .config
+            .as_ref()
+            .map(|c| c.available_editors.iter().map(|e| e.as_str().to_owned()).collect())
+            .unwrap_or_default();
+        let entries = if editors.is_empty() {
+            vec![Entry::item("No installed editors found", |_, _| {}).disabled(true)]
+        } else {
+            editors
+                .into_iter()
+                .enumerate()
+                .map(|(index, editor)| {
+                    let this = self.this.clone();
+                    let label = editor_name(&editor);
+                    let entry = Entry::item(label, move |_, cx| {
+                        this.update(cx, |v, cx| v.open_in_editor(Some(editor.clone()), cx)).ok();
+                    })
+                    .icon(Icon::SquareArrowOutUpRight);
+                    if index == 0 {
+                        entry.keys("⌘O")
+                    } else {
+                        entry
+                    }
+                })
+                .collect()
+        };
+        self.open_menu(entries, position, window, cx);
+    }
+
+    /// The thread's menu, from its title (the same as its row's in the sidebar).
+    fn open_thread_menu(&mut self, thread: &OrchestrationThreadShell, position: Point<Pixels>, window: &mut Window, cx: &mut Context<Self>) {
+        let this = self.this.clone();
+        let rename = Rc::new(move |_: &mut Window, cx: &mut App| {
+            this.update(cx, |_, cx| cx.emit(ThreadViewEvent::Rename)).ok();
+        }) as crate::sidebar::RenameThread;
+        let this = self.this.clone();
+        let removed = Rc::new(move |cx: &mut App| {
+            this.update(cx, |_, cx| cx.emit(ThreadViewEvent::Removed)).ok();
+        }) as crate::sidebar::ThreadRemoved;
+        let entries = crate::sidebar::thread_menu_entries(thread, cx, rename, removed);
+        let menu = OpenMenu::new(entries, position + gpui::point(px(0.), px(4.)), window, cx, |this, _, _| this.menu = None);
+        self.menu = Some(menu);
+        cx.notify();
     }
 
     fn render_item(&mut self, index: usize, cx: &mut Context<Self>) -> AnyElement {
@@ -1848,4 +1994,56 @@ impl Render for ThreadView {
             .when_some(terminals, |this, terminals| this.child(terminals))
             .when_some(self.menu.as_ref(), |this, menu| this.child(menu.render()))
     }
+}
+
+/// A project script's icon (`projectScriptEditor.tsx`).
+fn script_icon(icon: zc_contracts::ProjectScriptIcon) -> Icon {
+    use zc_contracts::ProjectScriptIcon as I;
+    match icon {
+        I::Play => Icon::Play,
+        I::Test => Icon::FlaskConical,
+        I::Lint => Icon::ListChecks,
+        I::Configure => Icon::Wrench,
+        I::Build => Icon::Hammer,
+        I::Debug => Icon::Bug,
+    }
+}
+
+/// The git action's icon (`GitQuickActionIcon`): the host's mark for pull requests.
+fn quick_icon(quick: &git::QuickAction) -> Icon {
+    match &quick.kind {
+        git::QuickKind::OpenPr => Icon::GitHub,
+        git::QuickKind::Publish => Icon::CloudUpload,
+        git::QuickKind::Pull => Icon::CloudDownload,
+        git::QuickKind::Run("commit") => Icon::GitCommit,
+        git::QuickKind::Run("push" | "commit_push") => Icon::CloudUpload,
+        git::QuickKind::Run(_) => Icon::GitHub,
+        git::QuickKind::Hint(_) if quick.label == "Commit" => Icon::GitCommit,
+        git::QuickKind::Hint(_) if quick.label == "Push" => Icon::CloudUpload,
+        git::QuickKind::Hint(_) => Icon::Info,
+    }
+}
+
+/// How the web names an editor (`OpenInPicker.tsx`).
+fn editor_name(id: &str) -> String {
+    match id {
+        "cursor" => "Cursor",
+        "trae" => "Trae",
+        "kiro" => "Kiro",
+        "vscode" => "VS Code",
+        "vscode-insiders" => "VS Code Insiders",
+        "vscodium" => "VSCodium",
+        "zed" => "Zed",
+        "antigravity" => "Antigravity",
+        "idea" => "IntelliJ IDEA",
+        "file-manager" => {
+            if cfg!(target_os = "macos") {
+                "Finder"
+            } else {
+                "File manager"
+            }
+        }
+        other => other,
+    }
+    .to_owned()
 }

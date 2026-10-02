@@ -3,11 +3,12 @@
 //! status, project and age, and a menu of what can be done with it.
 
 use std::collections::HashSet;
+use std::rc::Rc;
 use std::time::Duration;
 
 use gpui::prelude::*;
 use gpui::{
-    div, px, svg, App, ClipboardItem, Context, Entity, EventEmitter, FontWeight, Hsla, MouseButton, MouseDownEvent, Pixels, Point, PromptLevel, SharedString,
+    div, px, svg, App, ClipboardItem, Context, Entity, EventEmitter, FontWeight, MouseButton, MouseDownEvent, Pixels, Point, PromptLevel, SharedString,
     Subscription, Task, Window,
 };
 use serde_json::json;
@@ -15,6 +16,7 @@ use zc_contracts::{OrchestrationThreadShell, ProjectId, ThreadId};
 use zenith_model::shell::{self, Section, ThreadStatus};
 use zenith_model::time::{now_millis, sidebar_age, working_label};
 
+use crate::actions;
 use crate::assets::Icon;
 use crate::store::{self, Store};
 use crate::theme::{radius, ActiveTheme};
@@ -50,19 +52,6 @@ pub struct Sidebar {
 }
 
 impl EventEmitter<SidebarEvent> for Sidebar {}
-
-/// Colors and labels of a thread's status.
-pub fn status_color(status: ThreadStatus, cx: &App) -> Hsla {
-    let c = &cx.theme().colors;
-    match status {
-        ThreadStatus::Approval => c.warning,
-        ThreadStatus::Input => c.accent,
-        ThreadStatus::Working | ThreadStatus::Monitoring => c.accent,
-        ThreadStatus::Failed => c.danger,
-        ThreadStatus::PlanReady => c.accent_hover,
-        ThreadStatus::Ready => c.text_3,
-    }
-}
 
 impl Sidebar {
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
@@ -187,128 +176,29 @@ impl Sidebar {
         cx.notify();
     }
 
-    fn open_thread_menu(&mut self, thread: &OrchestrationThreadShell, position: Point<Pixels>, window: &mut Window, cx: &mut Context<Self>) {
+    pub fn open_thread_menu(&mut self, thread: &OrchestrationThreadShell, position: Point<Pixels>, window: &mut Window, cx: &mut Context<Self>) {
         let this = cx.entity().downgrade();
-        let id = thread.id.clone();
-        let now = now_millis();
-        let section = shell::section(thread, now);
-        let mut entries = Vec::new();
-        let tid = id.as_str().to_owned();
-        let cmd = |this: &gpui::WeakEntity<Self>, name: &'static str, params: serde_json::Value| {
+        let rename = {
             let this = this.clone();
-            move |_: &mut Window, cx: &mut App| {
-                let _ = this.update(cx, |s, cx| s.command(name, params.clone(), cx));
-            }
+            let id = thread.id.clone();
+            let title = thread.title.clone();
+            Rc::new(move |window: &mut Window, cx: &mut App| {
+                let _ = this.update(cx, |s, cx| s.start_rename(id.clone(), &title, window, cx));
+            }) as RenameThread
         };
-        let on_thread = json!({"threadId": tid});
-        entries.push(
-            Entry::item(
-                if section == Section::Pinned { "Unpin" } else { "Pin" },
-                cmd(&this, if section == Section::Pinned { "thread.unpin" } else { "thread.pin" }, on_thread.clone()),
-            )
-            .icon(if section == Section::Pinned { Icon::PinOff } else { Icon::Pin }),
-        );
-        entries.push(
-            Entry::item(
-                if section == Section::Settled { "Reopen" } else { "Settle" },
-                cmd(
-                    &this,
-                    if section == Section::Settled { "thread.reopen" } else { "thread.settle" },
-                    on_thread.clone(),
-                ),
-            )
-            .icon(Icon::CircleCheck)
-            .keys("⌘⇧S"),
-        );
-        if section == Section::Snoozed {
-            entries.push(Entry::item("Wake now", cmd(&this, "thread.wake", on_thread.clone())).icon(Icon::Bell));
-        } else if shell::can_snooze(thread) {
-            entries.push(Entry::Header("Snooze".into()));
-            for (label, until) in snooze_presets() {
-                entries.push(Entry::item(label, cmd(&this, "thread.snooze", json!({"threadId": tid, "until": until}))).icon(Icon::Clock));
-            }
-        }
-        entries.push(Entry::Separator);
-        {
+        let removed = {
             let this = this.clone();
-            let id = id.clone();
-            let title = thread.title.clone();
-            entries.push(
-                Entry::item("Rename…", move |window, cx| {
-                    let _ = this.update(cx, |s, cx| s.start_rename(id.clone(), &title, window, cx));
-                })
-                .icon(Icon::Pencil),
-            );
-        }
-        entries.push(Entry::item("Regenerate title", cmd(&this, "thread.regenerateTitle", on_thread.clone())).icon(Icon::Sparkles));
-        entries.push(Entry::Separator);
-        let path = thread
-            .worktree_path
-            .clone()
-            .or_else(|| self.store.read(cx).shell.project(&thread.project_id).map(|p| p.workspace_root.clone()));
-        if let Some(path) = path {
-            entries.push(Entry::item("Copy path", move |_, cx| cx.write_to_clipboard(ClipboardItem::new_string(path.clone()))).icon(Icon::Copy));
-        }
-        if let Some(branch) = thread.branch.clone() {
-            entries.push(Entry::item("Copy branch", move |_, cx| cx.write_to_clipboard(ClipboardItem::new_string(branch.clone()))).icon(Icon::GitBranch));
-        }
-        {
-            let tid = tid.clone();
-            entries.push(Entry::item("Copy thread ID", move |_, cx| cx.write_to_clipboard(ClipboardItem::new_string(tid.clone()))).icon(Icon::Copy));
-        }
-        entries.push(Entry::Separator);
-        let running = matches!(shell::status(thread), ThreadStatus::Working);
-        {
-            let this = this.clone();
-            let id = id.clone();
-            entries.push(
-                Entry::item("Archive", move |_, cx| {
-                    let _ = this.update(cx, |s, cx| {
-                        s.command("thread.archive", json!({"threadId": id.as_str()}), cx);
-                        cx.emit(SidebarEvent::Removed(id.clone()));
-                    });
-                })
-                .icon(Icon::Archive)
-                .disabled(running),
-            );
-        }
-        {
-            let this = this.clone();
-            let id = id.clone();
-            let title = thread.title.clone();
-            entries.push(
-                Entry::item("Delete…", move |window, cx| {
-                    let answer = window.prompt(
-                        PromptLevel::Warning,
-                        &format!("Delete “{title}”?"),
-                        Some("The thread and its messages are deleted. Its worktree, if any, stays on disk."),
-                        &["Delete Thread", "Cancel"],
-                        cx,
-                    );
-                    let this = this.clone();
-                    let id = id.clone();
-                    cx.spawn(async move |cx| {
-                        if answer.await == Ok(0) {
-                            let _ = this.update(cx, |s, cx| {
-                                if running {
-                                    s.command("thread.stop", json!({"threadId": id.as_str()}), cx);
-                                }
-                                s.command("thread.delete", json!({"threadId": id.as_str()}), cx);
-                                cx.emit(SidebarEvent::Removed(id.clone()));
-                            });
-                        }
-                    })
-                    .detach();
-                })
-                .icon(Icon::Trash)
-                .danger(),
-            );
-        }
+            let id = thread.id.clone();
+            Rc::new(move |cx: &mut App| {
+                let _ = this.update(cx, |_, cx| cx.emit(SidebarEvent::Removed(id.clone())));
+            }) as ThreadRemoved
+        };
+        let entries = thread_menu_entries(thread, cx, rename, removed);
         self.menu = Some(OpenMenu::new(entries, position, window, cx, |this, _, _| this.menu = None));
         cx.notify();
     }
 
-    fn start_rename(&mut self, id: ThreadId, title: &str, window: &mut Window, cx: &mut Context<Self>) {
+    pub fn start_rename(&mut self, id: ThreadId, title: &str, window: &mut Window, cx: &mut Context<Self>) {
         let field = cx.new(|cx| {
             let mut field = TextArea::single_line(cx);
             field.set_text(title, cx);
@@ -723,6 +613,118 @@ fn middle_truncate(branch: &str) -> String {
     let head: String = chars[..MAX - tail_len - 1].iter().collect();
     let tail: String = chars[chars.len() - tail_len..].iter().collect();
     format!("{head}…{tail}")
+}
+
+/// Starts renaming a thread where its menu was opened.
+pub type RenameThread = Rc<dyn Fn(&mut Window, &mut App)>;
+/// Runs after a thread is archived or deleted from its menu.
+pub type ThreadRemoved = Rc<dyn Fn(&mut App)>;
+
+/// What can be done with a thread, in the web's order (`threadActionMenu.logic.ts`): from its
+/// row in the sidebar and from its title in the header. `rename` starts renaming it where the
+/// menu was opened; `removed` runs after it is archived or deleted.
+pub fn thread_menu_entries(thread: &OrchestrationThreadShell, cx: &App, rename: RenameThread, removed: ThreadRemoved) -> Vec<Entry> {
+    let store = store::store(cx);
+    let now = now_millis();
+    let section = shell::section(thread, now);
+    let tid = thread.id.as_str().to_owned();
+    let cmd = |name: &'static str, params: serde_json::Value| {
+        let store = store.clone();
+        move |_: &mut Window, cx: &mut App| {
+            store.update(cx, |s, cx| s.run_command(name, params.clone(), cx)).detach();
+        }
+    };
+    let on_thread = json!({"threadId": tid});
+    let mut entries = Vec::new();
+    entries.push(
+        Entry::item(
+            if section == Section::Pinned { "Unpin thread" } else { "Pin thread" },
+            cmd(if section == Section::Pinned { "thread.unpin" } else { "thread.pin" }, on_thread.clone()),
+        )
+        .icon(if section == Section::Pinned { Icon::PinOff } else { Icon::Pin }),
+    );
+    entries.push(
+        Entry::item(
+            if section == Section::Settled { "Un-settle thread" } else { "Settle thread" },
+            cmd(if section == Section::Settled { "thread.reopen" } else { "thread.settle" }, on_thread.clone()),
+        )
+        .icon(Icon::CircleCheck)
+        .keys("⌘⇧S"),
+    );
+    if section == Section::Snoozed {
+        entries.push(Entry::item("Wake thread", cmd("thread.wake", on_thread.clone())).icon(Icon::AlarmClockOff));
+    } else if shell::can_snooze(thread) {
+        entries.push(Entry::Header("Snooze".into()));
+        for (label, until) in snooze_presets() {
+            entries.push(Entry::item(label, cmd("thread.snooze", json!({"threadId": tid, "until": until}))).icon(Icon::Clock));
+        }
+    }
+    entries.push(Entry::Separator);
+    entries.push(Entry::item("Rename thread", move |window, cx| rename(window, cx)).icon(Icon::Pencil));
+    entries.push(Entry::item("Regenerate title", cmd("thread.regenerateTitle", on_thread.clone())).icon(Icon::Refresh));
+    entries.push(Entry::Separator);
+    let path = thread
+        .worktree_path
+        .clone()
+        .or_else(|| store.read(cx).shell.project(&thread.project_id).map(|p| p.workspace_root.clone()));
+    if let Some(path) = path {
+        entries.push(Entry::item("Copy path", move |_, cx| cx.write_to_clipboard(ClipboardItem::new_string(path.clone()))).icon(Icon::Copy));
+    }
+    if let Some(branch) = thread.branch.clone() {
+        entries.push(Entry::item("Copy branch", move |_, cx| cx.write_to_clipboard(ClipboardItem::new_string(branch.clone()))).icon(Icon::GitBranch));
+    }
+    {
+        let tid = tid.clone();
+        entries.push(Entry::item("Copy thread ID", move |_, cx| cx.write_to_clipboard(ClipboardItem::new_string(tid.clone()))).icon(Icon::Copy));
+    }
+    entries.push(Entry::item("Project settings", |window, cx| window.dispatch_action(Box::new(actions::OpenSettings), cx)).icon(Icon::Settings));
+    entries.push(Entry::Separator);
+    let running = matches!(shell::status(thread), ThreadStatus::Working);
+    {
+        let store = store.clone();
+        let removed = removed.clone();
+        let tid = tid.clone();
+        entries.push(
+            Entry::item("Archive thread", move |_, cx| {
+                store.update(cx, |s, cx| s.run_command("thread.archive", json!({"threadId": tid}), cx)).detach();
+                removed(cx);
+            })
+            .icon(Icon::Archive)
+            .disabled(running),
+        );
+    }
+    {
+        let title = thread.title.clone();
+        entries.push(
+            Entry::item("Delete", move |window, cx| {
+                let answer = window.prompt(
+                    PromptLevel::Warning,
+                    &format!("Delete “{title}”?"),
+                    Some("The thread and its messages are deleted. Its worktree, if any, stays on disk."),
+                    &["Delete Thread", "Cancel"],
+                    cx,
+                );
+                let store = store.clone();
+                let removed = removed.clone();
+                let tid = tid.clone();
+                cx.spawn(async move |cx| {
+                    if answer.await == Ok(0) {
+                        let _ = cx.update(|cx| {
+                            if running {
+                                store.update(cx, |s, cx| s.run_command("thread.stop", json!({"threadId": tid}), cx)).detach();
+                            }
+                            store.update(cx, |s, cx| s.run_command("thread.delete", json!({"threadId": tid}), cx)).detach();
+                            removed(cx);
+                        });
+                    }
+                })
+                .detach();
+            })
+            .icon(Icon::Trash)
+            .danger(),
+        );
+    }
+    entries
 }
 
 /// Snooze choices: in an hour, in three, tomorrow 9:00, next Monday 9:00 (local time).
